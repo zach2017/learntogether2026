@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: demo
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: web } }
+  template:
+    metadata: { labels: { app: web } }
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/OWNER/REPO-web:dev
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 80, name: http }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: demo
+spec:
+  selector: { app: web }
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
