@@ -1,0 +1,69 @@
+### Import sample resume and job, then analyze (use VS Code REST Client or curl)
+
+### Add resume
+POST http://localhost:8080/api/resumes
+Content-Type: application/json
+
+{
+  "id": "res-1",
+  "name": "Alex Doe",
+  "email": "alex@example.com",
+  "raw_text": "Senior DevOps Engineer with Kubernetes, Terraform, Azure, and Python experience. Built CI/CD with ArgoCD and GitHub Actions..."
+}
+
+### Add job
+POST http://localhost:8080/api/jobs
+Content-Type: application/json
+
+{
+  "id": "job-1",
+  "title": "Sr. Cloud SRE",
+  "description": "We need Kubernetes, Terraform, Azure, Python, monitoring, security, CI/CD, SRE mindset."
+}
+
+### Resume analysis
+POST http://localhost:8080/api/analyze/resume
+Content-Type: application/json
+
+{
+  "id": "res-1",
+  "name": "Alex Doe",
+  "email": "alex@example.com",
+  "raw_text": "Senior DevOps Engineer with Kubernetes, Terraform, Azure, and Python experience. Built CI/CD with ArgoCD and GitHub Actions..."
+}
+
+### Proposal analysis
+POST http://localhost:8080/api/analyze/proposal
+Content-Type: application/json
+
+{
+  "resume": {
+    "id": "res-1",
+    "name": "Alex Doe",
+    "email": "alex@example.com",
+    "raw_text": "Senior DevOps Engineer with Kubernetes, Terraform, Azure, and Python experience. Built CI/CD with ArgoCD and GitHub Actions..."
+  },
+  "job": {
+    "id": "job-1",
+    "title": "Sr. Cloud SRE",
+    "description": "We need Kubernetes, Terraform, Azure, Python, monitoring, security, CI/CD, SRE mindset."
+  }
+}
+
+### Skills gap
+POST http://localhost:8080/api/analyze/skills-gap
+Content-Type: application/json
+
+{
+  "candidate_skills": ["Kubernetes", "Docker", "GitHub Actions", "Python"],
+  "target_skills": ["Kubernetes", "Terraform", "Azure", "Python", "Prometheus"]
+}
+
+### What-if
+POST http://localhost:8080/api/analyze/what-if
+Content-Type: application/json
+
+{
+  "resume_text": "Senior DevOps Engineer with Kubernetes, Terraform, Azure, and Python...",
+  "scenario": "What if the candidate completes an Azure Architect certification and adds Prometheus/Grafana observability?"
+}
