@@ -1,0 +1,121 @@
+version: "3.8"
+
+services:
+  # LocalStack - AWS services emulator
+  localstack:
+    container_name: localstack_main
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"            # LocalStack Gateway
+      # - "4510-4559:4510-4559"  # (optional) extra service ports
+    environment:
+      - DEBUG=1
+      - SERVICES=s3,iam
+      - PERSISTENCE=1
+      # Use a non-/tmp dir so we can mount a named volume (Windows-friendly)
+      - DATA_DIR=/var/lib/localstack/data
+    volumes:
+      - localstack_data:/var/lib/localstack
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "awslocal s3 ls >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+
+  # Init container to set up S3 bucket
+  localstack-init:
+    image: amazon/aws-cli:2.17.15
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - BUCKET=file-uploads
+    entrypoint: >
+      sh -c '
+        echo "Waiting for LocalStack (S3) to respond...";
+        until aws --endpoint-url=${AWS_ENDPOINT_URL} s3 ls >/dev/null 2>&1; do
+          echo "  ...still waiting"; sleep 2;
+        done
+        echo "LocalStack ready.";
+
+        if ! aws --endpoint-url=${AWS_ENDPOINT_URL} s3api head-bucket --bucket "${BUCKET}" 2>/dev/null; then
+          echo "Creating bucket: ${BUCKET}";
+          aws --endpoint-url=${AWS_ENDPOINT_URL} s3 mb s3://${BUCKET} --region ${AWS_DEFAULT_REGION} || true;
+        else
+          echo "Bucket ${BUCKET} already exists.";
+        fi
+
+        echo "Applying CORS...";
+        aws --endpoint-url=${AWS_ENDPOINT_URL} s3api put-bucket-cors \
+          --bucket ${BUCKET} \
+          --cors-configuration file:///init/cors.json \
+          --region ${AWS_DEFAULT_REGION};
+
+        echo "Setting public-read bucket policy (test only)...";
+        aws --endpoint-url=${AWS_ENDPOINT_URL} s3api put-bucket-policy \
+          --bucket ${BUCKET} \
+          --policy "{
+            \"Version\": \"2012-10-17\",
+            \"Statement\": [{
+              \"Sid\": \"PublicReadGetObject\",
+              \"Effect\": \"Allow\",
+              \"Principal\": \"*\",
+              \"Action\": \"s3:GetObject\",
+              \"Resource\": \"arn:aws:s3:::${BUCKET}/*\"
+            }]
+          }";
+
+        echo "Buckets now:";
+        aws --endpoint-url=${AWS_ENDPOINT_URL} s3 ls;
+        echo "Init complete.";
+      '
+    volumes:
+      - ./localstack-init/cors.json:/init/cors.json:ro
+    networks:
+      - app-network
+    restart: "no"
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      # Inside-Docker hostname for LocalStack:
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - S3_BUCKET_NAME=file-uploads
+      # Helps Node SDKs talk to LocalStack
+      - S3_FORCE_PATH_STYLE=true
+    depends_on:
+      localstack:
+        condition: service_healthy
+      localstack-init:
+        condition: service_completed_successfully
+    networks:
+      - app-network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  # Frontend React App
+
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  localstack_data:
