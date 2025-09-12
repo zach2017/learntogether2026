@@ -30,8 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-#  flutter_beacon: ^0.5.1
-  flutter_blue_plus: ^1.31.16
+  flutter_beacon: ^0.5.1
   url_launcher: ^6.3.2
 
 
