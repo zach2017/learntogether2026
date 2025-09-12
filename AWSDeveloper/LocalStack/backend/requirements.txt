@@ -1,0 +1,8 @@
+# Python Backend Requirements (pip install -r requirements.txt)
+
+Flask
+Flask-CORS
+boto3
+python-dotenv
+Werkzeug
+gunicorn
