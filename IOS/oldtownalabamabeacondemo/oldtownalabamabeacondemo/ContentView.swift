@@ -1,6 +1,7 @@
 // ===================================
-// FILE 1: ContentView.swift
+// FILE: ContentView.swift
 // Location: YourAppName/ContentView.swift
+// Corrected to work with multiple beacon URLs
 // ===================================
 
 import SwiftUI
@@ -45,14 +46,14 @@ struct ContentView: View {
                 if beaconDetector.isDetected {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
-                            Label("Type", systemImage: "beacon")
+                            Label("Type", systemImage: "beacon.max")
                                 .font(.headline)
                             Spacer()
                             Text(beaconDetector.beaconType)
                                 .fontWeight(.medium)
                         }
                         
-                        if !beaconDetector.namespace.isEmpty {
+                        if !beaconDetector.namespace.isEmpty && beaconDetector.namespace != "N/A" {
                             HStack {
                                 Label("Namespace", systemImage: "number")
                                     .font(.headline)
@@ -60,10 +61,12 @@ struct ContentView: View {
                                 Text(beaconDetector.namespace)
                                     .fontWeight(.medium)
                                     .font(.system(.caption, design: .monospaced))
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
                             }
                         }
                         
-                        if !beaconDetector.instance.isEmpty {
+                        if !beaconDetector.instance.isEmpty && beaconDetector.instance != "N/A" {
                             HStack {
                                 Label("Instance", systemImage: "tag")
                                     .font(.headline)
@@ -101,16 +104,19 @@ struct ContentView: View {
                 // Manual Open URL Button
                 if beaconDetector.isDetected {
                     Button(action: {
-                        showingSafari = true
+                        if beaconDetector.detectedURL != nil {
+                            showingSafari = true
+                        }
                     }) {
-                        Label("Open URL", systemImage: "safari")
+                        Label("Open Exhibit Info", systemImage: "safari")
                             .font(.headline)
                             .foregroundColor(.white)
                             .padding()
-                            .frame(maxWidth: 200)
+                            .frame(maxWidth: 250)
                             .background(Color.blue)
                             .cornerRadius(10)
                     }
+                    .disabled(beaconDetector.detectedURL == nil) // Disable button if no URL is available
                     .transition(.scale.combined(with: .opacity))
                 }
                 
@@ -123,9 +129,10 @@ struct ContentView: View {
                             .font(.headline)
                             .foregroundColor(.red)
                         
-                        Text("Please enable Bluetooth in Settings")
+                        Text("Please enable Bluetooth in Settings to find nearby exhibits.")
                             .font(.caption)
                             .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
                         
                         Button("Open Settings") {
                             if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
@@ -148,11 +155,18 @@ struct ContentView: View {
         }
         .animation(.easeInOut, value: beaconDetector.isDetected)
         .sheet(isPresented: $showingSafari) {
-            SafariView(url: URL(string: beaconDetector.targetURL)!)
+            // Safely unwrap the detectedURL from the beacon detector
+            if let url = beaconDetector.detectedURL {
+                SafariView(url: url)
+            }
         }
         .onChange(of: beaconDetector.shouldOpenURL) { _, newValue in
             if newValue {
-                showingSafari = true
+                // Ensure a URL has been detected before triggering the sheet
+                if beaconDetector.detectedURL != nil {
+                    showingSafari = true
+                }
+                // Reset the trigger flag in the detector
                 beaconDetector.shouldOpenURL = false
             }
         }
@@ -169,62 +183,3 @@ struct SafariView: UIViewControllerRepresentable {
     
     func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) {}
 }
-
-// ===================================
-// INFO.PLIST CONFIGURATION
-// Location: YourAppName/Info.plist
-// ===================================
-
-/*
- For Eddystone detection, you only need Bluetooth permissions:
- 
- 1. Click on your project in the navigator
- 2. Select your app target
- 3. Go to the "Info" tab
- 4. Add these keys under "Custom iOS Target Properties":
- 
- Key: NSBluetoothAlwaysUsageDescription
- Type: String
- Value: This app uses Bluetooth to detect nearby beacons
- 
- Key: NSBluetoothPeripheralUsageDescription (for older iOS versions)
- Type: String
- Value: This app uses Bluetooth to detect nearby beacons
- 
- That's it! Eddystone uses Bluetooth scanning, not location services like iBeacon.
- 
- Alternative method - Add directly to Info.plist source:
- 
- <key>NSBluetoothAlwaysUsageDescription</key>
- <string>This app uses Bluetooth to detect nearby beacons</string>
- <key>NSBluetoothPeripheralUsageDescription</key>
- <string>This app uses Bluetooth to detect nearby beacons</string>
- */
-
-// ===================================
-// CONFIGURING YOUR BLUECHARM BEACON
-// ===================================
-
-/*
- In your BlueCharm configuration app:
- 
- 1. Set Slot Type/Frame Type to: Eddystone-UID
- 2. Configure:
-    - Namespace: Any 10-byte hex value (20 characters)
-      Example: EDD1EBEAC04E5DEFA017
-    - Instance: Any 6-byte hex value (12 characters)
-      Example: 000000000001
-    - TX Power: -4 dBm (for better range)
-    - Advertising Interval: 1000ms
- 
- 3. If you want to detect a SPECIFIC beacon:
-    - Copy your Namespace and Instance values
-    - Update them in EddystoneBeaconDetector.swift:
-      let targetNamespace = "YOUR_NAMESPACE_HERE"
-      let targetInstance = "YOUR_INSTANCE_HERE"
- 
- 4. If you want to detect ANY Eddystone beacon:
-    - Leave targetNamespace and targetInstance as empty strings ""
- 
- The app will now detect Eddystone-UID beacons instead of iBeacons!
- */
