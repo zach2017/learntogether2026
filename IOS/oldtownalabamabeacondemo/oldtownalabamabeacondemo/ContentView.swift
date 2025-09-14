@@ -96,10 +96,10 @@ struct ContentView: View {
                             Image(systemName: "building.columns.fill")
                                 .font(.title2)
                                 .foregroundColor(Color(red: 0.6, green: 0.4, blue: 0.2))
-                            Text("Site Information")
+                           /* Text("Site Information")
                                 .font(.system(size: 18, weight: .bold, design: .serif))
                                 .foregroundColor(Color(red: 0.3, green: 0.25, blue: 0.2))
-                            Spacer()
+                            */ Spacer()
                         }
                         .padding(.bottom, 5)
                         
@@ -108,15 +108,26 @@ struct ContentView: View {
                         
                         // Beacon Details
                         VStack(alignment: .leading, spacing: 10) {
-                            DetailRow(icon: "mappin.circle", label: "Location ID", value: beaconDetector.beaconType)
+                           
                             
                             if !beaconDetector.namespace.isEmpty && beaconDetector.namespace != "N/A" {
-                                DetailRow(icon: "number.circle", label: "Site Code", value: String(beaconDetector.namespace.prefix(12)) + "...")
+                                switch String(beaconDetector.instance) {
+                                           case "000000000004":
+                                               DetailRow(icon: "mappin.circle", label: "Location", value: "Shotgun House")
+                                           
+                                           case "000000000001":
+                                               DetailRow(icon: "mappin.circle", label: "Location", value: "Pole Barn")
+                                           
+                                           default:
+                                               // This view is shown if `locationName` is anything else.
+                                               DetailRow(icon: "questionmark.diamond", label: "Location", value: "Unknown")
+                                           }
+                              //  DetailRow(icon: "number.circle", label: "Site Code", value: String(beaconDetector.namespace.prefix(12)) + "...")
                             }
                             
-                            DetailRow(icon: "antenna.radiowaves.left.and.right", label: "Signal", value: "\(beaconDetector.rssi) dBm")
+                           // DetailRow(icon: "antenna.radiowaves.left.and.right", label: "Signal", value: "\(beaconDetector.rssi) dBm")
                             
-                            DetailRow(icon: "location.circle", label: "Distance", value: beaconDetector.distanceString)
+                           // DetailRow(icon: "location.circle", label: "Distance", value: beaconDetector.distanceString)
                         }
                     }
                     .padding(20)
