@@ -1,7 +1,7 @@
 // ===================================
 // FILE: EddystoneBeaconDetector.swift
 // Location: YourAppName/EddystoneBeaconDetector.swift
-// UPDATED to support multiple beacons and URLs
+// FIXED: URL updates properly when switching between beacons
 // ===================================
 
 import Foundation
@@ -32,7 +32,7 @@ class EddystoneBeaconDetector: NSObject, ObservableObject {
     @Published var isBluetoothOn = true
     @Published var shouldOpenURL = false
     @Published var detectedURL: URL? // This will hold the URL of the detected beacon
-
+    
     // MARK: - Configuration
     // IMPORTANT: Configure your list of Eddystone beacons and their URLs here
     let targetBeacons: [TargetBeacon] = [
@@ -51,7 +51,8 @@ class EddystoneBeaconDetector: NSObject, ObservableObject {
     
     // MARK: - Properties
     private var centralManager: CBCentralManager!
-    private var openedBeaconIdentifiers: Set<String> = [] // Tracks which beacons have been triggered to prevent re-opening
+    private var openedBeaconIdentifiers: Set<String> = [] // Tracks which beacons have auto-opened
+    private var currentBeaconIdentifier: String? // Track the currently detected beacon
     private let eddystoneServiceUUID = CBUUID(string: "FEAA")
     private var resetTimer: Timer? // Timer to reset detection status
     
@@ -72,6 +73,8 @@ class EddystoneBeaconDetector: NSObject, ObservableObject {
         instance = ""
         rssi = 0
         distanceString = "Unknown"
+        currentBeaconIdentifier = nil
+        // Don't clear detectedURL here - keep it for manual button press
     }
     
     private func calculateDistance(rssi: Int, measuredPower: Int = -59) -> Double {
@@ -171,7 +174,7 @@ extension EddystoneBeaconDetector: CBCentralManagerDelegate {
         guard let discoveredNamespace = discoveredNamespace, let discoveredInstance = discoveredInstance else {
             return
         }
-
+        
         // Check if the discovered beacon matches any of our targets
         let matchedBeacon = targetBeacons.first {
             $0.namespace.uppercased() == discoveredNamespace.uppercased() &&
@@ -187,9 +190,12 @@ extension EddystoneBeaconDetector: CBCentralManagerDelegate {
         DispatchQueue.main.async {
             // Invalidate any existing timer, since we've just seen a beacon.
             self.resetTimer?.invalidate()
-
+            
+            let beaconIdentifier = target.identifier
+            let beaconChanged = self.currentBeaconIdentifier != beaconIdentifier
+            
             self.isDetected = true
-            self.statusText = "Eddystone Beacon Detected!"
+            self.statusText = "Historic Site Detected!"
             self.beaconType = "Eddystone-\(frameType)"
             self.namespace = discoveredNamespace
             self.instance = discoveredInstance
@@ -198,13 +204,19 @@ extension EddystoneBeaconDetector: CBCentralManagerDelegate {
             let distance = self.calculateDistance(rssi: RSSI.intValue)
             self.distanceString = self.formatDistance(distance)
             
-            // Auto-open URL on first detection for this specific beacon
-            let beaconIdentifier = target.identifier
-            if !self.openedBeaconIdentifiers.contains(beaconIdentifier) && frameType == "UID" {
-                self.openedBeaconIdentifiers.insert(beaconIdentifier) // Mark this beacon's URL as opened
-                if let url = URL(string: target.url) {
-                    self.detectedURL = url          // Set the specific URL to open
-                    self.shouldOpenURL = true       // Trigger the UI to open the URL
+            // ALWAYS update the URL when we detect a beacon
+            if let url = URL(string: target.url) {
+                self.detectedURL = url  // Always update to current beacon's URL
+            }
+            
+            // If this is a different beacon than before, update tracking
+            if beaconChanged {
+                self.currentBeaconIdentifier = beaconIdentifier
+                
+                // Auto-open URL only on first detection of each unique beacon
+                if !self.openedBeaconIdentifiers.contains(beaconIdentifier) && frameType == "UID" {
+                    self.openedBeaconIdentifiers.insert(beaconIdentifier)
+                    self.shouldOpenURL = true  // Trigger auto-open for first-time detection
                 }
             }
             
@@ -220,4 +232,3 @@ extension EddystoneBeaconDetector: CBCentralManagerDelegate {
         }
     }
 }
-
