@@ -4,7 +4,53 @@ import SafariServices
 
 struct ContentView: View {
     @StateObject private var beaconDetector = EddystoneBeaconDetector()
-    @State private var showingSafari = false
+    
+    // This state now controls which page is visible.
+    // When nil, the main scanning view is shown.
+    // When it has a URL, the web view page is shown.
+    @State private var activeURL: URL? = nil
+    
+    var body: some View {
+        ZStack {
+            if let url = activeURL {
+                // Show the new WebViewPage when a URL is active
+                WebViewPage(url: url) {
+                    // This is the action for the "Back" button
+                    // It sets the activeURL to nil, returning to the main view.
+                    withAnimation {
+                        activeURL = nil
+                    }
+                }
+                .transition(.asymmetric(insertion: .move(edge: .trailing), removal: .move(edge: .leading)))
+            } else {
+                // Show the main scanning interface
+                MainContentView(beaconDetector: beaconDetector) { url in
+                    // This is the action for the "Explore" button
+                    withAnimation {
+                        activeURL = url
+                    }
+                }
+                .transition(.asymmetric(insertion: .move(edge: .leading), removal: .move(edge: .trailing)))
+            }
+        }
+        .onChange(of: beaconDetector.shouldOpenURL) { _, newValue in
+            // This detects the beacon's trigger to auto-open a URL
+            if newValue, let url = beaconDetector.detectedURL {
+                withAnimation {
+                    activeURL = url
+                }
+                // Reset the trigger so it doesn't fire again on its own
+                beaconDetector.shouldOpenURL = false
+            }
+        }
+    }
+}
+
+// MARK: - Main Content View
+// Your original UI has been moved into this separate view for clarity.
+struct MainContentView: View {
+    @ObservedObject var beaconDetector: EddystoneBeaconDetector
+    var onExploreTapped: (URL) -> Void // Callback to tell the ContentView to navigate
     
     var body: some View {
         ZStack {
@@ -32,7 +78,6 @@ struct ContentView: View {
                         .tracking(3)
                         .foregroundColor(Color(red: 0.4, green: 0.3, blue: 0.2))
                     
-                    // Decorative line
                     Rectangle()
                         .fill(Color(red: 0.6, green: 0.4, blue: 0.2))
                         .frame(width: 100, height: 2)
@@ -41,7 +86,7 @@ struct ContentView: View {
                 .padding(.top, 40)
                 .padding(.bottom, 10)
                 
-                // Walking Tour Tagline
+                // Status Icon and Text...
                 HStack(spacing: 8) {
                     Image(systemName: "figure.walk")
                         .font(.system(size: 20))
@@ -54,7 +99,6 @@ struct ContentView: View {
                 .foregroundColor(Color(red: 0.3, green: 0.25, blue: 0.2))
                 .padding(.horizontal)
                 
-                // Status Icon with Historic Touch
                 ZStack {
                     Circle()
                         .fill(Color.white.opacity(0.9))
@@ -70,7 +114,6 @@ struct ContentView: View {
                 }
                 .padding(.vertical, 10)
                 
-                // Status Text with Historic Feel
                 VStack(spacing: 5) {
                     Text(beaconDetector.isDetected ? "Historic Site Detected!" : "Searching for Historic Sites...")
                         .font(.system(size: 20, weight: .semibold, design: .serif))
@@ -88,46 +131,31 @@ struct ContentView: View {
                 }
                 .padding(.horizontal)
                 
-                // Beacon Info Card with Vintage Style
+                // Beacon Info Card
                 if beaconDetector.isDetected {
                     VStack(alignment: .leading, spacing: 12) {
-                        // Header
                         HStack {
                             Image(systemName: "building.columns.fill")
                                 .font(.title2)
                                 .foregroundColor(Color(red: 0.6, green: 0.4, blue: 0.2))
-                           /* Text("Site Information")
-                                .font(.system(size: 18, weight: .bold, design: .serif))
-                                .foregroundColor(Color(red: 0.3, green: 0.25, blue: 0.2))
-                            */ Spacer()
+                            Spacer()
                         }
                         .padding(.bottom, 5)
                         
                         Divider()
                             .background(Color(red: 0.6, green: 0.4, blue: 0.2).opacity(0.3))
                         
-                        // Beacon Details
                         VStack(alignment: .leading, spacing: 10) {
-                           
-                            
                             if !beaconDetector.namespace.isEmpty && beaconDetector.namespace != "N/A" {
                                 switch String(beaconDetector.instance) {
-                                           case "000000000004":
-                                               DetailRow(icon: "mappin.circle", label: "Location", value: "Shotgun House")
-                                           
-                                           case "000000000001":
-                                               DetailRow(icon: "mappin.circle", label: "Location", value: "Pole Barn")
-                                           
-                                           default:
-                                               // This view is shown if `locationName` is anything else.
-                                               DetailRow(icon: "questionmark.diamond", label: "Location", value: "Unknown")
-                                           }
-                              //  DetailRow(icon: "number.circle", label: "Site Code", value: String(beaconDetector.namespace.prefix(12)) + "...")
+                                case "000000000004":
+                                    DetailRow(icon: "mappin.circle", label: "Location", value: "Shotgun House")
+                                case "000000000001":
+                                    DetailRow(icon: "mappin.circle", label: "Location", value: "Pole Barn")
+                                default:
+                                    DetailRow(icon: "questionmark.diamond", label: "Location", value: "Unknown")
+                                }
                             }
-                            
-                           // DetailRow(icon: "antenna.radiowaves.left.and.right", label: "Signal", value: "\(beaconDetector.rssi) dBm")
-                            
-                           // DetailRow(icon: "location.circle", label: "Distance", value: beaconDetector.distanceString)
                         }
                     }
                     .padding(20)
@@ -140,12 +168,11 @@ struct ContentView: View {
                     .transition(.scale.combined(with: .opacity))
                 }
                 
-                // Historic-styled CTA Button
-                if beaconDetector.isDetected {
+                // CTA Button
+                if beaconDetector.isDetected, let url = beaconDetector.detectedURL {
                     Button(action: {
-                        if beaconDetector.detectedURL != nil {
-                            showingSafari = true
-                        }
+                        // When tapped, call the closure to trigger navigation
+                        onExploreTapped(url)
                     }) {
                         VStack(spacing: 8) {
                             HStack {
@@ -176,14 +203,13 @@ struct ContentView: View {
                                 .italic()
                         }
                     }
-                    .disabled(beaconDetector.detectedURL == nil)
                     .transition(.scale.combined(with: .opacity))
                 }
                 
                 Spacer()
                 
-                // Bluetooth Status with Vintage Style
-                if !beaconDetector.isBluetoothOn {
+                // Bluetooth Status...
+                 if !beaconDetector.isBluetoothOn {
                     VStack(spacing: 12) {
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
@@ -224,31 +250,58 @@ struct ContentView: View {
                     .padding(.horizontal)
                 }
                 
-                // Footer with tour branding
+                // Footer
                 Text("Old Town Montgomery • Alabama")
                     .font(.system(size: 12, design: .serif))
                     .foregroundColor(Color(red: 0.5, green: 0.4, blue: 0.35))
                     .padding(.bottom, 20)
             }
         }
-        .animation(.easeInOut, value: beaconDetector.isDetected)
-        .sheet(isPresented: $showingSafari) {
-            if let url = beaconDetector.detectedURL {
-                SafariView(url: url)
-            }
-        }
-        .onChange(of: beaconDetector.shouldOpenURL) { _, newValue in
-            if newValue {
-                if beaconDetector.detectedURL != nil {
-                    showingSafari = true
-                }
-                beaconDetector.shouldOpenURL = false
-            }
-        }
     }
 }
 
-// Detail Row Component for Historic Theme
+
+// MARK: - Web View Page
+// This is the new page that displays the website and the back button.
+struct WebViewPage: View {
+    let url: URL
+    let onBack: () -> Void // Action to perform when back button is tapped
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Custom Header with Back Button
+            HStack {
+                Button(action: onBack) {
+                    HStack(spacing: 5) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 18, weight: .semibold))
+                        Text("Back to Tour")
+                            .font(.system(size: 18, weight: .semibold, design: .serif))
+                    }
+                    .foregroundColor(Color(red: 0.5, green: 0.3, blue: 0.15))
+                }
+                .padding()
+                
+                Spacer()
+            }
+            .background(Color.white.opacity(0.8))
+            .overlay(
+                Rectangle()
+                    .frame(height: 1)
+                    .foregroundColor(Color.gray.opacity(0.3)),
+                alignment: .bottom
+            )
+
+            // The Safari View takes up the rest of the screen
+            SafariView(url: url)
+                .ignoresSafeArea(.all, edges: .bottom)
+        }
+        .background(Color(red: 0.96, green: 0.93, blue: 0.88).ignoresSafeArea()) // Match background
+    }
+}
+
+
+// MARK: - Helper Views
 struct DetailRow: View {
     let icon: String
     let label: String
@@ -274,7 +327,6 @@ struct DetailRow: View {
     }
 }
 
-// Safari View Controller wrapper for SwiftUI
 struct SafariView: UIViewControllerRepresentable {
     let url: URL
     
