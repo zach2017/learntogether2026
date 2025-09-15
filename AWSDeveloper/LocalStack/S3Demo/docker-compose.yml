@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  localstack:
+    image: localstack/localstack
+    container_name: localstack_main
+    ports:
+      - "4566:4566"        # LocalStack edge port for all services
+      - "4510-4559:4510-4559"  # Lambda execution ports (range)
+    environment:
+      - SERVICES=s3,lambda,iam,logs,cloudwatch,apigateway,apigatewayv2,textract
+      - DEBUG=1
+      - AWS_DEFAULT_REGION=us-east-1
+      - LOCALSTACK_PERSISTENCE=1
+      - LAMBDA_EXECUTOR=docker-reuse   # better for performance on Docker
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - localstack-data:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  localstack-data:
