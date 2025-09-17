@@ -135,10 +135,10 @@ Operating large-scale, self-managed Kubernetes (K8s) clusters continues to prese
 
 ## 6. Real-World Case Studies (New Section)
 - **[Riot Games (2025)](https://aws.amazon.com/solutions/case-studies/riot-games-case-study/):** Migrated to EKS, cutting $10M in annual infrastructure costs through modernization and elastic scaling.
-- **JFrog (2025):** Reduced carbon footprint by 60% and costs by 20% using EKS and Graviton processors for seamless migrations.
-- **CAFU (2025):** Doubled engineering productivity by modernizing infrastructure on EKS, addressing scaling bottlenecks.
-- **Coinbase:** Scaled 50% faster and cut costs 62% by migrating Auto Scaling groups to EKS.
-- **Crossuite:** Saved 30% on costs and achieved 99.9% uptime with EKS for eHealth apps.
+- **[JFrog (2025)](https://aws.amazon.com/solutions/case-studies/jfrog-eks-case-study/):** Reduced carbon footprint by 60% and costs by 20% using EKS and Graviton processors for seamless migrations.
+- **[CAFU (2025)](https://aws.amazon.com/solutions/case-studies/cafu-case-study/):** Doubled engineering productivity by modernizing infrastructure on EKS, addressing scaling bottlenecks.
+- **[Coinbase](https://aws.amazon.com/solutions/case-studies/coinbase-migration-case-study/):** Scaled 50% faster and cut costs 62% by migrating Auto Scaling groups to EKS.
+- **[Crossuite](https://aws.amazon.com/solutions/case-studies/crossuite-eks-case-study/):** Saved 30% on costs and achieved 99.9% uptime with EKS for eHealth apps.
 
 These examples demonstrate EKS's impact on cost savings (20-62%), scalability, and operational efficiency in multi-cluster transitions.
 
