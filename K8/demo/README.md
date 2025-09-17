@@ -2,7 +2,9 @@
 
 - Start demo Docker
 
+```sh
 docker compose -f docker-compose.yml up -d
+```
 
 - Run the following command after 
 
