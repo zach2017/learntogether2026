@@ -10,7 +10,7 @@ Operating large-scale, self-managed Kubernetes (K8s) clusters presents significa
 
 ### 1.1 Hardware Limitations
 
-* **Scenario:** A cluster with 36 chambers where the number of virtual CPUs (vCPUs) exceeded the physical CPUs available. This oversubscription caused CPU starvation, resulting in pod evictions, performance degradation, and instability across multiple clusters.
+* **Scenario:** A cluster with 20 chambers where the number of virtual CPUs (vCPUs) exceeded the physical CPUs available. This oversubscription caused CPU starvation, resulting in pod evictions, performance degradation, and instability across multiple clusters.
 
 ### 1.2 Operational Overhead
 
