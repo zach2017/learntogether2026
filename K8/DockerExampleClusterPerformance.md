@@ -10,7 +10,7 @@ Operating large-scale, self-managed Kubernetes (K8s) clusters presents significa
 
 ### 1.1 Hardware Limitations
 
-* **Scenario:** A cluster with 20 chambers where the number of virtual CPUs (vCPUs) exceeded the physical CPUs available. This oversubscription caused CPU starvation, resulting in pod evictions, performance degradation, and instability across multiple clusters.
+* **Scenario:** A cluster with 36 chambers where the number of virtual CPUs (vCPUs) exceeded the physical CPUs available. This oversubscription caused CPU starvation, resulting in pod evictions, performance degradation, and instability across multiple clusters.
 
 ### 1.2 Operational Overhead
 
@@ -84,6 +84,25 @@ services:
           memory: 1G
     ports:
       - "5432:5432"
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+```
+
+#### prometheus.yml (basic config)
+
+```yaml
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['webapp:80', 'api:5000']
 ```
 
 **How to Run:**
@@ -93,13 +112,15 @@ docker compose up -d
 docker stats
 ```
 
-If your host machine has fewer than 6 physical CPU cores, you will see CPU contention (steal time). Requests to `api` or queries on `db` will slow under load.
+Visit Prometheus at: [http://localhost:9090](http://localhost:9090)
 
 **Load Test Example:**
 
 ```bash
 ab -n 5000 -c 200 http://localhost:8080/
 ```
+
+Prometheus will capture request metrics and allow you to query CPU/memory trends.
 
 ---
 
@@ -158,19 +179,20 @@ When replicas > available cores, you’ll see pods throttled.
 2. **Quotas:** Apply **ResourceQuota** and **LimitRange** per namespace.
 3. **Horizontal Scaling:** Increase replicas of stateless workloads instead of overcommitting CPUs.
 4. **Node Right-Sizing:** Match node instance size (in test clusters: VM specs) to expected workload.
-5. **Monitoring:** Use `kubectl top`, Prometheus, or Grafana to track CPU throttling.
+5. **Monitoring:** Use Prometheus dashboards (or `kubectl top`) to track CPU throttling.
 
 ---
 
 ## 6. Example Workflow for Admins
 
 1. **Start local simulation with Docker Compose** to understand oversubscription effects.
-2. **Recreate with kind/minikube** to see how K8s enforces limits.
-3. **Apply mitigations**: set limits, quotas, and autoscaling.
-4. **Document learnings** for production strategy (on-prem or managed service).
+2. **Use Prometheus** to visualize CPU and memory usage under load.
+3. **Recreate with kind/minikube** to see how K8s enforces limits.
+4. **Apply mitigations**: set limits, quotas, and autoscaling.
+5. **Document learnings** for production strategy (on-prem or managed service).
 
 ---
 
 ## Conclusion
 
-Oversubscription of CPU resources leads to cluster instability in both Docker and Kubernetes. By simulating the issue locally with Docker Compose and kind, administrators can better understand contention, test mitigation strategies, and enforce best practices such as quotas and autoscaling. This provides a foundation for improving stability—whether clusters remain self-managed or eventually move to a managed solution.
+Oversubscription of CPU resources leads to cluster instability in both Docker and Kubernetes. By simulating the issue locally with Docker Compose, monitoring with Prometheus, and repeating the test in kind, administrators can better understand contention, test mitigation strategies, and enforce best practices such as quotas and autoscaling. This provides a foundation for improving stability—whether clusters remain self-managed or eventually move to a managed solution.
