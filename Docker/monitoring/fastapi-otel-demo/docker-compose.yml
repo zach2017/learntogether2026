@@ -48,7 +48,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "8080:80"
+      - "3001:80"
     networks: [demo]
 
   otel-collector:
@@ -58,11 +58,55 @@ services:
     volumes:
       - ./otel/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc:/hostfs/proc:ro
+      - /sys:/hostfs/sys:ro
+      - /var/log:/var/log:ro
+    environment:
+      - HOST_PROC=/hostfs/proc
+      - HOST_SYS=/hostfs/sys
     ports:
       - "9445:4317"   # OTLP gRPC
       - "4318:4318"   # OTLP HTTP
       - "8889:8889"   # Prometheus exporter metrics endpoint
     networks: [demo]
+    privileged: true
+
+  # Container metrics with cAdvisor
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: demo_cadvisor
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    networks: [demo]
+    restart: unless-stopped
+
+  # Host system metrics with Node Exporter
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: demo_node_exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.netdev.device-exclude=^(veth.*|docker.*|br-.*|lo)$$'
+    networks: [demo]
+    restart: unless-stopped
 
   prometheus:
     image: prom/prometheus:v2.54.1
@@ -70,12 +114,20 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prom_data:/prometheus
-    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=3d"]
+    command: 
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=3d"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
     ports:
       - "9090:9090"
     networks: [demo]
     depends_on:
       - otel-collector
+      - cadvisor
+      - node-exporter
 
   tempo:
     image: grafana/tempo:2.6.1
@@ -97,6 +149,7 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource,grafana-worldmap-panel
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
@@ -109,6 +162,7 @@ services:
 
 networks:
   demo:
+    driver: bridge
 
 volumes:
   db_data:
