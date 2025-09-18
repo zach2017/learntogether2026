@@ -10,6 +10,30 @@
 - aws --profile localstack --endpoint-url http://localhost:4566 iam create-role --role-name lambda-s3-role --assume-role-policy-document file://trust-policy.json
 - aws --profile localstack --endpoint-url http://localhost:4566 iam attach-role-policy --role-name lambda-s3-role --policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess
 
+
+
+NOTE:  Zip of app.py file was performed. 
+
+aws --profile localstack --endpoint-url http://localhost:4566 lambda create-function --function-name upload-to-s3 --runtime python3.12 --role arn:aws:iam::000000000000:role/lambda-s3-role --handler app.handler --zip-file fileb://app.zip --environment Variables="{BUCKET_NAME=file-uploads,S3_ENDPOINT=http://s3.localhost.localstack.cloud:4566}"
+
+
+aws --profile localstack --endpoint-url http://localhost:4566 lambda update-function-code --function-name upload-to-s3 --zip-file fileb://app.zip
+
+- Run Lambda 
+
+aws --profile localstack --endpoint-url http://localhost:4566 lambda invoke --function-name upload-to-s3  --cli-binary-format raw-in-base64-out --payload fileb://payload.json --log-type Tail out.json
+
+cat out.json
+
+
+aws --profile localstack --endpoint-url http://localhost:4566 lambda invoke --function-name upload-to-s3 --cli-binary-format raw-in-base64-out -payload file://payload.json out.json
+
+aws --profile localstack --endpoint-url http://localhost:4566 lambda invoke --function-name upload-to-s3 --cli-binary-format raw-in-base64-out --payload '{"filename":"uploads/hello.txt","text":"Hello from Lambda!"}' out.json
+
+aws --profile localstack --endpoint-url http://localhost:4566 lambda get-function  --function-name upload-to-s3  --query 'Configuration.{LastModified:LastModified,CodeSha256:CodeSha256}'
+
+cat out.json
+
 ## Detaied Explaination
 
 ### 1. `aws configure --profile localstack`
