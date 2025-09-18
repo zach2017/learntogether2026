@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Spring Controller Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 2rem; max-width: 900px; }
+    textarea { width: 100%; height: 140px; }
+    pre { background: #111; color: #eee; padding: 1rem; overflow: auto; }
+    .row { display: flex; gap: 1rem; align-items: center; }
+    .row > * { flex: 1; }
+    button { padding: .6rem 1rem; }
+    .hint { color: #555; font-size: .95rem; }
+  </style>
+</head>
+<body>
+  <h1>Java Spring Controller JSON Generator</h1>
+  <p class="hint">
+    Describe the REST API you want (entities, endpoints, validation, DTOs). The model will respond with strict JSON and a full Spring controller.
+  </p>
+
+  <form id="f">
+    <label for="prompt">Prompt</label>
+    <textarea id="prompt" name="prompt" placeholder="Example: Create a ProductController with CRUD endpoints under /api/products. Validate price &gt;= 0. Return ProductDTO."></textarea>
+    <div class="row">
+      <button type="submit">Generate JSON</button>
+    </div>
+  </form>
+
+  <h2>Response</h2>
+  <pre id="out">{}</pre>
+
+  <script>
+    const form = document.getElementById('f');
+    const out = document.getElementById('out');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      out.textContent = 'Generating...';
+      const fd = new FormData(form);
+      const res = await fetch('/api/generate', { method:'POST', body: fd });
+      const data = await res.json();
+      out.textContent = JSON.stringify(data, null, 2);
+    });
+  </script>
+</body>
+</html>

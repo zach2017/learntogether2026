@@ -1,0 +1,65 @@
+# otel/otel-collector-config.yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  # Optional: Docker stats receiver
+  docker_stats:
+    endpoint: unix:///var/run/docker.sock
+    collection_interval: 10s
+    timeout: 5s
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+  memory_limiter:
+    limit_mib: 512
+    check_interval: 1s
+
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: demo
+        action: insert
+
+exporters:
+  # Prometheus metrics exporter
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: demo
+    const_labels:
+      environment: demo
+
+  # Tempo traces exporter
+  otlp/tempo:
+    endpoint: http://tempo:4317
+    tls:
+      insecure: true
+
+  # Logging exporter for debugging
+  logging:
+    loglevel: debug
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp/tempo, logging]
+
+    metrics:
+      receivers: [otlp, docker_stats]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheus, logging]
+
+  extensions: []
+  telemetry:
+    logs:
+      level: "debug"

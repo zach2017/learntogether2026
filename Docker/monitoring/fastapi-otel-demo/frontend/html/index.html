@@ -1,0 +1,51 @@
+ 
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Demo Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 2rem; }
+    form, table { max-width: 800px; margin-bottom: 1rem; }
+    input, button, select { padding: .5rem; margin:.25rem; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding:.5rem; }
+    tr:nth-child(even){background:#f9f9f9}
+    .row { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; }
+  </style>
+</head>
+<body>
+  <h1>Demo Shop (FastAPI + OpenTelemetry)</h1>
+
+  <form id="itemForm">
+    <div class="row">
+      <input id="product" placeholder="Product" required />
+      <input id="price" type="number" step="0.01" placeholder="Price" required />
+      <input id="cart" placeholder="Cart (optional)" />
+      <input id="qty" type="number" min="1" value="1" placeholder="Qty" required />
+      <button type="submit">Add</button>
+      <button type="button" id="refreshBtn">Refresh</button>
+    </div>
+  </form>
+
+  <div class="row">
+    <label>Filter by cart:</label>
+    <input id="filterCart" placeholder="cart id"/>
+    <button id="applyFilter">Apply</button>
+    <button id="clearFilter">Clear</button>
+  </div>
+
+  <table id="itemsTable">
+    <thead><tr><th>ID</th><th>Product</th><th>Price</th><th>Cart</th><th>Qty</th><th>Actions</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <p>
+    API: <code>http://localhost:8000</code> • Frontend: <code>http://localhost:8080</code> • Grafana: <code>http://localhost:3000</code> (admin/admin)
+  </p>
+
+<script src="app.js"></script>
+</body>
+</html>

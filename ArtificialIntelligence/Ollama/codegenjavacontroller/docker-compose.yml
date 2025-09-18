@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    environment:
+      # Keep server warm for faster responses
+      - OLLAMA_KEEP_ALIVE=5m
+    volumes:
+      - ollama-data:/root/.ollama
+      - ./ollama/Modelfile:/models/Modelfile:ro
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "curl -sf http://localhost:11434/api/tags > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: ./web
+    container_name: flask-web
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      # Name of the custom model we create from the Modelfile
+      - OLLAMA_MODEL=qwen3.8b-spring
+    depends_on:
+      ollama:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+volumes:
+  ollama-data:
