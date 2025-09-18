@@ -1,0 +1,41 @@
+version: '3.8'
+services:
+  webapp:
+    image: nginx
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 256M
+    ports:
+      - "8080:80"
+
+  api:
+    image: python:3.9-slim
+    command: python -m http.server 5122
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 512M
+    ports:
+      - "5333:5122"
+
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_PASSWORD: example
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+    ports:
+      - "5432:5432"
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"

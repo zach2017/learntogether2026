@@ -1,0 +1,10 @@
+groups:
+- name: overload-rules
+rules:
+- alert: HighCPUUsage
+expr: process_cpu_seconds_total > 0.8
+for: 30s
+labels:
+severity: critical
+annotations:
+description: "CPU usage exceeded threshold. Switch traffic to failover."
