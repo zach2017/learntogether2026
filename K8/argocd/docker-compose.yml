@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 256M
+    ports:
+      - "8080:80"
+
+  api:
+    image: python:3.9-slim
+    command: python -m http.server 5113
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 512M
+    ports:
+      - "5113:5000"
+
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_PASSWORD: example
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+    ports:
+      - "5432:5432"
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alert.rules.yml:/etc/prometheus/alert.rules.yml
+    ports:
+      - "9090:9090"
+
+  failover:
+    image: nginx
+    command: ["/bin/sh", "-c", "while true; do echo 'Failover active' > /usr/share/nginx/html/index.html; sleep 10; done"]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+    ports:
+      - "8081:80"
+
+  haproxy:
+    image: haproxy:2.8
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    ports:
+      - "8085:8085"
+
+  argocd:
+    image: argoproj/argocd
+    command: ["argocd-server", "--insecure"]
+    ports:
+      - "8082:8080"
