@@ -1,0 +1,124 @@
+# ================================
+# SpringControllerMaker – Modelfile
+# ================================
+FROM qwen3:8b
+
+# Deterministic, code-focused outputs
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER repeat_penalty 1.05
+PARAMETER num_ctx 8192
+
+# -----------------------
+# Chat TEMPLATE (no prose in outputs)
+# -----------------------
+TEMPLATE """
+{{- if .System }}SYSTEM:
+{{ .System }}
+{{- end}}
+{{- range .Messages }}
+{{ .Role | upper }}:
+{{ .Content }}
+{{- end}}
+
+ASSISTANT (OUTPUT RULES):
+Output ONLY Java code in ONE fenced block like:
+```java
+package com.example.api;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+
+@RestController
+@RequestMapping(path = "/api/v1/products", produces = MediaType.APPLICATION_JSON_VALUE)
+public class ProductController {
+
+  private final ProductService service;
+
+  public ProductController(ProductService service) {
+    this.service = service;
+  }
+
+  /** Create a new product. */
+  @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Product> create(@Valid @RequestBody CreateProductRequest req) {
+    Product created = service.create(req);
+    return ResponseEntity.status(HttpStatus.CREATED).body(created);
+  }
+
+  /** Get a product by id. */
+  @GetMapping("/{id}")
+  public ResponseEntity<Product> getById(@PathVariable Long id) {
+    return service.findById(id)
+      .map(ResponseEntity::ok)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+  }
+
+  /** List products with optional paging. */
+  @GetMapping
+  public ResponseEntity<List<Product>> list(
+      @RequestParam(defaultValue = "0") @Min(0) int page,
+      @RequestParam(defaultValue = "20") @Min(1) int size) {
+    return ResponseEntity.ok(service.findAll(page, size));
+  }
+
+  /** Update a product. */
+  @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Product> update(@PathVariable Long id, @Valid @RequestBody UpdateProductRequest req) {
+    return ResponseEntity.ok(service.update(id, req));
+  }
+
+  /** Delete a product. */
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> delete(@PathVariable Long id) {
+    service.delete(id);
+    return ResponseEntity.noContent().build();
+  }
+
+  /* ===== DTOs (Java 21 records) ===== */
+  public record Product(
+      @NotNull Long id,
+      @NotBlank String name,
+      @NotNull @Min(0) BigDecimal price) { }
+
+  public record CreateProductRequest(
+      @NotBlank String name,
+      @NotNull @Min(0) BigDecimal price) { }
+
+  public record UpdateProductRequest(
+      @NotBlank String name,
+      @NotNull @Min(0) BigDecimal price) { }
+
+  /* ===== Minimal service interface ===== */
+  public interface ProductService {
+    Product create(CreateProductRequest req);
+    Optional<Product> findById(Long id);
+    List<Product> findAll(int page, int size);
+    Product update(Long id, UpdateProductRequest req);
+    void delete(Long id);
+  }
+
+  /** Optional: map ResponseStatusException to ProblemDetail */
+  @ExceptionHandler(ResponseStatusException.class)
+  public ResponseEntity<ProblemDetail> handleRse(ResponseStatusException ex) {
+    ProblemDetail pd = ProblemDetail.forStatusAndDetail(
+      ex.getStatusCode(),
+      ex.getReason() == null ? "Not found" : ex.getReason()
+    );
+    return ResponseEntity.status(ex.getStatusCode()).body(pd);
+  }
+}
+```
+"""
