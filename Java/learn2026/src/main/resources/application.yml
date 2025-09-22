@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: reactServer
+
+management:
+  otlp:
+    metrics:
+      export:
+        endpoint: http://localhost:4317
+        step: 15s
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics

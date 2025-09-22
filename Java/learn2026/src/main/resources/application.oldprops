@@ -1,0 +1,2 @@
+spring.application.name=reactServer
+otel.exporter.otlp.metrics.endpoint=http://localhost:9090/v1/metrics
