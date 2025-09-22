@@ -17,7 +17,7 @@ TEMPLATE """
 {{ .System }}
 {{- end}}
 {{- range .Messages }}
-{{ .Role | upper }}:
+{{ .Role}}:
 {{ .Content }}
 {{- end}}
 

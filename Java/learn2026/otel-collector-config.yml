@@ -3,11 +3,24 @@ receivers:
     protocols:
       grpc:
         endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+
 exporters:
-  prometheus:
-    endpoint: "0.0.0.0:8889"
+  debug:
+    verbosity: detailed
+  # Add other exporters as needed (e.g., jaeger, prometheus, etc.)
+
 service:
   pipelines:
     metrics:
       receivers: [otlp]
-      exporters: [prometheus]
+      processors: [batch]
+      exporters: [debug]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]
