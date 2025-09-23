@@ -18,24 +18,6 @@ services:
     networks:
       - sagemaker-net
 
-  # LocalStack for local AWS services simulation
-  localstack:
-    image: localstack/localstack:latest
-    ports:
-      - "4566:4566"  # LocalStack main endpoint
-      - "4510-4559:4510-4559"  # External services port range
-    environment:
-      - SERVICES=s3,iam,sts,sagemaker
-      - DEBUG=1
-      - DATA_DIR=/tmp/localstack/data
-      - DOCKER_HOST=unix:///var/run/docker.sock
-      - HOST_TMP_FOLDER=${TMPDIR:-/tmp}/localstack
-    volumes:
-      - "${TMPDIR:-/tmp}/localstack:/tmp/localstack"
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    networks:
-      - sagemaker-net
-
   # MinIO for S3-compatible object storage
   minio:
     image: minio/minio:latest
@@ -57,7 +39,7 @@ services:
       context: ./training
       dockerfile: Dockerfile
     volumes:
-      - ./data:/opt/ml/input/data
+      - ./data:/opt/ml/input/data/training
       - ./model:/opt/ml/model
       - ./output:/opt/ml/output
     environment:
