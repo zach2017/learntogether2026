@@ -1,0 +1,115 @@
+version: "3.8"
+
+services:
+  # Vulnerable Web Application (DVWA - Damn Vulnerable Web Application)
+  vulnerable-webapp:
+    image: vulnerables/web-dvwa:latest
+    container_name: dvwa
+    # bind to localhost for safer local-only access; change to "8080:80" if you want external access
+    ports:
+      - "127.0.0.1:8080:80"
+    environment:
+      - MYSQL_ENDPOINT=vulnerable-db:3306
+      - MYSQL_DATABASE=dvwa
+      - MYSQL_USERNAME=root
+      - MYSQL_PASSWORD=weakpassword123
+    networks:
+      - vuln-network
+    depends_on:
+      - vulnerable-db
+    restart: unless-stopped
+
+  # Vulnerable Database with weak credentials
+  vulnerable-db:
+    image: mysql:5.7
+    container_name: vuln-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=weakpassword123
+      - MYSQL_DATABASE=dvwa
+      - MYSQL_USER=dvwauser
+      - MYSQL_PASSWORD=dvwa
+    ports:
+      - "127.0.0.1:3306:3306"
+    networks:
+      - vuln-network
+    volumes:
+      - db-data:/var/lib/mysql
+    restart: unless-stopped
+
+  # Vulnerable FTP Server
+  vulnerable-ftp:
+    image: bogem/ftp
+    container_name: vuln-ftp
+    environment:
+      - FTP_USER=admin
+      - FTP_PASS=admin123
+    ports:
+      - "127.0.0.1:21:21"
+      - "127.0.0.1:47400-47470:47400-47470"
+    networks:
+      - vuln-network
+    restart: unless-stopped
+
+  # Vulnerable SSH Server
+  vulnerable-ssh:
+    image: rastasheep/ubuntu-sshd:18.04
+    container_name: vuln-ssh
+    ports:
+      - "127.0.0.1:2222:22"
+    environment:
+      - ROOT_PASS=toor
+    networks:
+      - vuln-network
+    restart: unless-stopped
+
+  # Kali Linux container with security tools (build from Dockerfile)
+  kali-attacker:
+    build:
+      context: ./kali
+      dockerfile: Dockerfile
+    image: demo/kali-tools:latest
+    container_name: kali-tools
+    tty: true
+    stdin_open: true
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    networks:
+      - vuln-network
+      - attacker-network
+    volumes:
+      - ./wordlists:/wordlists
+      - ./results:/results
+    # keep it interactive; tools are available in the image
+    command: /bin/bash
+    restart: unless-stopped
+
+  # Optional: Security monitoring service (IDS simulation)
+  security-monitor:
+    image: alpine:latest
+    container_name: ids-monitor
+    networks:
+      - vuln-network
+    volumes:
+      - ./logs:/logs
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    command: /bin/sh -c "apk add --no-cache tcpdump && tcpdump -i any -w /logs/capture.pcap"
+    restart: unless-stopped
+
+networks:
+  vuln-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+  attacker-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+volumes:
+  db-data:
