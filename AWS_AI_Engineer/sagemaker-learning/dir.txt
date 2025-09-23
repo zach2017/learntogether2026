@@ -1,0 +1,16 @@
+sagemaker-learning/
+├── docker-compose.yml
+├── notebook/
+│   ├── Dockerfile
+│   └── examples/
+│       └── sagemaker_local_example.ipynb
+├── training/
+│   ├── Dockerfile
+│   └── train.py
+├── inference/
+│   ├── Dockerfile
+│   └── serve.py
+├── data/          # Training data directory
+├── model/         # Trained model output
+├── output/        # Training job outputs
+└── notebooks/     # Jupyter notebook workspace

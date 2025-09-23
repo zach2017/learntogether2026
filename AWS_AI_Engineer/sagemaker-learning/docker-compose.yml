@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # Jupyter notebook environment for SageMaker development
+  sagemaker-notebook:
+    build:
+      context: ./notebook
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/home/jovyan/data
+      - ~/.aws:/home/jovyan/.aws:ro  # Mount AWS credentials
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+    networks:
+      - sagemaker-net
+
+  # LocalStack for local AWS services simulation
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"  # LocalStack main endpoint
+      - "4510-4559:4510-4559"  # External services port range
+    environment:
+      - SERVICES=s3,iam,sts,sagemaker
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - HOST_TMP_FOLDER=${TMPDIR:-/tmp}/localstack
+    volumes:
+      - "${TMPDIR:-/tmp}/localstack:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - sagemaker-net
+
+  # MinIO for S3-compatible object storage
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - sagemaker-net
+
+  # Training container simulation
+  sagemaker-training:
+    build:
+      context: ./training
+      dockerfile: Dockerfile
+    volumes:
+      - ./data:/opt/ml/input/data
+      - ./model:/opt/ml/model
+      - ./output:/opt/ml/output
+    environment:
+      - SM_MODEL_DIR=/opt/ml/model
+      - SM_CHANNEL_TRAINING=/opt/ml/input/data/training
+      - SM_OUTPUT_DATA_DIR=/opt/ml/output
+    networks:
+      - sagemaker-net
+    profiles:
+      - training
+
+  # Model serving container
+  sagemaker-inference:
+    build:
+      context: ./inference
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./model:/opt/ml/model:ro
+    environment:
+      - MODEL_DIR=/opt/ml/model
+    networks:
+      - sagemaker-net
+    profiles:
+      - inference
+
+volumes:
+  minio_data:
+
+networks:
+  sagemaker-net:
+    driver: bridge
