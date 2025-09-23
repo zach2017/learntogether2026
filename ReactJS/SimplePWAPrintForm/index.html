@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form PWA App</title>
+    <link rel="manifest" href="data:application/json,{%22name%22:%22Form%20PWA%20App%22,%22short_name%22:%22FormApp%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22theme_color%22:%22%231976d2%22,%22background_color%22:%22%23ffffff%22,%22icons%22:[{%22src%22:%22data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20512%20512'%3E%3Crect%20width='512'%20height='512'%20fill='%231976d2'/%3E%3Ctext%20x='50%25'%20y='50%25'%20font-size='300'%20fill='white'%20text-anchor='middle'%20dy='.3em'%3EF%3C/text%3E%3C/svg%3E%22,%22sizes%22:%22512x512%22,%22type%22:%22image/svg+xml%22}]}">
+    <meta name="theme-color" content="#1976d2">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script crossorigin src="https://unpkg.com/@mui/material@5/umd/material-ui.production.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        #root {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .print-container {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 20px !important;
+            }
+            
+            .MuiTextField-root {
+                margin-bottom: 15px !important;
+            }
+            
+            .MuiInputBase-input {
+                color: black !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            .MuiInputLabel-root {
+                color: #666 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+
+        .form-container {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-message {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const {
+            ThemeProvider,
+            createTheme,
+            CssBaseline,
+            Container,
+            Paper,
+            TextField,
+            Button,
+            Typography,
+            Box,
+            Grid,
+            MenuItem,
+            FormControl,
+            InputLabel,
+            Select,
+            Checkbox,
+            FormControlLabel,
+            Snackbar,
+            Alert,
+            IconButton,
+            Chip,
+            Divider
+        } = MaterialUI;
+
+        const theme = createTheme({
+            palette: {
+                primary: {
+                    main: '#1976d2',
+                },
+                secondary: {
+                    main: '#dc004e',
+                },
+            },
+            shape: {
+                borderRadius: 12,
+            },
+        });
+
+        function FormApp() {
+            const [formData, setFormData] = useState({
+                firstName: '',
+                lastName: '',
+                email: '',
+                phone: '',
+                address: '',
+                city: '',
+                state: '',
+                zipCode: '',
+                country: 'USA',
+                gender: '',
+                dateOfBirth: '',
+                occupation: '',
+                company: '',
+                interests: [],
+                newsletter: false,
+                terms: false,
+                comments: ''
+            });
+
+            const [errors, setErrors] = useState({});
+            const [showSuccess, setShowSuccess] = useState(false);
+            const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+            useEffect(() => {
+                // Register service worker for PWA
+                if ('serviceWorker' in navigator) {
+                    const sw = `
+                        self.addEventListener('install', event => {
+                            self.skipWaiting();
+                        });
+                        
+                        self.addEventListener('activate', event => {
+                            event.waitUntil(clients.claim());
+                        });
+                        
+                        self.addEventListener('fetch', event => {
+                            event.respondWith(
+                                caches.match(event.request)
+                                    .then(response => response || fetch(event.request))
+                            );
+                        });
+                    `;
+                    const blob = new Blob([sw], { type: 'application/javascript' });
+                    const swUrl = URL.createObjectURL(blob);
+                    navigator.serviceWorker.register(swUrl);
+                }
+
+                // Online/offline detection
+                const handleOnline = () => setIsOnline(true);
+                const handleOffline = () => setIsOnline(false);
+                
+                window.addEventListener('online', handleOnline);
+                window.addEventListener('offline', handleOffline);
+                
+                return () => {
+                    window.removeEventListener('online', handleOnline);
+                    window.removeEventListener('offline', handleOffline);
+                };
+            }, []);
+
+            const handleChange = (e) => {
+                const { name, value, type, checked } = e.target;
+                setFormData(prev => ({
+                    ...prev,
+                    [name]: type === 'checkbox' ? checked : value
+                }));
+                // Clear error for this field
+                if (errors[name]) {
+                    setErrors(prev => ({ ...prev, [name]: '' }));
+                }
+            };
+
+            const handleInterestsChange = (event) => {
+                setFormData(prev => ({
+                    ...prev,
+                    interests: event.target.value
+                }));
+            };
+
+            const validate = () => {
+                const newErrors = {};
+                
+                if (!formData.firstName) newErrors.firstName = 'First name is required';
+                if (!formData.lastName) newErrors.lastName = 'Last name is required';
+                if (!formData.email) newErrors.email = 'Email is required';
+                else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
+                if (!formData.phone) newErrors.phone = 'Phone is required';
+                if (!formData.terms) newErrors.terms = 'You must accept the terms';
+                
+                setErrors(newErrors);
+                return Object.keys(newErrors).length === 0;
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (validate()) {
+                    // Save to localStorage for offline capability
+                    localStorage.setItem('formData', JSON.stringify(formData));
+                    setShowSuccess(true);
+                    console.log('Form submitted:', formData);
+                }
+            };
+
+            const handlePrint = () => {
+                window.print();
+            };
+
+            const handleReset = () => {
+                setFormData({
+                    firstName: '',
+                    lastName: '',
+                    email: '',
+                    phone: '',
+                    address: '',
+                    city: '',
+                    state: '',
+                    zipCode: '',
+                    country: 'USA',
+                    gender: '',
+                    dateOfBirth: '',
+                    occupation: '',
+                    company: '',
+                    interests: [],
+                    newsletter: false,
+                    terms: false,
+                    comments: ''
+                });
+                setErrors({});
+            };
+
+            const interestOptions = ['Technology', 'Sports', 'Music', 'Art', 'Travel', 'Reading', 'Gaming', 'Cooking'];
+
+            return (
+                <ThemeProvider theme={theme}>
+                    <CssBaseline />
+                    <Container component="main" maxWidth="md">
+                        <Paper 
+                            elevation={24} 
+                            className="form-container print-container"
+                            sx={{ 
+                                mt: 4, 
+                                p: 4, 
+                                background: 'rgba(255, 255, 255, 0.98)',
+                                backdropFilter: 'blur(10px)'
+                            }}
+                        >
+                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                                <Typography component="h1" variant="h4" sx={{ flexGrow: 1, fontWeight: 'bold', color: 'primary.main' }}>
+                                    Registration Form
+                                </Typography>
+                                {!isOnline && (
+                                    <Chip 
+                                        label="Offline Mode" 
+                                        color="warning" 
+                                        size="small"
+                                        sx={{ animation: 'pulse 2s infinite' }}
+                                    />
+                                )}
+                            </Box>
+                            
+                            <Divider sx={{ mb: 3 }} />
+
+                            <form onSubmit={handleSubmit}>
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            fullWidth
+                                            label="First Name"
+                                            name="firstName"
+                                            value={formData.firstName}
+                                            onChange={handleChange}
+                                            error={!!errors.firstName}
+                                            helperText={errors.firstName}
+                                            variant="outlined"
+                                            required
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            fullWidth
+                                            label="Last Name"
+                                            name="lastName"
+                                            value={formData.lastName}
+                                            onChange={handleChange}
+                                            error={!!errors.lastName}
+                                            helperText={errors.lastName}
+                                            variant="outlined"
+                                            required
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            fullWidth
+                                            label="Email"
+                                            name="email"
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                            error={!!errors.email}
+                                            helperText={errors.email}
+                                            variant="outlined"
+                                            required
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            fullWidth
+                                            label="Phone"
+                                            name="phone"
+                                            value={formData.phone}
+                                            onChange={handleChange}
+                                            error={!!errors.phone}
+                                            helperText={errors.phone}
+                                            variant="outlined"
+                                            required
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            fullWidth
+                                            label="Address"
+                                            name="address"
+                                            value={formData.address}
+                                            onChange={handleChange}
+                                            variant="outlined"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={4}>
+                                        <TextField
+                                            fullWidth
+                                            label="City"
+                                            name="city"
+                                            value={formData.city}
+                                            onChange={handleChange}
+                                            variant="outlined"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={4}>
+                                        <TextField
+                                            fullWidth
+                                            label="State/Province"
+                                            name="state"
+                                            value={formData.state}
+                                            onChange={handleChange}
+                                            variant="outlined"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={4}>
+                                        <TextField
+                                            fullWidth
+                                            label="ZIP Code"
+                                            name="zipCode"
+                                            value={formData.zipCode}
+                                            onChange={handleChange}
+                                            variant="outlined"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <FormControl fullWidth variant="outlined">
+                                            <InputLabel>Country</InputLabel>
+                                            <Select
+                                                name="country"
+                                                value={formData.country}
+                                                onChange={handleChange}
+                                                label="Country"
+                                            >
+                                                <MenuItem value="USA">United States</MenuItem>
+                                                <MenuItem value="Canada">Canada</MenuItem>
+                                                <MenuItem value="UK">United Kingdom</MenuItem>
+                                                <MenuItem value="Australia">Australia</MenuItem>
+                                                <MenuItem value="Other">Other</MenuItem>
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <FormControl fullWidth variant="outlined">
+                                            <InputLabel>Gender</InputLabel>
+                                            <Select
+                                                name="gender"
+                                                value={formData.gender}
+                                                onChange={handleChange}
+                                                label="Gender"
+                                            >
+                                                <MenuItem value="Male">Male</MenuItem>
+                                                <MenuItem value="Female">Female</MenuItem>
+                                                <MenuItem value="Other">Other</MenuItem>
+                                                <MenuItem value="PreferNotToSay">Prefer not to say</MenuItem>
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            fullWidth
+                                            label="Date of Birth"
+                                            name="dateOfBirth"
+                                            type="date"
+                                            value={formData.dateOfBirth}
+                                            onChange={handleChange}
+                                            variant="outlined"
+                                            InputLabelProps={{ shrink: true }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            fullWidth
+                                            label="Occupation"
+                                            name="occupation"
+                                            value={formData.occupation}
+                                            onChange={handleChange}
+                                            variant="outlined"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            fullWidth
+                                            label="Company"
+                                            name="company"
+                                            value={formData.company}
+                                            onChange={handleChange}
+                                            variant="outlined"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <FormControl fullWidth variant="outlined">
+                                            <InputLabel>Interests</InputLabel>
+                                            <Select
+                                                multiple
+                                                name="interests"
+                                                value={formData.interests}
+                                                onChange={handleInterestsChange}
+                                                label="Interests"
+                                                renderValue={(selected) => (
+                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                        {selected.map((value) => (
+                                                            <Chip key={value} label={value} size="small" />
+                                                        ))}
+                                                    </Box>
+                                                )}
+                                            >
+                                                {interestOptions.map((interest) => (
+                                                    <MenuItem key={interest} value={interest}>
+                                                        {interest}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            fullWidth
+                                            label="Comments"
+                                            name="comments"
+                                            value={formData.comments}
+                                            onChange={handleChange}
+                                            variant="outlined"
+                                            multiline
+                                            rows={4}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    name="newsletter"
+                                                    checked={formData.newsletter}
+                                                    onChange={handleChange}
+                                                    color="primary"
+                                                />
+                                            }
+                                            label="Subscribe to newsletter"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    name="terms"
+                                                    checked={formData.terms}
+                                                    onChange={handleChange}
+                                                    color="primary"
+                                                    required
+                                                />
+                                            }
+                                            label="I accept the terms and conditions"
+                                        />
+                                        {errors.terms && (
+                                            <Typography color="error" variant="caption" display="block">
+                                                {errors.terms}
+                                            </Typography>
+                                        )}
+                                    </Grid>
+                                </Grid>
+
+                                <Box sx={{ mt: 4, display: 'flex', gap: 2, flexWrap: 'wrap' }} className="no-print">
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        color="primary"
+                                        size="large"
+                                        sx={{ 
+                                            minWidth: 120,
+                                            background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                                            boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
+                                        }}
+                                    >
+                                        Submit
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        color="secondary"
+                                        size="large"
+                                        onClick={handlePrint}
+                                        sx={{ 
+                                            minWidth: 120,
+                                            background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)',
+                                            boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
+                                        }}
+                                    >
+                                        Print Form
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        size="large"
+                                        onClick={handleReset}
+                                        sx={{ minWidth: 120 }}
+                                    >
+                                        Reset
+                                    </Button>
+                                </Box>
+                            </form>
+                        </Paper>
+
+                        <Snackbar
+                            open={showSuccess}
+                            autoHideDuration={6000}
+                            onClose={() => setShowSuccess(false)}
+                            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                        >
+                            <Alert 
+                                onClose={() => setShowSuccess(false)} 
+                                severity="success"
+                                sx={{ width: '100%' }}
+                                className="success-message"
+                            >
+                                Form submitted successfully! Data saved locally.
+                            </Alert>
+                        </Snackbar>
+                    </Container>
+                </ThemeProvider>
+            );
+        }
+
+        ReactDOM.render(<FormApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
