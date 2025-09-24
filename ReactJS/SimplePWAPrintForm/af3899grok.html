@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Movement Record - AF IMT 3899</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        .section-header { background-color: #f0f0f0; font-weight: bold; }
+        .checkbox { margin-right: 5px; }
+        .form-container { max-width: 800px; margin: auto; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <form>
+            <h1>PATIENT MOVEMENT RECORD</h1>
+            <p>DATA PROTECTED BY PRIVACY ACT OF 1974</p>
+            <p>PERMANENT MEDICAL RECORD</p>
+            <p>(S) - Information needed to submit patient movement record</p>
+
+            <table>
+                <tr class="section-header">
+                    <td colspan="7">SECTION I - PATIENT IDENTIFICATION</td>
+                </tr>
+                <tr>
+                    <td>(s) NAME (Last, First, Middle Initial)</td>
+                    <td colspan="2"><input type="text" name="name"></td>
+                    <td>(s) SSN</td>
+                    <td><input type="text" name="ssn"></td>
+                    <td>DATE OF BIRTH</td>
+                    <td><input type="date" name="dob"></td>
+                </tr>
+                <tr>
+                    <td>(s) AGE</td>
+                    <td><input type="number" name="age"></td>
+                    <td>(s) SEX</td>
+                    <td>
+                        <label><input type="radio" name="sex" value="F" class="checkbox"> F</label>
+                        <label><input type="radio" name="sex" value="M" class="checkbox"> M</label>
+                    </td>
+                    <td>(s) STATUS</td>
+                    <td><input type="text" name="status"></td>
+                    <td>(s) SERVICE</td>
+                </tr>
+                <tr>
+                    <td>(s) GRADE</td>
+                    <td><input type="text" name="grade"></td>
+                    <td>(s) UNIT OF RECORD AND PHONE NUMBER</td>
+                    <td colspan="2"><input type="text" name="unit"></td>
+                    <td>CITE NUMBER</td>
+                    <td><input type="text" name="cite_number"></td>
+                </tr>
+            </table>
+
+            <table>
+                <tr class="section-header">
+                    <td colspan="6">SECTION II - VALIDATION INFORMATION</td>
+                </tr>
+                <tr>
+                    <td>(s) Medical Treatment Facility Origination and Phone Number</td>
+                    <td colspan="5"><input type="text" name="mtf_origination"></td>
+                </tr>
+                <tr>
+                    <td>(s) Ready Date (Julian Date)</td>
+                    <td><input type="text" name="ready_date"></td>
+                    <td>APPOINTMENT DATE</td>
+                    <td><input type="date" name="appointment_date"></td>
+                    <td>NUMBER OF ATTENDANTS</td>
+                    <td>
+                        (s) MEDICAL <input type="number" name="medical_attendants"><br>
+                        (s) NON-MED <input type="number" name="non_med_attendants">
+                    </td>
+                </tr>
+                <tr>
+                    <td>(s) Medical Treatment Facility Destination and Phone Number</td>
+                    <td colspan="5"><input type="text" name="mtf_destination"></td>
+                </tr>
+                <tr>
+                    <td>(s) CLASSIFICATION 1A-5F</td>
+                    <td><input type="text" name="classification"></td>
+                    <td>AMBULATORY</td>
+                    <td><input type="checkbox" name="ambulatory" class="checkbox"></td>
+                    <td>LITTER</td>
+                    <td><input type="checkbox" name="litter" class="checkbox"></td>
+                </tr>
+                <tr>
+                    <td>(s) PRECEDENCE</td>
+                    <td>
+                        <label><input type="radio" name="precedence" value="U" class="checkbox"> U</label>
+                        <label><input type="radio" name="precedence" value="P" class="checkbox"> P</label>
+                        <label><input type="radio" name="precedence" value="R" class="checkbox"> R</label>
+                    </td>
+                    <td>(s) Reason Regulated</td>
+                    <td><input type="text" name="reason_regulated"></td>
+                    <td>Max # Stops</td>
+                    <td><input type="number" name="max_stops"></td>
+                </tr>
+                <tr>
+                    <td>Max # RONS</td>
+                    <td><input type="number" name="max_rons"></td>
+                    <td>Altitude Restriction</td>
+                    <td><input type="text" name="altitude_restriction"></td>
+                    <td>(s) CCATT Required</td>
+                    <td>
+                        <label><input type="radio" name="ccatt" value="yes" class="checkbox"> yes</label>
+                        <label><input type="radio" name="ccatt" value="no" class="checkbox"> no</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Name, sex, weight, rank of attendants:</td>
+                    <td colspan="5"><textarea name="attendants_details"></textarea></td>
+                </tr>
+            </table>
+
+            <table>
+                <tr class="section-header">
+                    <td colspan="2">SECTION III - OTHER INFORMATION</td>
+                </tr>
+                <tr>
+                    <td>(s) Attending Physician name, Phone Number and e-mail</td>
+                    <td><input type="text" name="attending_physician"></td>
+                </tr>
+                <tr>
+                    <td>(s) Accepting Physician name, Phone Number and e-mail</td>
+                    <td><input type="text" name="accepting_physician"></td>
+                </tr>
+                <tr>
+                    <td>(s) Origination Transportation 24 Hour Phone Number</td>
+                    <td><input type="text" name="orig_transport_phone"></td>
+                </tr>
+                <tr>
+                    <td>(s) Destination Transportation 24 Hour Phone Number</td>
+                    <td><input type="text" name="dest_transport_phone"></td>
+                </tr>
+                <tr>
+                    <td>(s) Insurance Company</td>
+                    <td><input type="text" name="insurance_company"></td>
+                </tr>
+                <tr>
+                    <td>Address</td>
+                    <td><input type="text" name="insurance_address"></td>
+                </tr>
+                <tr>
+                    <td>Phone #</td>
+                    <td><input type="text" name="insurance_phone"></td>
+                </tr>
+                <tr>
+                    <td>Policy #</td>
+                    <td><input type="text" name="insurance_policy"></td>
+                </tr>
+                <tr>
+                    <td>Relationship to policy holder</td>
+                    <td><input type="text" name="insurance_relationship"></td>
+                </tr>
+                <tr>
+                    <td>(s) Waivers (med equip, etc)</td>
+                    <td><input type="text" name="waivers"></td>
+                </tr>
+            </table>
+
+            <table>
+                <tr class="section-header">
+                    <td colspan="8">SECTION IV - CLINICAL INFORMATION</td>
+                </tr>
+                <tr>
+                    <td>(s) Diagnosis</td>
+                    <td colspan="7"><textarea name="diagnosis"></textarea></td>
+                </tr>
+                <tr>
+                    <td>(s) Allergies</td>
+                    <td colspan="7"><input type="text" name="allergies"></td>
+                </tr>
+                <tr>
+                    <td colspan="8">LABS (Date and time drawn in Zulu)</td>
+                </tr>
+                <tr>
+                    <td>WBC</td>
+                    <td><input type="text" name="wbc"></td>
+                    <td>HGB</td>
+                    <td><input type="text" name="hgb"></td>
+                    <td>HCT</td>
+                    <td><input type="text" name="hct"></td>
+                    <td>Other Labs</td>
+                    <td><input type="text" name="other_labs"></td>
+                </tr>
+                <tr>
+                    <td>(s) WEIGHT:</td>
+                    <td><input type="text" name="weight"></td>
+                    <td>(S) Blood type:</td>
+                    <td><input type="text" name="blood_type"></td>
+                    <td colspan="4">Vital Signs (Date and time taken in Zulu)</td>
+                </tr>
+                <tr>
+                    <td>battle casualty</td>
+                    <td><input type="checkbox" name="battle_casualty" class="checkbox"></td>
+                    <td>disease</td>
+                    <td><input type="checkbox" name="disease" class="checkbox"></td>
+                    <td>Date</td>
+                    <td><input type="date" name="vitals_date"></td>
+                    <td>Time (Zulu)</td>
+                    <td><input type="time" name="vitals_time"></td>
+                </tr>
+                <tr>
+                    <td>B/P</td>
+                    <td><input type="text" name="bp"></td>
+                    <td>Pulse</td>
+                    <td><input type="text" name="pulse"></td>
+                    <td>Resp</td>
+                    <td><input type="text" name="resp"></td>
+                    <td>Pain Level: /10</td>
+                    <td><input type="number" name="pain_level" min="0" max="10"></td>
+                </tr>
+                <tr>
+                    <td>non-battle injury</td>
+                    <td><input type="checkbox" name="non_battle_injury" class="checkbox"></td>
+                    <td>Last Pain Med: O /LPM:</td>
+                    <td><input type="text" name="last_pain_med"></td>
+                    <td>Route:</td>
+                    <td><input type="text" name="pain_med_route"></td>
+                    <td>Temp</td>
+                    <td><input type="text" name="temp"></td>
+                </tr>
+                <tr>
+                    <td colspan="8">Baseline 02 Sat If Applicable <input type="text" name="baseline_o2"></td>
+                </tr>
+                <tr>
+                    <td colspan="8">CLINICAL ISSUES</td>
+                </tr>
+                <tr>
+                    <td>Infection Control Precautions:</td>
+                    <td colspan="7"><input type="text" name="infection_precautions"></td>
+                </tr>
+                <tr>
+                    <td>LMP:</td>
+                    <td><input type="date" name="lmp"></td>
+                    <td colspan="6">SPECIAL EQUIPMENT (Check all that apply)</td>
+                </tr>
+                <tr>
+                    <td>OTHER:</td>
+                    <td><input type="text" name="other_equip"></td>
+                    <td>Suction</td>
+                    <td><input type="checkbox" name="suction" class="checkbox"></td>
+                    <td>Traction</td>
+                    <td><input type="checkbox" name="traction" class="checkbox"></td>
+                    <td>Orthopedic devices</td>
+                    <td><input type="checkbox" name="ortho_devices" class="checkbox"></td>
+                </tr>
+                <tr>
+                    <td>Date of last bowel movement:</td>
+                    <td><input type="date" name="last_bm"></td>
+                    <td>NG Tube</td>
+                    <td><input type="checkbox" name="ng_tube" class="checkbox"></td>
+                    <td>Monitor</td>
+                    <td><input type="checkbox" name="monitor" class="checkbox"></td>
+                    <td>Restraints</td>
+                    <td><input type="checkbox" name="restraints" class="checkbox"></td>
+                </tr>
+                <tr>
+                    <td>High Risk for Skin Breakdown</td>
+                    <td>
+                        <label><input type="radio" name="skin_breakdown" value="yes" class="checkbox"> yes</label>
+                        <label><input type="radio" name="skin_breakdown" value="no" class="checkbox"> no</label>
+                    </td>
+                    <td>Foley</td>
+                    <td><input type="checkbox" name="foley" class="checkbox"></td>
+                    <td>Trach</td>
+                    <td><input type="checkbox" name="trach" class="checkbox"></td>
+                    <td>Chest Tubes</td>
+                    <td><input type="checkbox" name="chest_tubes" class="checkbox"></td>
+                </tr>
+                <tr>
+                    <td>Incubator</td>
+                    <td><input type="checkbox" name="incubator" class="checkbox"></td>
+                    <td>IV Pumps</td>
+                    <td><input type="checkbox" name="iv_pumps" class="checkbox"></td>
+                    <td>IV Location:</td>
+                    <td colspan="3"><input type="text" name="iv_location"></td>
+                </tr>
+                <tr>
+                    <td>Initial appropriate boxes:</td>
+                    <td colspan="7"></td>
+                </tr>
+                <tr>
+                    <td>Yes No</td>
+                    <td>Cast /Location:</td>
+                    <td><input type="text" name="cast_location"></td>
+                    <td>Bivalved:</td>
+                    <td>
+                        <label><input type="radio" name="bivalved" value="yes" class="checkbox"> yes</label>
+                        <label><input type="radio" name="bivalved" value="no" class="checkbox"> no</label>
+                    </td>
+                    <td>Hearing Impaired</td>
+                    <td><input type="checkbox" name="hearing_impaired" class="checkbox"> Yes</td>
+                    <td><input type="checkbox" name="hearing_impaired_no" class="checkbox"> No</td>
+                </tr>
+                <tr>
+                    <td>Hypertension</td>
+                    <td><input type="checkbox" name="hypertension" class="checkbox"> Yes</td>
+                    <td><input type="checkbox" name="hypertension_no" class="checkbox"> No</td>
+                    <td>Ventilator</td>
+                    <td><input type="checkbox" name="ventilator" class="checkbox"></td>
+                    <td>Ventilator Settings:</td>
+                    <td colspan="2"><input type="text" name="vent_settings"></td>
+                </tr>
+                <tr>
+                    <td>Communication Barriers</td>
+                    <td><input type="checkbox" name="comm_barriers" class="checkbox"> Yes</td>
+                    <td><input type="checkbox" name="comm_barriers_no" class="checkbox"> No</td>
+                    <td>Dizziness</td>
+                    <td><input type="checkbox" name="dizziness" class="checkbox"> Yes</td>
+                    <td><input type="checkbox" name="dizziness_no" class="checkbox"> No</td>
+                    <td colspan="2"></td>
+                </tr>
+                <tr>
+                    <td>DIET INFORMATION (Check all that apply)</td>
+                    <td colspan="7"></td>
+                </tr>
+                <tr>
+                    <td>Vision Impaired</td>
+                    <td><input type="checkbox" name="vision_impaired" class="checkbox"></td>
+                    <td>Voiding difficulty</td>
+                    <td><input type="checkbox" name="voiding_difficulty" class="checkbox"></td>
+                    <td>Soft</td>
+                    <td><input type="checkbox" name="diet_soft" class="checkbox"></td>
+                    <td>Full Liq</td>
+                    <td><input type="checkbox" name="diet_full_liq" class="checkbox"></td>
+                </tr>
+                <tr>
+                    <td>CI Liq</td>
+                    <td><input type="checkbox" name="diet_ci_liq" class="checkbox"></td>
+                    <td>Reg</td>
+                    <td><input type="checkbox" name="diet_reg" class="checkbox"></td>
+                    <td>NPO</td>
+                    <td><input type="checkbox" name="diet_npo" class="checkbox"></td>
+                    <td>Cardiac Hx</td>
+                    <td><input type="checkbox" name="cardiac_hx" class="checkbox"></td>
+                </tr>
+                <tr>
+                    <td>*Takes long-term meds</td>
+                    <td><input type="checkbox" name="long_term_meds" class="checkbox"></td>
+                    <td>Renal</td>
+                    <td><input type="checkbox" name="diet_renal" class="checkbox"></td>
+                    <td>Gm Protein</td>
+                    <td><input type="text" name="gm_protein"></td>
+                    <td>Gm Na</td>
+                    <td><input type="text" name="gm_na"></td>
+                </tr>
+                <tr>
+                    <td>Meq K</td>
+                    <td><input type="text" name="meq_k"></td>
+                    <td>Mag Sulfate</td>
+                    <td><input type="checkbox" name="mag_sulfate" class="checkbox"></td>
+                    <td>Diabetes</td>
+                    <td><input type="checkbox" name="diabetes" class="checkbox"></td>
+                    <td>*Will self-medicate</td>
+                    <td><input type="checkbox" name="self_medicate" class="checkbox"></td>
+                </tr>
+                <tr>
+                    <td>Tube Feeding</td>
+                    <td><input type="checkbox" name="tube_feeding" class="checkbox"></td>
+                    <td>Type</td>
+                    <td><input type="text" name="tube_type"></td>
+                    <td>cc/hr</td>
+                    <td><input type="text" name="cc_hr"></td>
+                    <td>Discontinue for Flight</td>
+                    <td><input type="checkbox" name="discontinue_flight" class="checkbox"></td>
+                </tr>
+                <tr>
+                    <td>Has adequate supply of meds</td>
+                    <td><input type="checkbox" name="adequate_meds" class="checkbox"></td>
+                    <td>Motion Sickness</td>
+                    <td><input type="checkbox" name="motion_sickness" class="checkbox"></td>
+                    <td>Cardiac</td>
+                    <td><input type="checkbox" name="diet_cardiac" class="checkbox"></td>
+                    <td>Diabetic</td>
+                    <td><input type="checkbox" name="diet_diabetic" class="checkbox"></td>
+                </tr>
+                <tr>
+                    <td>cal</td>
+                    <td><input type="text" name="cal"></td>
+                    <td>Infant formula:</td>
+                    <td><input type="text" name="infant_formula"></td>
+                    <td>Pediatric Age:</td>
+                    <td><input type="text" name="pediatric_age"></td>
+                    <td>Ears/Sinus Problems</td>
+                    <td><input type="checkbox" name="ears_sinus" class="checkbox"></td>
+                </tr>
+                <tr>
+                    <td>TPN:</td>
+                    <td><input type="checkbox" name="tpn" class="checkbox"></td>
+                    <td>Respiratory difficulty</td>
+                    <td><input type="checkbox" name="respiratory_difficulty" class="checkbox"></td>
+                    <td>Other(specify):</td>
+                    <td colspan="3"><input type="text" name="diet_other"></td>
+                </tr>
+                <tr>
+                    <td colspan="8">*Medication listed on physician's orders</td>
+                </tr>
+            </table>
+
+            <table>
+                <tr class="section-header">
+                    <td>SECTION V</td>
+                </tr>
+                <tr>
+                    <td>Physician's Signature</td>
+                    <td><input type="text" name="physician_signature"></td>
+                    <td>Date/Time</td>
+                    <td><input type="datetime-local" name="physician_datetime"></td>
+                </tr>
+                <tr>
+                    <td>Signature of Clearing Flight Surgeon</td>
+                    <td><input type="text" name="flight_surgeon_signature"></td>
+                    <td>Date/Time</td>
+                    <td><input type="datetime-local" name="flight_surgeon_datetime"></td>
+                </tr>
+            </table>
+
+            <p>PERTINENT CLINICAL HISTORY (Transfer Summary)</p>
+            <textarea name="clinical_history" rows="10" style="width:100%;"></textarea>
+
+            <p>"Per AFI 48-307V3" The attending provider will sign the AF Form 3899; consultation with the TPMRCW TVFS has been completed- the patient is stable and cleared for Flight."</p>
+
+            <hr>
+            <h2>(continuation)</h2>
+            <h1>PATIENT MOVEMENT RECORD</h1>
+            <p>PERMANENT MEDICAL RECORD</p>
+            <p>DATA PROTECTED BY PRIVACY ACT OF 1974</p>
+            <p>(for continued care in the AE system and at enroute stops)</p>
+            <h2>PATIENT MOVEMENT PHYSICIAN ORDERS</h2>
+
+            <table>
+                <tr class="section-header">
+                    <td colspan="6">SECTION I. PATIENT IDENTIFICATION</td>
+                </tr>
+                <tr>
+                    <td>1. NAME (Last, First, Middle Initial)</td>
+                    <td colspan="2"><input type="text" name="name_cont"></td>
+                    <td>2. GRADE</td>
+                    <td><input type="text" name="grade_cont"></td>
+                    <td>3. SSN#</td>
+                </tr>
+                <tr>
+                    <td><input type="text" name="ssn_cont"></td>
+                    <td>4. ALLERGIES</td>
+                    <td colspan="4"><input type="text" name="allergies_cont"></td>
+                </tr>
+                <tr>
+                    <td>5. ORIGINATING MTF</td>
+                    <td colspan="2"><input type="text" name="originating_mtf"></td>
+                    <td>6. DESTINATION MTF</td>
+                    <td colspan="2"><input type="text" name="destination_mtf"></td>
+                </tr>
+            </table>
+
+            <table>
+                <tr class="section-header">
+                    <td colspan="2">SECTION II. MEDICATION ORDERS (Drugs and IVs)</td>
+                </tr>
+                <tr>
+                    <td>patient will self-medicate</td>
+                    <td>
+                        <label><input type="radio" name="self_medicate_cont" value="yes" class="checkbox"> yes</label>
+                        <label><input type="radio" name="self_medicate_cont" value="no" class="checkbox"> no</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td>with the following medications:</td>
+                    <td><textarea name="medications_cont" rows="10"></textarea></td>
+                </tr>
+            </table>
+
+            <table>
+                <tr class="section-header">
+                    <td>SECTION III. OTHER ORDERS (Procedures, Treatment, V/S Frequency, ETC)</td>
+                </tr>
+                <tr>
+                    <td><textarea name="other_orders" rows="20" style="width:100%;"></textarea></td>
+                </tr>
+            </table>
+
+            <p>(REVERSE)</p>
+            <p>AF IMT 3899, 20060819, V1</p>
+        </form>
+    </div>
+</body>
+</html>

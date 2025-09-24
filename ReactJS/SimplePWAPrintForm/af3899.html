@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AF IMT 3899 - Patient Movement Record</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; font-size: 14px; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+    th, td { border: 1px solid #000; padding: 6px; vertical-align: top; }
+    th { background: #f2f2f2; text-align: left; }
+    input, select, textarea { width: 95%; border: none; font-size: 14px; }
+    .section-title { background: #ccc; font-weight: bold; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <h2 style="text-align:center;">PATIENT MOVEMENT RECORD</h2>
+  <p style="text-align:center;">
+    DATA PROTECTED BY PRIVACY ACT OF 1974 — PERMANENT MEDICAL RECORD
+  </p>
+
+  <!-- Section I -->
+  <table>
+    <tr><th colspan="6" class="section-title">SECTION I - PATIENT IDENTIFICATION</th></tr>
+    <tr>
+      <td colspan="2">Name (Last, First, MI)<br><input type="text" name="name"></td>
+      <td>SSN<br><input type="text" name="ssn"></td>
+      <td>Date of Birth<br><input type="date" name="dob"></td>
+      <td>Age<br><input type="number" name="age"></td>
+      <td>Sex<br>
+        <select name="sex">
+          <option></option>
+          <option>Male</option>
+          <option>Female</option>
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td>Status<br><input type="text" name="status"></td>
+      <td>Service<br><input type="text" name="service"></td>
+      <td>Grade<br><input type="text" name="grade"></td>
+      <td colspan="2">Unit of Record & Phone<br><input type="text" name="unit"></td>
+      <td>CITE Number<br><input type="text" name="cite"></td>
+    </tr>
+  </table>
+
+  <!-- Section II -->
+  <table>
+    <tr><th colspan="6" class="section-title">SECTION II - VALIDATION INFORMATION</th></tr>
+    <tr>
+      <td colspan="3">MTF Origination & Phone<br><input type="text" name="mtf_orig"></td>
+      <td>Ready Date (Julian)<br><input type="text" name="ready_date"></td>
+      <td>Appointment Date<br><input type="date" name="appt_date"></td>
+      <td># Attendants<br><input type="number" name="attendants"></td>
+    </tr>
+    <tr>
+      <td>Medical<br><input type="checkbox" name="med"></td>
+      <td>Non-Med<br><input type="checkbox" name="nonmed"></td>
+      <td colspan="2">Destination MTF & Phone<br><input type="text" name="mtf_dest"></td>
+      <td>Classification (1A–5F)<br><input type="text" name="class"></td>
+      <td>Precedence<br>
+        <select name="precedence">
+          <option></option>
+          <option>U - Urgent</option>
+          <option>P - Priority</option>
+          <option>R - Routine</option>
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2">Reason Regulated<br><input type="text" name="reason"></td>
+      <td>Max Stops<br><input type="number" name="stops"></td>
+      <td>Max RONs<br><input type="number" name="rons"></td>
+      <td>Altitude Restriction<br><input type="text" name="altitude"></td>
+      <td>CCATT Required<br>
+        <select name="ccatt">
+          <option></option>
+          <option>Yes</option>
+          <option>No</option>
+        </select>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
