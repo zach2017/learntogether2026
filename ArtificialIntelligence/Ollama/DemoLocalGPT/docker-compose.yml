@@ -1,0 +1,54 @@
+
+services:
+  ollama:
+    # Use the official Ollama image
+    image: ollama/ollama
+    container_name: ollama
+    # Map the default Ollama port from the container to your host machine
+    ports:
+      - "11434:11434"
+    # Create a volume to persist the downloaded models and data
+    volumes:
+      - ollama_data:/root/.ollama
+    # Set environment variables to make Ollama accessible from outside the container
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    # --- Optional: GPU Support ---
+    # If you have an NVIDIA GPU and want to enable GPU acceleration,
+    # uncomment the following 'deploy' section.
+    # Make sure you have the NVIDIA Container Toolkit installed.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # Separate service to pull the model after ollama is running
+  ollama-puller:
+    image: ollama/ollama
+    container_name: ollama-puller
+    depends_on:
+      - ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=ollama:11434
+      - OLLAMA_ORIGINS=*
+    command: >
+      sh -c "
+      echo 'Waiting for Ollama server to be ready...'
+      until curl -f http://ollama:11434/api/tags >/dev/null 2>&1; do
+        echo 'Waiting for Ollama server...'
+        sleep 5
+      done
+      echo 'Ollama server is ready. Pulling qwen:4b model...'
+      ollama pull qwen:4b
+      echo 'Model pull completed!'
+      "
+    restart: "no"
+
+volumes:
+  # Define the named volume for data persistence
+  ollama_data:
