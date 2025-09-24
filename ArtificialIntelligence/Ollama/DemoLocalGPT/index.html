@@ -161,10 +161,14 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json',
                         },
+                        mode: 'cors',
+                        credentials: 'omit',
                         body: JSON.stringify({
-                            model: this.modelInput.value || 'qwen:4b',
+                            model: this.modelInput.value.trim() || 'qwen:4b',
                             messages: this.messages,
+                            stream: false
                         }),
                     });
 

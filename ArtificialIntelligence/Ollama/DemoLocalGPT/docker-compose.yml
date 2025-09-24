@@ -13,6 +13,7 @@ services:
     # Set environment variables to make Ollama accessible from outside the container
     environment:
       - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_ORIGINS=*
     # --- Optional: GPU Support ---
     # If you have an NVIDIA GPU and want to enable GPU acceleration,
     # uncomment the following 'deploy' section.
