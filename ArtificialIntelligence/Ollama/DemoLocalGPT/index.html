@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zactonics GPT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .message-bubble {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .typing-indicator {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="gradient-bg text-white shadow-xl">
+            <div class="max-w-4xl mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold">Zactonics GPT</h1>
+                            <p class="text-white/80 text-sm">Powered by Ollama</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2">
+                            <label class="text-sm text-white/90">Model:</label>
+                            <input 
+                                id="modelInput" 
+                                type="text" 
+                                value="qwen:4b" 
+                                class="bg-transparent text-white placeholder-white/60 border-none outline-none text-sm ml-2 w-24"
+                            />
+                        </div>
+                        <button 
+                            id="clearBtn" 
+                            class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium"
+                        >
+                            Clear Chat
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Chat Container -->
+        <main class="flex-1 max-w-4xl mx-auto w-full px-6 py-6">
+            <div class="bg-white rounded-2xl shadow-2xl h-full flex flex-col overflow-hidden border border-gray-100">
+                <!-- Messages Area -->
+                <div id="chatMessages" class="flex-1 overflow-y-auto p-6 space-y-4">
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 bg-gradient-to-r from-purple-400 to-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Welcome to Zactonics GPT</h3>
+                        <p class="text-gray-600 max-w-md mx-auto">Start a conversation with your AI assistant. Ask questions, get help, or just chat!</p>
+                        <div class="mt-4 text-xs text-gray-400">
+                            🔗 Connected to localhost:11434
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="border-t border-gray-100 p-6 bg-gray-50/50">
+                    <div class="flex space-x-4">
+                        <div class="flex-1 relative">
+                            <textarea 
+                                id="messageInput"
+                                placeholder="Type your message here... (Enter to send, Shift+Enter for new line)"
+                                class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none bg-white shadow-sm transition-all duration-200"
+                                rows="2"
+                            ></textarea>
+                        </div>
+                        <button 
+                            id="sendBtn"
+                            class="bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500">
+                        <span id="statusIndicator">Ready to chat</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        class ZactonicsGPT {
+            constructor() {
+                this.messages = [];
+                this.isLoading = false;
+                this.initializeElements();
+                this.setupEventListeners();
+            }
+
+            initializeElements() {
+                this.chatMessages = document.getElementById('chatMessages');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendBtn = document.getElementById('sendBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+                this.modelInput = document.getElementById('modelInput');
+                this.statusIndicator = document.getElementById('statusIndicator');
+            }
+
+            setupEventListeners() {
+                this.sendBtn.addEventListener('click', () => this.sendMessage());
+                this.clearBtn.addEventListener('click', () => this.clearChat());
+                
+                this.messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                this.messageInput.addEventListener('input', () => {
+                    this.adjustTextareaHeight();
+                });
+            }
+
+            adjustTextareaHeight() {
+                this.messageInput.style.height = 'auto';
+                this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
+            }
+
+            async sendMessage() {
+                const message = this.messageInput.value.trim();
+                if (!message || this.isLoading) return;
+
+                this.addMessage('user', message);
+                this.messageInput.value = '';
+                this.adjustTextareaHeight();
+                this.setLoading(true);
+
+                try {
+                    const response = await fetch('http://localhost:11434/api/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        },
+                        mode: 'cors',
+                        credentials: 'omit',
+                        body: JSON.stringify({
+                            model: this.modelInput.value.trim() || 'qwen:4b',
+                            messages: this.messages,
+                            stream: false
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    this.addMessage('assistant', data.message.content);
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.addMessage('error', `Connection failed: ${error.message}\n\nMake sure Ollama is running on localhost:11434 and CORS is enabled.`);
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+
+            addMessage(role, content) {
+                if (role !== 'error') {
+                    this.messages.push({ role, content });
+                }
+
+                // Clear welcome message if it exists
+                const welcomeMsg = this.chatMessages.querySelector('.text-center.py-12');
+                if (welcomeMsg) {
+                    welcomeMsg.remove();
+                }
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message-bubble flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+                
+                const bubbleClass = role === 'user' 
+                    ? 'bg-gradient-to-r from-purple-500 to-blue-600 text-white' 
+                    : role === 'error'
+                    ? 'bg-red-50 text-red-700 border border-red-200'
+                    : 'bg-gray-100 text-gray-800';
+
+                messageDiv.innerHTML = `
+                    <div class="max-w-xs lg:max-w-2xl px-4 py-3 rounded-2xl ${bubbleClass} shadow-md">
+                        <div class="text-xs font-medium mb-1 opacity-75">
+                            ${role === 'user' ? 'You' : role === 'error' ? 'System' : 'Zactonics GPT'}
+                        </div>
+                        <div class="whitespace-pre-wrap text-sm leading-relaxed">${content}</div>
+                    </div>
+                `;
+
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            setLoading(loading) {
+                this.isLoading = loading;
+                this.sendBtn.disabled = loading;
+                this.statusIndicator.textContent = loading ? 'Thinking...' : 'Ready to chat';
+
+                if (loading) {
+                    this.showTypingIndicator();
+                } else {
+                    this.hideTypingIndicator();
+                }
+            }
+
+            showTypingIndicator() {
+                const typingDiv = document.createElement('div');
+                typingDiv.id = 'typingIndicator';
+                typingDiv.className = 'flex justify-start';
+                typingDiv.innerHTML = `
+                    <div class="bg-gray-100 max-w-xs px-4 py-3 rounded-2xl shadow-md">
+                        <div class="text-xs font-medium mb-1 text-gray-600">Zactonics GPT</div>
+                        <div class="flex items-center space-x-1">
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                        </div>
+                    </div>
+                `;
+                this.chatMessages.appendChild(typingDiv);
+                this.scrollToBottom();
+            }
+
+            hideTypingIndicator() {
+                const typingIndicator = document.getElementById('typingIndicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+            }
+
+            clearChat() {
+                this.messages = [];
+                this.chatMessages.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 bg-gradient-to-r from-purple-400 to-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Welcome to Zactonics GPT</h3>
+                        <p class="text-gray-600 max-w-md mx-auto">Start a conversation with your AI assistant. Ask questions, get help, or just chat!</p>
+                        <div class="mt-4 text-xs text-gray-400">
+                            🔗 Connected to localhost:11434
+                        </div>
+                    </div>
+                `;
+            }
+
+            scrollToBottom() {
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+        }
+
+        // Initialize the chat application
+        document.addEventListener('DOMContentLoaded', () => {
+            new ZactonicsGPT();
+        });
+    </script>
+</body>
+</html>

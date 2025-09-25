@@ -1,0 +1,1 @@
+ollama create qwen:4b -f Modelfile
