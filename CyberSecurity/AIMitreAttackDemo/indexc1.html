@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Resilience Plan Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.0/cdn.min.js" defer></script>
+    <style>
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 3s ease-in-out infinite;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .gradient-animate {
+            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #667eea);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        .glass-morphism {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-900 text-white" x-data="resilienceApp()">
+    <!-- Background Effect -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse-subtle"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse-subtle"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="relative z-10 border-b border-gray-800">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 gradient-animate rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                        Resilience Plan Generator
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-2 text-sm">
+                    <span class="px-3 py-1 bg-green-500/20 text-green-400 rounded-full border border-green-500/30">
+                        MITRE ATT&CK Enabled
+                    </span>
+                    <span class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full border border-blue-500/30">
+                        CVE Intelligence Active
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="relative z-10 container mx-auto px-6 py-8">
+        <!-- System Architecture Input -->
+        <div class="glass-morphism rounded-xl p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                System Architecture Configuration
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">System Name</label>
+                    <input 
+                        type="text" 
+                        x-model="systemConfig.name"
+                        class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                        placeholder="e.g., Production API Gateway"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Environment</label>
+                    <select 
+                        x-model="systemConfig.environment"
+                        class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                    >
+                        <option>Production</option>
+                        <option>Staging</option>
+                        <option>Development</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-2 text-gray-300">Architecture Components</label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <template x-for="component in components" :key="component">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                :value="component"
+                                @change="toggleComponent(component)"
+                                class="w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500"
+                            >
+                            <span class="text-sm" x-text="component"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+
+            <button 
+                @click="analyzeSystem()"
+                :disabled="loading"
+                class="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-lg font-semibold hover:from-purple-700 hover:to-cyan-700 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                <span x-show="!loading" class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                    Generate Resilience Plan
+                </span>
+                <span x-show="loading" class="flex items-center">
+                    <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Analyzing System...
+                </span>
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div x-show="analysisComplete" x-transition class="space-y-6">
+            <!-- Risk Score -->
+            <div class="glass-morphism rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">Overall Risk Assessment</h3>
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="relative pt-1">
+                            <div class="flex mb-2 items-center justify-between">
+                                <div>
+                                    <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full"
+                                          :class="getRiskColor(results.riskScore)">
+                                        Risk Score: <span x-text="results.riskScore"></span>%
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-gray-700">
+                                <div :style="`width: ${results.riskScore}%`" 
+                                     :class="getRiskGradient(results.riskScore)"
+                                     class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ml-8 text-center">
+                        <div class="text-3xl font-bold" :class="getRiskTextColor(results.riskScore)" x-text="getRiskLevel(results.riskScore)"></div>
+                        <div class="text-sm text-gray-400">Risk Level</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MITRE ATT&CK Techniques -->
+            <div class="glass-morphism rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    Detected MITRE ATT&CK Techniques
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <template x-for="technique in results.mitreAttacks" :key="technique.id">
+                        <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-red-500/50 transition">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-red-400 font-mono text-sm" x-text="technique.id"></span>
+                                <span class="px-2 py-1 text-xs rounded-full"
+                                      :class="getSeverityClass(technique.severity)"
+                                      x-text="technique.severity"></span>
+                            </div>
+                            <h4 class="font-semibold mb-1" x-text="technique.name"></h4>
+                            <p class="text-sm text-gray-400" x-text="technique.description"></p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- CVE Vulnerabilities -->
+            <div class="glass-morphism rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01"></path>
+                    </svg>
+                    Critical CVE Vulnerabilities
+                </h3>
+                <div class="space-y-3">
+                    <template x-for="cve in results.vulnerabilities" :key="cve.id">
+                        <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-yellow-500/50 transition">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-3 mb-2">
+                                        <span class="font-mono text-yellow-400" x-text="cve.id"></span>
+                                        <span class="px-2 py-1 text-xs bg-orange-500/20 text-orange-400 rounded-full">
+                                            CVSS: <span x-text="cve.cvss"></span>
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-300" x-text="cve.description"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="glass-morphism rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Security Recommendations
+                </h3>
+                <div class="space-y-3">
+                    <template x-for="(rec, index) in results.recommendations" :key="index">
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0 w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center mt-0.5">
+                                <span class="text-green-400 text-sm font-semibold" x-text="index + 1"></span>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-green-400 mb-1" x-text="rec.title"></h4>
+                                <p class="text-sm text-gray-300" x-text="rec.description"></p>
+                                <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full"
+                                      :class="getPriorityClass(rec.priority)"
+                                      x-text="rec.priority + ' Priority'"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Generated Runbooks -->
+            <div class="glass-morphism rounded-xl p-6" x-data="{ activeRunbook: 0 }">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    Generated Incident Response Runbooks
+                </h3>
+                
+                <!-- Runbook Tabs -->
+                <div class="flex space-x-2 mb-6 overflow-x-auto">
+                    <template x-for="(runbook, index) in results.runbooks" :key="index">
+                        <button 
+                            @click="activeRunbook = index"
+                            :class="activeRunbook === index ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50' : 'bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700'"
+                            class="px-4 py-2 rounded-lg border transition whitespace-nowrap text-sm font-medium"
+                            x-text="runbook.scenario"
+                        ></button>
+                    </template>
+                </div>
+
+                <!-- Active Runbook Content -->
+                <template x-for="(runbook, index) in results.runbooks" :key="index">
+                    <div x-show="activeRunbook === index" x-transition>
+                        <!-- Runbook Header -->
+                        <div class="bg-gray-800 rounded-lg p-4 mb-6 border border-gray-700">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-xl font-semibold text-cyan-400" x-text="runbook.scenario"></h4>
+                                <div class="flex items-center space-x-2">
+                                    <span class="px-2 py-1 text-xs rounded-full"
+                                          :class="getSeverityClass(runbook.severity)"
+                                          x-text="runbook.severity + ' SEVERITY'"></span>
+                                    <span class="px-2 py-1 text-xs bg-purple-500/20 text-purple-400 rounded-full">
+                                        Est. MTTR: <span x-text="runbook.estimatedMTTR"></span>
+                                    </span>
+                                </div>
+                            </div>
+                            <p class="text-gray-300 mb-3" x-text="runbook.description"></p>
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="technique in runbook.relatedMitre" :key="technique">
+                                    <span class="px-2 py-1 text-xs bg-red-500/20 text-red-400 rounded-full border border-red-500/30"
+                                          x-text="technique"></span>
+                                </template>
+                                <template x-for="cve in runbook.relatedCVEs" :key="cve">
+                                    <span class="px-2 py-1 text-xs bg-yellow-500/20 text-yellow-400 rounded-full border border-yellow-500/30"
+                                          x-text="cve"></span>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Runbook Phases -->
+                        <div class="space-y-6">
+                            <!-- Detection Phase -->
+                            <div class="bg-gray-800/50 rounded-lg p-5 border border-blue-500/30">
+                                <h5 class="text-lg font-semibold text-blue-400 mb-3 flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    1. Detection & Identification
+                                </h5>
+                                <div class="space-y-3">
+                                    <template x-for="(step, stepIndex) in runbook.phases.detection" :key="stepIndex">
+                                        <div class="flex items-start space-x-3">
+                                            <div class="flex-shrink-0 w-6 h-6 bg-blue-500/20 rounded-full flex items-center justify-center mt-0.5">
+                                                <span class="text-blue-400 text-xs font-semibold" x-text="stepIndex + 1"></span>
+                                            </div>
+                                            <p class="text-sm text-gray-300" x-text="step"></p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Containment Phase -->
+                            <div class="bg-gray-800/50 rounded-lg p-5 border border-orange-500/30">
+                                <h5 class="text-lg font-semibold text-orange-400 mb-3 flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01"></path>
+                                    </svg>
+                                    2. Containment
+                                </h5>
+                                <div class="space-y-3">
+                                    <template x-for="(step, stepIndex) in runbook.phases.containment" :key="stepIndex">
+                                        <div class="flex items-start space-x-3">
+                                            <div class="flex-shrink-0 w-6 h-6 bg-orange-500/20 rounded-full flex items-center justify-center mt-0.5">
+                                                <span class="text-orange-400 text-xs font-semibold" x-text="stepIndex + 1"></span>
+                                            </div>
+                                            <p class="text-sm text-gray-300" x-text="step"></p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Eradication Phase -->
+                            <div class="bg-gray-800/50 rounded-lg p-5 border border-red-500/30">
+                                <h5 class="text-lg font-semibold text-red-400 mb-3 flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                    3. Eradication
+                                </h5>
+                                <div class="space-y-3">
+                                    <template x-for="(step, stepIndex) in runbook.phases.eradication" :key="stepIndex">
+                                        <div class="flex items-start space-x-3">
+                                            <div class="flex-shrink-0 w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center mt-0.5">
+                                                <span class="text-red-400 text-xs font-semibold" x-text="stepIndex + 1"></span>
+                                            </div>
+                                            <p class="text-sm text-gray-300" x-text="step"></p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Recovery Phase -->
+                            <div class="bg-gray-800/50 rounded-lg p-5 border border-green-500/30">
+                                <h5 class="text-lg font-semibold text-green-400 mb-3 flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                    4. Recovery
+                                </h5>
+                                <div class="space-y-3">
+                                    <template x-for="(step, stepIndex) in runbook.phases.recovery" :key="stepIndex">
+                                        <div class="flex items-start space-x-3">
+                                            <div class="flex-shrink-0 w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center mt-0.5">
+                                                <span class="text-green-400 text-xs font-semibold" x-text="stepIndex + 1"></span>
+                                            </div>
+                                            <p class="text-sm text-gray-300" x-text="step"></p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Lessons Learned Phase -->
+                            <div class="bg-gray-800/50 rounded-lg p-5 border border-purple-500/30">
+                                <h5 class="text-lg font-semibold text-purple-400 mb-3 flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                    </svg>
+                                    5. Lessons Learned & Post-Incident Activities
+                                </h5>
+                                <div class="space-y-3">
+                                    <template x-for="(step, stepIndex) in runbook.phases.lessonsLearned" :key="stepIndex">
+                                        <div class="flex items-start space-x-3">
+                                            <div class="flex-shrink-0 w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center mt-0.5">
+                                                <span class="text-purple-400 text-xs font-semibold" x-text="stepIndex + 1"></span>
+                                            </div>
+                                            <p class="text-sm text-gray-300" x-text="step"></p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Static JSON data simulating API response
+        const staticAPIResponse = {
+            riskScore: 72,
+            mitreAttacks: [
+                {
+                    id: "T1190",
+                    name: "Exploit Public-Facing Application",
+                    description: "Adversaries may attempt to exploit a weakness in an Internet-facing host or system.",
+                    severity: "HIGH"
+                },
+                {
+                    id: "T1078",
+                    name: "Valid Accounts",
+                    description: "Adversaries may obtain and abuse credentials of existing accounts.",
+                    severity: "MEDIUM"
+                },
+                {
+                    id: "T1040",
+                    name: "Network Sniffing",
+                    description: "Adversaries may sniff network traffic to capture information.",
+                    severity: "MEDIUM"
+                },
+                {
+                    id: "T1053",
+                    name: "Scheduled Task/Job",
+                    description: "Adversaries may abuse task scheduling functionality to facilitate persistence.",
+                    severity: "LOW"
+                }
+            ],
+            vulnerabilities: [
+                {
+                    id: "CVE-2024-3456",
+                    cvss: 9.8,
+                    description: "Critical authentication bypass vulnerability in API Gateway allowing unauthorized access."
+                },
+                {
+                    id: "CVE-2024-2234",
+                    cvss: 8.5,
+                    description: "SQL injection vulnerability in database connector module."
+                },
+                {
+                    id: "CVE-2024-1122",
+                    cvss: 7.2,
+                    description: "Remote code execution through unvalidated input in message queue handler."
+                }
+            ],
+            recommendations: [
+                {
+                    title: "Implement Zero Trust Architecture",
+                    description: "Deploy microsegmentation and enforce least privilege access across all system components.",
+                    priority: "HIGH"
+                },
+                {
+                    title: "Enable Advanced Threat Detection",
+                    description: "Integrate SIEM with ML-based anomaly detection for real-time threat identification.",
+                    priority: "HIGH"
+                },
+                {
+                    title: "Patch Management Protocol",
+                    description: "Establish automated vulnerability scanning and patch deployment within 24 hours for critical CVEs.",
+                    priority: "MEDIUM"
+                },
+                {
+                    title: "Incident Response Automation",
+                    description: "Implement automated playbooks for common attack scenarios based on MITRE ATT&CK framework.",
+                    priority: "MEDIUM"
+                },
+                {
+                    title: "Regular Security Audits",
+                    description: "Schedule quarterly penetration testing and security assessments.",
+                    priority: "LOW"
+                }
+            ],
+            runbooks: [
+                {
+                    scenario: "API Gateway Breach",
+                    severity: "HIGH",
+                    estimatedMTTR: "2-4 hours",
+                    description: "Critical security incident involving unauthorized access through API Gateway authentication bypass vulnerability.",
+                    relatedMitre: ["T1190", "T1078"],
+                    relatedCVEs: ["CVE-2024-3456"],
+                    phases: {
+                        detection: [
+                            "Monitor authentication logs for abnormal patterns (multiple failed attempts, successful logins from unusual locations)",
+                            "Analyze API Gateway access logs for requests without proper authentication headers",
+                            "Check SIEM alerts for CVE-2024-3456 exploitation signatures",
+                            "Verify WAF logs for bypass attempts and suspicious traffic patterns",
+                            "Review rate limiting metrics for unusual spikes in API calls"
+                        ],
+                        containment: [
+                            "Immediately isolate affected API Gateway instances from external traffic",
+                            "Enable emergency WAF rules to block suspected attack vectors",
+                            "Revoke all API keys and JWT tokens that may have been compromised",
+                            "Implement temporary IP-based blocking for suspicious source addresses",
+                            "Activate backup API Gateway with stricter authentication controls",
+                            "Notify security team and initiate incident response protocol"
+                        ],
+                        eradication: [
+                            "Apply critical patch for CVE-2024-3456 to all API Gateway instances",
+                            "Update authentication middleware to latest version",
+                            "Remove any backdoors or persistent access mechanisms created by attackers",
+                            "Scan all connected systems for signs of lateral movement",
+                            "Update firewall rules to prevent similar attacks",
+                            "Review and strengthen input validation on all API endpoints"
+                        ],
+                        recovery: [
+                            "Deploy patched API Gateway instances in staged environment first",
+                            "Conduct thorough security testing of all API endpoints",
+                            "Gradually restore traffic using blue-green deployment strategy",
+                            "Generate new API keys and distribute to legitimate clients",
+                            "Monitor system performance and security metrics closely",
+                            "Update DNS and load balancer configurations as needed"
+                        ],
+                        lessonsLearned: [
+                            "Document timeline and root cause analysis in incident report",
+                            "Review patch management process to prevent similar CVE delays",
+                            "Conduct post-incident security assessment of all API endpoints",
+                            "Update monitoring and alerting rules based on attack patterns observed",
+                            "Schedule security awareness training focused on API security",
+                            "Review and update incident response procedures based on lessons learned"
+                        ]
+                    }
+                },
+                {
+                    scenario: "SQL Injection Attack",
+                    severity: "HIGH",
+                    estimatedMTTR: "3-6 hours",
+                    description: "Database compromise through SQL injection vulnerability in database connector module.",
+                    relatedMitre: ["T1190"],
+                    relatedCVEs: ["CVE-2024-2234"],
+                    phases: {
+                        detection: [
+                            "Monitor database query logs for SQL injection patterns (UNION, DROP, INSERT statements)",
+                            "Analyze application logs for unusual database connection attempts",
+                            "Check for abnormal database response times and error messages",
+                            "Review WAF logs for SQL injection attack signatures",
+                            "Monitor data access patterns for unauthorized data extraction"
+                        ],
+                        containment: [
+                            "Immediately isolate affected database servers from application layer",
+                            "Enable database firewall with strict query filtering rules",
+                            "Terminate all active database connections from compromised applications",
+                            "Create emergency database snapshots for forensic analysis",
+                            "Switch applications to read-only database replicas if possible",
+                            "Activate DLP monitoring to detect data exfiltration attempts"
+                        ],
+                        eradication: [
+                            "Apply security patch for CVE-2024-2234 to database connector module",
+                            "Implement prepared statements and parameterized queries in all applications",
+                            "Remove any malicious stored procedures or database objects created by attacker",
+                            "Update database permissions to principle of least privilege",
+                            "Enable additional database security controls (query monitoring, encryption)",
+                            "Conduct full database integrity check and restore from clean backups if necessary"
+                        ],
+                        recovery: [
+                            "Deploy updated application code with secure database connector",
+                            "Test all database operations in staging environment thoroughly",
+                            "Gradually restore write access to production databases",
+                            "Monitor database performance and query patterns closely",
+                            "Update application configuration for enhanced security",
+                            "Verify data integrity and completeness after recovery"
+                        ],
+                        lessonsLearned: [
+                            "Conduct code review of all database interaction points",
+                            "Implement automated SQL injection testing in CI/CD pipeline",
+                            "Schedule developer training on secure coding practices",
+                            "Review and enhance database security monitoring capabilities",
+                            "Document improved database security architecture decisions",
+                            "Update security testing procedures to include SQL injection scenarios"
+                        ]
+                    }
+                },
+                {
+                    scenario: "Message Queue RCE",
+                    severity: "MEDIUM",
+                    estimatedMTTR: "4-8 hours",
+                    description: "Remote code execution exploit targeting message queue handler through unvalidated input processing.",
+                    relatedMitre: ["T1190"],
+                    relatedCVEs: ["CVE-2024-1122"],
+                    phases: {
+                        detection: [
+                            "Monitor message queue processing logs for unusual payload patterns",
+                            "Analyze system resource usage for unexpected process spawning",
+                            "Check network traffic for command and control communications",
+                            "Review application error logs for deserialization failures",
+                            "Monitor file system for unauthorized file creation or modification"
+                        ],
+                        containment: [
+                            "Pause message queue processing on affected systems immediately",
+                            "Isolate message queue servers from network to prevent lateral movement",
+                            "Quarantine suspicious messages in dead letter queues",
+                            "Implement network segmentation around message queue infrastructure",
+                            "Deploy endpoint detection tools on affected systems",
+                            "Backup current queue state for forensic analysis"
+                        ],
+                        eradication: [
+                            "Apply security patch for CVE-2024-1122 to message queue handler",
+                            "Implement strict input validation and sanitization for all message processing",
+                            "Remove any malicious code or backdoors installed through RCE exploit",
+                            "Update message queue software to latest secure version",
+                            "Implement message signing and encryption for queue communications",
+                            "Review and clean all existing messages in queues for malicious content"
+                        ],
+                        recovery: [
+                            "Deploy patched message queue handler in test environment first",
+                            "Process queued messages through enhanced security controls",
+                            "Gradually restore normal message processing operations",
+                            "Monitor system behavior and queue processing metrics",
+                            "Update monitoring and alerting for message queue security",
+                            "Verify integrity of processed data and downstream systems"
+                        ],
+                        lessonsLearned: [
+                            "Review message processing architecture for security improvements",
+                            "Implement secure deserialization practices across all applications",
+                            "Schedule security assessment of all message queue implementations",
+                            "Update development guidelines for secure message handling",
+                            "Document enhanced monitoring and detection capabilities",
+                            "Create automated testing for message queue security vulnerabilities"
+                        ]
+                    }
+                },
+                {
+                    scenario: "Account Compromise",
+                    severity: "MEDIUM",
+                    estimatedMTTR: "2-4 hours",
+                    description: "Unauthorized access through compromised user accounts, potentially involving credential stuffing or phishing attacks.",
+                    relatedMitre: ["T1078", "T1040"],
+                    relatedCVEs: [],
+                    phases: {
+                        detection: [
+                            "Monitor authentication logs for unusual login patterns (time, location, device)",
+                            "Analyze user behavior analytics for deviations from normal patterns",
+                            "Check for multiple simultaneous sessions from different locations",
+                            "Review password reset and account recovery requests",
+                            "Monitor privileged account usage and access to sensitive resources"
+                        ],
+                        containment: [
+                            "Immediately disable compromised user accounts",
+                            "Revoke all active sessions and tokens for affected accounts",
+                            "Reset passwords for compromised and related accounts",
+                            "Enable enhanced monitoring for accounts with similar access patterns",
+                            "Implement temporary access restrictions on sensitive systems",
+                            "Review and limit permissions for affected account roles"
+                        ],
+                        eradication: [
+                            "Force password reset for all users in affected groups or departments",
+                            "Implement multi-factor authentication for all accounts if not already enabled",
+                            "Review and remove any unauthorized access grants or permissions",
+                            "Scan for and remove any malware that may have facilitated account compromise",
+                            "Update security awareness training to address current attack vectors",
+                            "Implement additional account monitoring and anomaly detection"
+                        ],
+                        recovery: [
+                            "Re-enable user accounts with enhanced security controls",
+                            "Guide users through secure account recovery process",
+                            "Restore necessary access permissions based on least privilege principle",
+                            "Monitor restored accounts closely for any suspicious activity",
+                            "Update identity and access management policies and procedures",
+                            "Verify that all business functions are restored and operating normally"
+                        ],
+                        lessonsLearned: [
+                            "Review and improve user awareness training programs",
+                            "Assess effectiveness of current authentication and authorization controls",
+                            "Document improved account monitoring and response procedures",
+                            "Update password policies and account security requirements",
+                            "Schedule regular security assessments of identity management systems",
+                            "Create metrics and KPIs for account security monitoring"
+                        ]
+                    }
+                }
+            ]
+        };
+
+        function resilienceApp() {
+            return {
+                loading: false,
+                analysisComplete: false,
+                systemConfig: {
+                    name: '',
+                    environment: 'Production'
+                },
+                selectedComponents: [],
+                components: [
+                    'API Gateway', 'Load Balancer', 'Kubernetes', 'Docker',
+                    'PostgreSQL', 'MongoDB', 'Redis', 'Kafka',
+                    'AWS S3', 'CDN', 'WAF', 'VPN'
+                ],
+                results: {},
+
+                toggleComponent(component) {
+                    const index = this.selectedComponents.indexOf(component);
+                    if (index === -1) {
+                        this.selectedComponents.push(component);
+                    } else {
+                        this.selectedComponents.splice(index, 1);
+                    }
+                },
+
+                async analyzeSystem() {
+                    if (!this.systemConfig.name || this.selectedComponents.length === 0) {
+                        alert('Please enter a system name and select at least one component');
+                        return;
+                    }
+
+                    this.loading = true;
+                    this.analysisComplete = false;
+
+                    // Simulate API call with delay
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    // Simulate fetching data from API (using static data)
+                    try {
+                        // In real implementation, this would be:
+                        // const response = await fetch('/api/analyze', {
+                        //     method: 'POST',
+                        //     headers: { 'Content-Type': 'application/json' },
+                        //     body: JSON.stringify({
+                        //         system: this.systemConfig,
+                        //         components: this.selectedComponents
+                        //     })
+                        // });
+                        // this.results = await response.json();
+
+                        // Simulate API response with some randomization
+                        this.results = {
+                            ...staticAPIResponse,
+                            riskScore: Math.floor(Math.random() * 30) + 60, // Random between 60-90
+                        };
+
+                        this.analysisComplete = true;
+                    } catch (error) {
+                        console.error('Error analyzing system:', error);
+                        alert('Failed to analyze system. Please try again.');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                getRiskColor(score) {
+                    if (score >= 80) return 'bg-red-500/20 text-red-400';
+                    if (score >= 60) return 'bg-orange-500/20 text-orange-400';
+                    if (score >= 40) return 'bg-yellow-500/20 text-yellow-400';
+                    return 'bg-green-500/20 text-green-400';
+                },
+
+                getRiskGradient(score) {
+                    if (score >= 80) return 'bg-gradient-to-r from-red-500 to-red-600';
+                    if (score >= 60) return 'bg-gradient-to-r from-orange-500 to-orange-600';
+                    if (score >= 40) return 'bg-gradient-to-r from-yellow-500 to-yellow-600';
+                    return 'bg-gradient-to-r from-green-500 to-green-600';
+                },
+
+                getRiskTextColor(score) {
+                    if (score >= 80) return 'text-red-400';
+                    if (score >= 60) return 'text-orange-400';
+                    if (score >= 40) return 'text-yellow-400';
+                    return 'text-green-400';
+                },
+
+                getRiskLevel(score) {
+                    if (score >= 80) return 'CRITICAL';
+                    if (score >= 60) return 'HIGH';
+                    if (score >= 40) return 'MEDIUM';
+                    return 'LOW';
+                },
+
+                getSeverityClass(severity) {
+                    const classes = {
+                        'HIGH': 'bg-red-500/20 text-red-400',
+                        'MEDIUM': 'bg-yellow-500/20 text-yellow-400',
+                        'LOW': 'bg-blue-500/20 text-blue-400'
+                    };
+                    return classes[severity] || classes['LOW'];
+                },
+
+                getPriorityClass(priority) {
+                    const classes = {
+                        'HIGH': 'bg-red-500/20 text-red-400 border border-red-500/30',
+                        'MEDIUM': 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
+                        'LOW': 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                    };
+                    return classes[priority] || classes['LOW'];
+                }
+            }
+        }
+    </script>
+</body>
+</html>
