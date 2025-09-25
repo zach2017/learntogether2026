@@ -27,20 +27,20 @@
     details > summary::-webkit-details-marker { display:none; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="bg-gradient-to-br from-violet-50 via-sky-50 to-emerald-50 text-slate-800 min-h-screen">
   <!-- Header -->
-  <header class="sticky top-0 z-20 border-b border-slate-200 backdrop-blur bg-white/80">
+  <header class="sticky top-0 z-20 border-b border-violet-200/50 backdrop-blur bg-white/90 shadow-lg shadow-violet-100/50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 via-sky-500 to-cyan-400"></div>
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 shadow-lg shadow-violet-200"></div>
         <div>
-          <h1 class="text-xl sm:text-2xl font-bold tracking-tight">AI‑Powered Resilience Plan & Runbooks Generator</h1>
+          <h1 class="text-xl sm:text-2xl font-bold tracking-tight bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">AI‑Powered Resilience Plan & Runbooks Generator</h1>
           <p class="text-sm text-slate-500 -mt-0.5">Simulated local generator • Tailwind UI • Works with your JSON architecture + ATT&CK + CVEs</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
-        <button id="btnPrint" class="px-3 py-2 rounded-xl text-sm font-medium bg-white border border-slate-200 hover:bg-slate-50">Print</button>
-        <button id="btnExportMd" class="px-3 py-2 rounded-xl text-sm font-medium bg-slate-900 text-white hover:bg-slate-800">Export Markdown</button>
+        <button id="btnPrint" class="px-3 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-orange-400 to-amber-400 text-white hover:from-orange-500 hover:to-amber-500 shadow-lg shadow-orange-200 transition-all duration-200">Print</button>
+        <button id="btnExportMd" class="px-3 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-200 transition-all duration-200">Export Markdown</button>
       </div>
     </div>
   </header>
@@ -49,37 +49,37 @@
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
     <!-- Left Column: Input Panel -->
     <aside class="lg:col-span-4 space-y-6">
-      <section class="bg-white shadow-sm rounded-2xl border border-slate-200">
-        <div class="p-5 border-b border-slate-100">
-          <h2 class="font-semibold">1) Provide Inputs</h2>
-          <p class="text-sm text-slate-500">Upload or paste a JSON describing your system architecture, ATT&CK techniques, and known CVEs.</p>
+      <section class="bg-gradient-to-br from-blue-50 to-indigo-50 shadow-xl rounded-2xl border border-blue-200/50 backdrop-blur-sm">
+        <div class="p-5 border-b border-blue-200/50 bg-gradient-to-r from-blue-500/10 to-indigo-500/10">
+          <h2 class="font-semibold text-blue-900">1) Provide Inputs</h2>
+          <p class="text-sm text-blue-700">Upload or paste a JSON describing your system architecture, ATT&CK techniques, and known CVEs.</p>
         </div>
         <div class="p-5 space-y-4">
-          <label class="block text-sm font-medium">Upload JSON file</label>
-          <input id="fileInput" type="file" accept="application/json" class="block w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-slate-900 file:text-white hover:file:bg-slate-800" />
+          <label class="block text-sm font-medium text-blue-900">Upload JSON file</label>
+          <input id="fileInput" type="file" accept="application/json" class="block w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-gradient-to-r file:from-purple-500 file:to-indigo-500 file:text-white hover:file:from-purple-600 hover:file:to-indigo-600 file:shadow-lg file:shadow-purple-200 file:transition-all file:duration-200" />
 
           <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-500">or</span>
-            <button id="btnLoadSample" class="text-xs px-2 py-1 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500">Load Sample JSON</button>
+            <span class="text-xs text-blue-600">or</span>
+            <button id="btnLoadSample" class="text-xs px-2 py-1 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 shadow-lg shadow-cyan-200 transition-all duration-200">Load Sample JSON</button>
           </div>
 
-          <label class="block text-sm font-medium">Paste JSON</label>
-          <textarea id="jsonInput" rows="10" class="w-full rounded-xl border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder='{"architecture":{...}, "attack":{...}, "cves":[...]}'></textarea>
+          <label class="block text-sm font-medium text-blue-900">Paste JSON</label>
+          <textarea id="jsonInput" rows="10" class="w-full rounded-xl border-blue-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white/70 backdrop-blur-sm" placeholder='{"architecture":{...}, "attack":{...}, "cves":[...]}'></textarea>
 
           <div class="flex items-center gap-2">
-            <button id="btnValidate" class="px-3 py-2 rounded-xl text-sm font-medium bg-white border border-slate-200 hover:bg-slate-50">Validate</button>
-            <button id="btnGenerate" class="px-3 py-2 rounded-xl text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-500">Generate Plan & Runbooks</button>
+            <button id="btnValidate" class="px-3 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-rose-400 to-pink-500 text-white hover:from-rose-500 hover:to-pink-600 shadow-lg shadow-rose-200 transition-all duration-200">Validate</button>
+            <button id="btnGenerate" class="px-3 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-emerald-500 to-green-500 text-white hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-200 transition-all duration-200">Generate Plan & Runbooks</button>
           </div>
           <p id="validateMsg" class="text-xs text-slate-500"></p>
         </div>
       </section>
 
-      <section class="bg-white shadow-sm rounded-2xl border border-slate-200">
-        <div class="p-5 border-b border-slate-100">
-          <h2 class="font-semibold">Assumptions & Scope</h2>
+      <section class="bg-gradient-to-br from-amber-50 to-orange-50 shadow-xl rounded-2xl border border-amber-200/50 backdrop-blur-sm">
+        <div class="p-5 border-b border-amber-200/50 bg-gradient-to-r from-amber-500/10 to-orange-500/10">
+          <h2 class="font-semibold text-amber-900">Assumptions & Scope</h2>
         </div>
-        <div class="p-5 text-sm text-slate-600 space-y-3">
-          <p>This demo runs locally in your browser and <span class="font-semibold">simulates</span> an AI pipeline. No data leaves your device. The generation uses static knowledge packs and heuristic rules.</p>
+        <div class="p-5 text-sm text-amber-800 space-y-3">
+          <p>This demo runs locally in your browser and <span class="font-semibold text-orange-700">simulates</span> an AI pipeline. No data leaves your device. The generation uses static knowledge packs and heuristic rules.</p>
           <ul class="list-disc pl-5 space-y-1">
             <li>Maps components (e.g., Java Spring, React, Postgres, NGINX) to ATT&CK techniques.</li>
             <li>Drafts a resilience plan (RTO/RPO, backup/DR, monitoring, controls) and incident runbooks.</li>
@@ -92,13 +92,16 @@
 
     <!-- Right Column: Output Panel -->
     <section class="lg:col-span-8 space-y-6">
-      <div class="bg-white shadow-sm rounded-2xl border border-slate-200">
-        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+      <div class="bg-gradient-to-br from-violet-50 to-indigo-50 shadow-xl rounded-2xl border border-violet-200/50 backdrop-blur-sm">
+        <div class="p-5 border-b border-violet-200/50 bg-gradient-to-r from-violet-500/10 to-indigo-500/10 flex items-center justify-between">
           <div>
-            <h2 class="font-semibold">2) Results</h2>
-            <p class="text-sm text-slate-500">Overview, Resilience Plan, Runbooks, ATT&CK mapping, CVEs, and Best Practices</p>
+            <h2 class="font-semibold text-violet-900">2) Results</h2>
+            <p class="text-sm text-violet-700">Overview, Resilience Plan, Runbooks, ATT&CK mapping, CVEs, and Best Practices</p>
           </div>
-          <div id="loading" class="hidden items-center gap-3 text-slate-500"><span class="spinner"></span><span class="text-sm">Synthesizing…</span></div>
+          <div id="loading" class="hidden items-center gap-3 text-violet-600">
+            <span class="spinner border-violet-400"></span>
+            <span class="text-sm font-medium">Synthesizing…</span>
+          </div>
         </div>
 
         <!-- Tabs -->
@@ -126,13 +129,13 @@
       </div>
 
       <!-- Knowledge Packs (collapsible) -->
-      <section class="bg-white shadow-sm rounded-2xl border border-slate-200">
+      <section class="bg-gradient-to-br from-emerald-50 to-teal-50 shadow-xl rounded-2xl border border-emerald-200/50 backdrop-blur-sm">
         <details open>
-          <summary class="cursor-pointer select-none px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <span class="font-semibold">Built‑in Knowledge Packs (Simulated)</span>
-            <span class="text-xs text-slate-500">Click to toggle</span>
+          <summary class="cursor-pointer select-none px-5 py-4 border-b border-emerald-200/50 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 flex items-center justify-between hover:from-emerald-500/20 hover:to-teal-500/20 transition-all duration-200">
+            <span class="font-semibold text-emerald-900">Built‑in Knowledge Packs (Simulated)</span>
+            <span class="text-xs text-emerald-600 font-medium">Click to toggle</span>
           </summary>
-          <div class="p-5 grid sm:grid-cols-2 gap-6 text-sm text-slate-700">
+          <div class="p-5 grid sm:grid-cols-2 gap-6 text-sm text-emerald-800">
             <div>
               <h3 class="font-semibold mb-2">ATT&CK Technique Library (subset)</h3>
               <ul class="list-disc pl-5 space-y-1" id="libAttack"></ul>
@@ -147,7 +150,7 @@
     </section>
   </main>
 
-  <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 text-xs text-slate-500">
+  <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 text-xs text-violet-600/80">
     <p>Demo only. Generated content is for planning and educational purposes; validate before production use.</p>
   </footer>
 
@@ -376,27 +379,30 @@
     function renderOverview(input, out) {
       const arch = input.architecture || { components: [] };
       const sum = summarizeArchitecture(arch);
-      const comps = arch.components.map(c => `<li><span class="font-medium">${c.name}</span> <span class="text-slate-500">(${c.type})</span> — deps: ${c.dependencies?.join(', ') || 'none'}</li>`).join('');
+      const comps = arch.components.map(c => `<li><span class="font-medium text-indigo-700">${c.name}</span> <span class="text-slate-500">(${c.type})</span> — deps: ${c.dependencies?.join(', ') || 'none'}</li>`).join('');
       byId('panel-overview').innerHTML = `
         <div class="space-y-4">
-          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <div class="text-sm text-slate-600">${sum}</div>
+          <div class="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
+            <div class="text-sm text-blue-800 font-medium">${sum}</div>
           </div>
           <div>
-            <h3 class="font-semibold mb-2">Components</h3>
+            <h3 class="font-semibold mb-2 text-slate-800">Components</h3>
             <ul class="list-disc pl-5 space-y-1">${comps}</ul>
           </div>
           <div>
-            <h3 class="font-semibold mb-2">Technique Coverage (by component)</h3>
+            <h3 class="font-semibold mb-2 text-slate-800">Technique Coverage (by component)</h3>
             <div class="grid sm:grid-cols-2 gap-4">
-              ${out.compMappings.map(m => `
-                <div class="p-4 rounded-xl border border-slate-200">
-                  <div class="font-semibold">${m.component.name}</div>
+              ${out.compMappings.map((m, i) => {
+                const colors = ['from-red-50 to-rose-50 border-red-200', 'from-blue-50 to-indigo-50 border-blue-200', 'from-green-50 to-emerald-50 border-green-200', 'from-yellow-50 to-amber-50 border-yellow-200', 'from-purple-50 to-violet-50 border-purple-200', 'from-pink-50 to-fuchsia-50 border-pink-200'];
+                const colorClass = colors[i % colors.length];
+                return `
+                <div class="p-4 rounded-xl bg-gradient-to-br ${colorClass} shadow-sm">
+                  <div class="font-semibold text-slate-800">${m.component.name}</div>
                   <ul class="mt-2 list-disc pl-5 text-sm space-y-1">
-                    ${m.techniques.map(t => `<li><span class="font-medium">${t.id}</span> ${t.name} <span class="text-slate-500">(${t.phase})</span></li>`).join('')}
+                    ${m.techniques.map(t => `<li><span class="font-medium text-red-600">${t.id}</span> ${t.name} <span class="text-slate-500">(${t.phase})</span></li>`).join('')}
                   </ul>
                 </div>
-              `).join('')}
+              `}).join('')}
             </div>
           </div>
         </div>`;
@@ -404,10 +410,11 @@
 
     function renderPlan(input, out) {
       const p = out.plan;
-      const strategy = p.strategy.map(s => `
-        <details class="group border border-slate-200 rounded-xl">
-          <summary class="cursor-pointer px-4 py-3 font-semibold bg-slate-50 rounded-xl group-open:rounded-b-none">${s.h}</summary>
-          <div class="px-4 py-3 border-t border-slate-200 rounded-b-xl">
+      const strategyColors = ['border-blue-200 bg-blue-50', 'border-green-200 bg-green-50', 'border-purple-200 bg-purple-50', 'border-orange-200 bg-orange-50', 'border-pink-200 bg-pink-50'];
+      const strategy = p.strategy.map((s, i) => `
+        <details class="group border ${strategyColors[i % strategyColors.length]} rounded-xl shadow-sm">
+          <summary class="cursor-pointer px-4 py-3 font-semibold bg-gradient-to-r from-white/50 to-white/80 rounded-xl group-open:rounded-b-none hover:from-white/80 hover:to-white transition-all duration-200">${s.h}</summary>
+          <div class="px-4 py-3 border-t border-slate-200 rounded-b-xl bg-white/30">
             <ul class="list-disc pl-5 space-y-1 text-sm">${s.b.map(x => `<li>${x}</li>`).join('')}</ul>
           </div>
         </details>`).join('');
@@ -415,22 +422,25 @@
       byId('panel-plan').innerHTML = `
         <div class="space-y-4">
           <div class="grid sm:grid-cols-2 gap-4">
-            <div class="p-4 rounded-xl border border-slate-200">
-              <div class="text-xs text-slate-500">System</div>
-              <div class="font-semibold">${p.summary.name}</div>
+            <div class="p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 shadow-sm">
+              <div class="text-xs text-indigo-600 font-medium">System</div>
+              <div class="font-semibold text-indigo-900">${p.summary.name}</div>
             </div>
-            <div class="p-4 rounded-xl border border-slate-200">
+            <div class="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 shadow-sm">
               <div class="grid grid-cols-3 gap-2 text-center">
-                <div><div class="text-xs text-slate-500">Env</div><div class="font-semibold">${p.summary.environment}</div></div>
-                <div><div class="text-xs text-slate-500">RTO</div><div class="font-semibold">${p.summary.rtoHours}h</div></div>
-                <div><div class="text-xs text-slate-500">RPO</div><div class="font-semibold">${p.summary.rpoMinutes}m</div></div>
+                <div><div class="text-xs text-emerald-600 font-medium">Env</div><div class="font-semibold text-emerald-900">${p.summary.environment}</div></div>
+                <div><div class="text-xs text-blue-600 font-medium">RTO</div><div class="font-semibold text-blue-900">${p.summary.rtoHours}h</div></div>
+                <div><div class="text-xs text-purple-600 font-medium">RPO</div><div class="font-semibold text-purple-900">${p.summary.rpoMinutes}m</div></div>
               </div>
             </div>
           </div>
           <div>
-            <h3 class="font-semibold mb-2">Standards</h3>
+            <h3 class="font-semibold mb-2 text-slate-800">Standards</h3>
             <div class="flex flex-wrap gap-2">
-              ${p.summary.standards.map(s => `<span class="px-2 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs">${s}</span>`).join('')}
+              ${p.summary.standards.map((s, i) => {
+                const badgeColors = ['bg-gradient-to-r from-blue-400 to-indigo-500', 'bg-gradient-to-r from-green-400 to-emerald-500', 'bg-gradient-to-r from-purple-400 to-violet-500'];
+                return `<span class="px-3 py-1 rounded-full ${badgeColors[i % badgeColors.length]} text-white text-xs font-medium shadow-lg">${s}</span>`;
+              }).join('')}
             </div>
           </div>
           <div class="space-y-3">${strategy}</div>
@@ -472,10 +482,33 @@
     }
 
     function renderCVEs(input, out) {
+      const getSeverityColor = (severity) => {
+        switch(severity.toLowerCase()) {
+          case 'critical': return 'border-red-300 bg-gradient-to-br from-red-50 to-rose-50';
+          case 'high': return 'border-orange-300 bg-gradient-to-br from-orange-50 to-amber-50';  
+          case 'medium': return 'border-yellow-300 bg-gradient-to-br from-yellow-50 to-amber-50';
+          case 'low': return 'border-green-300 bg-gradient-to-br from-green-50 to-emerald-50';
+          default: return 'border-gray-300 bg-gradient-to-br from-gray-50 to-slate-50';
+        }
+      };
+      
+      const getSeverityTextColor = (severity) => {
+        switch(severity.toLowerCase()) {
+          case 'critical': return 'text-red-700';
+          case 'high': return 'text-orange-700';  
+          case 'medium': return 'text-yellow-700';
+          case 'low': return 'text-green-700';
+          default: return 'text-gray-700';
+        }
+      };
+      
       byId('panel-cves').innerHTML = out.cveTasks.map(c => `
-        <details class="group border border-slate-200 rounded-xl">
-          <summary class="cursor-pointer px-4 py-3 font-semibold bg-slate-50 rounded-xl group-open:rounded-b-none">${c.id} • ${c.title} <span class="text-xs text-slate-500">(${c.componentType} • ${c.severity})</span></summary>
-          <div class="px-4 py-3 border-t border-slate-200 rounded-b-xl">
+        <details class="group border ${getSeverityColor(c.severity)} rounded-xl shadow-sm">
+          <summary class="cursor-pointer px-4 py-3 font-semibold bg-gradient-to-r from-white/50 to-white/80 rounded-xl group-open:rounded-b-none hover:from-white/80 hover:to-white transition-all duration-200">
+            ${c.id} • ${c.title} 
+            <span class="text-xs ${getSeverityTextColor(c.severity)} font-bold ml-2">(${c.componentType} • ${c.severity.toUpperCase()})</span>
+          </summary>
+          <div class="px-4 py-3 border-t border-slate-200 rounded-b-xl bg-white/30">
             <ol class="list-decimal pl-6 text-sm space-y-1">${c.tasks.map(t => `<li>${t}</li>`).join('')}</ol>
           </div>
         </details>
@@ -483,10 +516,38 @@
     }
 
     function renderBest(input, out) {
+      const getTagColor = (tag) => {
+        const colors = {
+          'web': 'border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50',
+          'api': 'border-green-200 bg-gradient-to-br from-green-50 to-emerald-50', 
+          'frontend': 'border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50',
+          'backend': 'border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50',
+          'db': 'border-red-200 bg-gradient-to-br from-red-50 to-rose-50',
+          'ops': 'border-cyan-200 bg-gradient-to-br from-cyan-50 to-teal-50',
+          'platform': 'border-pink-200 bg-gradient-to-br from-pink-50 to-fuchsia-50',
+          'network': 'border-yellow-200 bg-gradient-to-br from-yellow-50 to-amber-50'
+        };
+        return colors[tag] || 'border-gray-200 bg-gradient-to-br from-gray-50 to-slate-50';
+      };
+      
+      const getTagTextColor = (tag) => {
+        const colors = {
+          'web': 'text-blue-600',
+          'api': 'text-green-600', 
+          'frontend': 'text-purple-600',
+          'backend': 'text-orange-600',
+          'db': 'text-red-600',
+          'ops': 'text-cyan-600',
+          'platform': 'text-pink-600',
+          'network': 'text-yellow-600'
+        };
+        return colors[tag] || 'text-gray-600';
+      };
+      
       const blocks = Object.entries(out.bestByTag).map(([tag, arr]) => `
-        <div class="p-4 rounded-xl border border-slate-200">
-          <div class="uppercase text-[11px] tracking-wide text-slate-500 mb-1">${tag}</div>
-          <ul class="list-disc pl-5 text-sm space-y-1">${arr.map(x => `<li>${x.text}</li>`).join('')}</ul>
+        <div class="p-4 rounded-xl ${getTagColor(tag)} border shadow-sm">
+          <div class="uppercase text-[11px] tracking-wide ${getTagTextColor(tag)} font-bold mb-2">${tag}</div>
+          <ul class="list-disc pl-5 text-sm space-y-1 text-slate-700">${arr.map(x => `<li>${x.text}</li>`).join('')}</ul>
         </div>`).join('');
       byId('panel-best').innerHTML = `<div class="grid sm:grid-cols-2 gap-4">${blocks}</div>`;
     }
@@ -543,10 +604,10 @@
     function renderExport(input, out) {
       byId('panel-export').innerHTML = `
         <div class="space-y-3">
-          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-sm">Export your generated content as Markdown or JSON for your wiki/runbooks repository.</div>
-          <div class="flex flex-wrap gap-2">
-            <button id="btnDlMd" class="px-3 py-2 rounded-xl text-sm font-medium bg-slate-900 text-white hover:bg-slate-800">Download Markdown</button>
-            <button id="btnDlJson" class="px-3 py-2 rounded-xl text-sm font-medium bg-white border border-slate-200 hover:bg-slate-50">Download JSON</button>
+          <div class="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 text-sm shadow-sm">Export your generated content as Markdown or JSON for your wiki/runbooks repository.</div>
+          <div class="flex flex-wrap gap-3">
+            <button id="btnDlMd" class="px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-200 transition-all duration-200">📄 Download Markdown</button>
+            <button id="btnDlJson" class="px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-violet-500 to-purple-500 text-white hover:from-violet-600 hover:to-purple-600 shadow-lg shadow-violet-200 transition-all duration-200">📋 Download JSON</button>
           </div>
         </div>`;
 
@@ -571,13 +632,36 @@
         best: byId('panel-best'),
         export: byId('panel-export'),
       };
+      
+      // Color schemes for different tabs
+      const tabColors = {
+        overview: 'from-blue-500 to-indigo-500',
+        plan: 'from-green-500 to-emerald-500', 
+        runbooks: 'from-purple-500 to-violet-500',
+        attack: 'from-red-500 to-rose-500',
+        cves: 'from-orange-500 to-amber-500',
+        best: 'from-teal-500 to-cyan-500',
+        export: 'from-pink-500 to-fuchsia-500'
+      };
+      
       btns.forEach(b => {
-        b.classList.add('px-3','py-2','rounded-xl','text-sm','font-medium','bg-white','border','border-slate-200','hover:bg-slate-50');
+        b.classList.add('px-3','py-2','rounded-xl','text-sm','font-medium','bg-white/70','border','border-slate-200/50','hover:bg-white','hover:shadow-lg','transition-all','duration-200','backdrop-blur-sm');
       });
+      
       function activate(name) {
-        btns.forEach(b => b.classList.toggle('bg-slate-900', b.dataset.tab === name));
-        btns.forEach(b => b.classList.toggle('text-white', b.dataset.tab === name));
-        btns.forEach(b => b.classList.toggle('border-slate-900', b.dataset.tab === name));
+        btns.forEach(b => {
+          const isActive = b.dataset.tab === name;
+          b.classList.toggle('bg-gradient-to-r', isActive);
+          if (isActive) {
+            b.className = b.className.replace(/from-\w+-\d+\s+to-\w+-\d+/g, '');
+            b.classList.add(...tabColors[name].split(' '));
+            b.classList.add('text-white', 'shadow-lg', 'border-transparent');
+          } else {
+            b.className = b.className.replace(/from-\w+-\d+\s+to-\w+-\d+/g, '');
+            b.classList.remove('text-white', 'shadow-lg', 'border-transparent');
+            b.classList.add('text-slate-700', 'border-slate-200/50');
+          }
+        });
         Object.entries(panels).forEach(([k, p]) => p.classList.toggle('hidden', k !== name));
       }
       document.getElementById('tabs').addEventListener('click', (e) => {
