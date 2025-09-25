@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Resilience Plan Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.13.0/cdn.min.js" defer></script>
+    <style>
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 3s ease-in-out infinite;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .gradient-animate {
+            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #667eea);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        .glass-morphism {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-900 text-white" x-data="resilienceApp()">
+    <!-- Background Effect -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse-subtle"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse-subtle"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="relative z-10 border-b border-gray-800">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 gradient-animate rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                        </svg>
+                    </div>
+                    <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                        Resilience Plan Generator
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-2 text-sm">
+                    <span class="px-3 py-1 bg-green-500/20 text-green-400 rounded-full border border-green-500/30">
+                        MITRE ATT&CK Enabled
+                    </span>
+                    <span class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full border border-blue-500/30">
+                        CVE Intelligence Active
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="relative z-10 container mx-auto px-6 py-8">
+        <!-- System Architecture Input -->
+        <div class="glass-morphism rounded-xl p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                System Architecture Configuration
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">System Name</label>
+                    <input 
+                        type="text" 
+                        x-model="systemConfig.name"
+                        class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                        placeholder="e.g., Production API Gateway"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Environment</label>
+                    <select 
+                        x-model="systemConfig.environment"
+                        class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                    >
+                        <option>Production</option>
+                        <option>Staging</option>
+                        <option>Development</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-2 text-gray-300">Architecture Components</label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <template x-for="component in components" :key="component">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                :value="component"
+                                @change="toggleComponent(component)"
+                                class="w-4 h-4 text-purple-600 bg-gray-800 border-gray-600 rounded focus:ring-purple-500"
+                            >
+                            <span class="text-sm" x-text="component"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+
+            <button 
+                @click="analyzeSystem()"
+                :disabled="loading"
+                class="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-lg font-semibold hover:from-purple-700 hover:to-cyan-700 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                <span x-show="!loading" class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                    Generate Resilience Plan
+                </span>
+                <span x-show="loading" class="flex items-center">
+                    <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Analyzing System...
+                </span>
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div x-show="analysisComplete" x-transition class="space-y-6">
+            <!-- Risk Score -->
+            <div class="glass-morphism rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">Overall Risk Assessment</h3>
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="relative pt-1">
+                            <div class="flex mb-2 items-center justify-between">
+                                <div>
+                                    <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full"
+                                          :class="getRiskColor(results.riskScore)">
+                                        Risk Score: <span x-text="results.riskScore"></span>%
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-gray-700">
+                                <div :style="`width: ${results.riskScore}%`" 
+                                     :class="getRiskGradient(results.riskScore)"
+                                     class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-500">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ml-8 text-center">
+                        <div class="text-3xl font-bold" :class="getRiskTextColor(results.riskScore)" x-text="getRiskLevel(results.riskScore)"></div>
+                        <div class="text-sm text-gray-400">Risk Level</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MITRE ATT&CK Techniques -->
+            <div class="glass-morphism rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    Detected MITRE ATT&CK Techniques
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <template x-for="technique in results.mitreAttacks" :key="technique.id">
+                        <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-red-500/50 transition">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-red-400 font-mono text-sm" x-text="technique.id"></span>
+                                <span class="px-2 py-1 text-xs rounded-full"
+                                      :class="getSeverityClass(technique.severity)"
+                                      x-text="technique.severity"></span>
+                            </div>
+                            <h4 class="font-semibold mb-1" x-text="technique.name"></h4>
+                            <p class="text-sm text-gray-400" x-text="technique.description"></p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- CVE Vulnerabilities -->
+            <div class="glass-morphism rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01"></path>
+                    </svg>
+                    Critical CVE Vulnerabilities
+                </h3>
+                <div class="space-y-3">
+                    <template x-for="cve in results.vulnerabilities" :key="cve.id">
+                        <div class="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-yellow-500/50 transition">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-3 mb-2">
+                                        <span class="font-mono text-yellow-400" x-text="cve.id"></span>
+                                        <span class="px-2 py-1 text-xs bg-orange-500/20 text-orange-400 rounded-full">
+                                            CVSS: <span x-text="cve.cvss"></span>
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-300" x-text="cve.description"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="glass-morphism rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Security Recommendations
+                </h3>
+                <div class="space-y-3">
+                    <template x-for="(rec, index) in results.recommendations" :key="index">
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0 w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center mt-0.5">
+                                <span class="text-green-400 text-sm font-semibold" x-text="index + 1"></span>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-green-400 mb-1" x-text="rec.title"></h4>
+                                <p class="text-sm text-gray-300" x-text="rec.description"></p>
+                                <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full"
+                                      :class="getPriorityClass(rec.priority)"
+                                      x-text="rec.priority + ' Priority'"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Static JSON data simulating API response
+        const staticAPIResponse = {
+            riskScore: 72,
+            mitreAttacks: [
+                {
+                    id: "T1190",
+                    name: "Exploit Public-Facing Application",
+                    description: "Adversaries may attempt to exploit a weakness in an Internet-facing host or system.",
+                    severity: "HIGH"
+                },
+                {
+                    id: "T1078",
+                    name: "Valid Accounts",
+                    description: "Adversaries may obtain and abuse credentials of existing accounts.",
+                    severity: "MEDIUM"
+                },
+                {
+                    id: "T1040",
+                    name: "Network Sniffing",
+                    description: "Adversaries may sniff network traffic to capture information.",
+                    severity: "MEDIUM"
+                },
+                {
+                    id: "T1053",
+                    name: "Scheduled Task/Job",
+                    description: "Adversaries may abuse task scheduling functionality to facilitate persistence.",
+                    severity: "LOW"
+                }
+            ],
+            vulnerabilities: [
+                {
+                    id: "CVE-2024-3456",
+                    cvss: 9.8,
+                    description: "Critical authentication bypass vulnerability in API Gateway allowing unauthorized access."
+                },
+                {
+                    id: "CVE-2024-2234",
+                    cvss: 8.5,
+                    description: "SQL injection vulnerability in database connector module."
+                },
+                {
+                    id: "CVE-2024-1122",
+                    cvss: 7.2,
+                    description: "Remote code execution through unvalidated input in message queue handler."
+                }
+            ],
+            recommendations: [
+                {
+                    title: "Implement Zero Trust Architecture",
+                    description: "Deploy microsegmentation and enforce least privilege access across all system components.",
+                    priority: "HIGH"
+                },
+                {
+                    title: "Enable Advanced Threat Detection",
+                    description: "Integrate SIEM with ML-based anomaly detection for real-time threat identification.",
+                    priority: "HIGH"
+                },
+                {
+                    title: "Patch Management Protocol",
+                    description: "Establish automated vulnerability scanning and patch deployment within 24 hours for critical CVEs.",
+                    priority: "MEDIUM"
+                },
+                {
+                    title: "Incident Response Automation",
+                    description: "Implement automated playbooks for common attack scenarios based on MITRE ATT&CK framework.",
+                    priority: "MEDIUM"
+                },
+                {
+                    title: "Regular Security Audits",
+                    description: "Schedule quarterly penetration testing and security assessments.",
+                    priority: "LOW"
+                }
+            ]
+        };
+
+        function resilienceApp() {
+            return {
+                loading: false,
+                analysisComplete: false,
+                systemConfig: {
+                    name: '',
+                    environment: 'Production'
+                },
+                selectedComponents: [],
+                components: [
+                    'API Gateway', 'Load Balancer', 'Kubernetes', 'Docker',
+                    'PostgreSQL', 'MongoDB', 'Redis', 'Kafka',
+                    'AWS S3', 'CDN', 'WAF', 'VPN'
+                ],
+                results: {},
+
+                toggleComponent(component) {
+                    const index = this.selectedComponents.indexOf(component);
+                    if (index === -1) {
+                        this.selectedComponents.push(component);
+                    } else {
+                        this.selectedComponents.splice(index, 1);
+                    }
+                },
+
+                async analyzeSystem() {
+                    if (!this.systemConfig.name || this.selectedComponents.length === 0) {
+                        alert('Please enter a system name and select at least one component');
+                        return;
+                    }
+
+                    this.loading = true;
+                    this.analysisComplete = false;
+
+                    // Simulate API call with delay
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+
+                    // Simulate fetching data from API (using static data)
+                    try {
+                        // In real implementation, this would be:
+                        // const response = await fetch('/api/analyze', {
+                        //     method: 'POST',
+                        //     headers: { 'Content-Type': 'application/json' },
+                        //     body: JSON.stringify({
+                        //         system: this.systemConfig,
+                        //         components: this.selectedComponents
+                        //     })
+                        // });
+                        // this.results = await response.json();
+
+                        // Simulate API response with some randomization
+                        this.results = {
+                            ...staticAPIResponse,
+                            riskScore: Math.floor(Math.random() * 30) + 60, // Random between 60-90
+                        };
+
+                        this.analysisComplete = true;
+                    } catch (error) {
+                        console.error('Error analyzing system:', error);
+                        alert('Failed to analyze system. Please try again.');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                getRiskColor(score) {
+                    if (score >= 80) return 'bg-red-500/20 text-red-400';
+                    if (score >= 60) return 'bg-orange-500/20 text-orange-400';
+                    if (score >= 40) return 'bg-yellow-500/20 text-yellow-400';
+                    return 'bg-green-500/20 text-green-400';
+                },
+
+                getRiskGradient(score) {
+                    if (score >= 80) return 'bg-gradient-to-r from-red-500 to-red-600';
+                    if (score >= 60) return 'bg-gradient-to-r from-orange-500 to-orange-600';
+                    if (score >= 40) return 'bg-gradient-to-r from-yellow-500 to-yellow-600';
+                    return 'bg-gradient-to-r from-green-500 to-green-600';
+                },
+
+                getRiskTextColor(score) {
+                    if (score >= 80) return 'text-red-400';
+                    if (score >= 60) return 'text-orange-400';
+                    if (score >= 40) return 'text-yellow-400';
+                    return 'text-green-400';
+                },
+
+                getRiskLevel(score) {
+                    if (score >= 80) return 'CRITICAL';
+                    if (score >= 60) return 'HIGH';
+                    if (score >= 40) return 'MEDIUM';
+                    return 'LOW';
+                },
+
+                getSeverityClass(severity) {
+                    const classes = {
+                        'HIGH': 'bg-red-500/20 text-red-400',
+                        'MEDIUM': 'bg-yellow-500/20 text-yellow-400',
+                        'LOW': 'bg-blue-500/20 text-blue-400'
+                    };
+                    return classes[severity] || classes['LOW'];
+                },
+
+                getPriorityClass(priority) {
+                    const classes = {
+                        'HIGH': 'bg-red-500/20 text-red-400 border border-red-500/30',
+                        'MEDIUM': 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
+                        'LOW': 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                    };
+                    return classes[priority] || classes['LOW'];
+                }
+            }
+        }
+    </script>
+</body>
+</html>
