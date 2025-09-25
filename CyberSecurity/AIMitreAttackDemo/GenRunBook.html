@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resilience Plan & Runbook Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+        }
+        .tab-active {
+            border-bottom-color: #3b82f6; /* border-blue-500 */
+            color: #ffffff; /* text-white */
+        }
+        .tab-inactive {
+            border-bottom-color: transparent;
+            color: #9ca3af; /* text-gray-400 */
+        }
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3b82f6; /* Blue */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Custom scrollbar for better aesthetics in dark mode */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; /* bg-gray-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; /* bg-gray-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* bg-gray-500 */
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <!-- Header Section -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2">AI Resilience Plan & Runbook Generator</h1>
+            <p class="text-lg text-gray-400">Upload your system architecture, CVEs, and security frameworks to generate a comprehensive resilience strategy.</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Input Section -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-white mb-4 border-b border-gray-700 pb-2">1. Provide System Context</h2>
+                
+                <!-- System Architecture Upload -->
+                <div>
+                    <label for="architecture-file" class="block text-sm font-medium text-gray-300 mb-2">Upload System Design Architecture (JSON)</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <div class="flex text-sm text-gray-400">
+                                <label for="architecture-file" class="relative cursor-pointer bg-gray-700 rounded-md font-medium text-blue-400 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-gray-800 focus-within:ring-blue-500 p-1">
+                                    <span>Upload a file</span>
+                                    <input id="architecture-file" name="architecture-file" type="file" class="sr-only" accept=".json">
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p id="file-name" class="text-xs text-gray-500">JSON up to 10MB</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CVEs Input -->
+                <div class="mt-6">
+                    <label for="cve-input" class="block text-sm font-medium text-gray-300">Known CVEs (Comma-separated)</label>
+                    <textarea id="cve-input" rows="3" class="mt-1 block w-full bg-gray-900 border-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2" placeholder="e.g., CVE-2023-4863, CVE-2021-44228"></textarea>
+                </div>
+
+                <!-- Frameworks Input -->
+                 <div class="mt-6">
+                    <label for="framework-input" class="block text-sm font-medium text-gray-300">Security Frameworks (Optional)</label>
+                    <input type="text" id="framework-input" class="mt-1 block w-full bg-gray-900 border-gray-700 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2" placeholder="e.g., MITRE ATT&CK, NIST CSF">
+                </div>
+
+                <!-- Generate Button -->
+                <div class="mt-8 text-center">
+                    <button id="generate-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105">
+                        Generate Resilience Plan
+                    </button>
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-white mb-4 border-b border-gray-700 pb-2">2. Generated Resilience Strategy</h2>
+                
+                <!-- Loading/Placeholder -->
+                <div id="output-placeholder" class="text-center text-gray-500 py-16">
+                    <svg class="mx-auto h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <p class="mt-4 text-lg">Your generated plan will appear here.</p>
+                </div>
+
+                <div id="output-loading" class="hidden text-center py-16">
+                    <div class="loader mx-auto"></div>
+                    <p class="mt-4 text-lg text-blue-400">AI is analyzing your system and generating the report...</p>
+                </div>
+
+                <!-- Tabs -->
+                <div id="output-content" class="hidden">
+                    <div class="border-b border-gray-700">
+                        <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                            <button id="tab-plan" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-active">Resilience Plan</button>
+                            <button id="tab-runbooks" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm tab-inactive">Runbooks</button>
+                        </nav>
+                    </div>
+
+                    <!-- Content Panes -->
+                    <div id="pane-plan" class="py-4 max-h-[60vh] overflow-y-auto">
+                        <!-- Resilience Plan Content will be injected here -->
+                    </div>
+                    <div id="pane-runbooks" class="hidden py-4 max-h-[60vh] overflow-y-auto">
+                        <!-- Runbooks Content will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const architectureFileInput = document.getElementById('architecture-file');
+        const fileNameDisplay = document.getElementById('file-name');
+        const cveInput = document.getElementById('cve-input');
+        const frameworkInput = document.getElementById('framework-input');
+        const generateBtn = document.getElementById('generate-btn');
+
+        const outputPlaceholder = document.getElementById('output-placeholder');
+        const outputLoading = document.getElementById('output-loading');
+        const outputContent = document.getElementById('output-content');
+
+        const tabPlan = document.getElementById('tab-plan');
+        const tabRunbooks = document.getElementById('tab-runbooks');
+        const panePlan = document.getElementById('pane-plan');
+        const paneRunbooks = document.getElementById('pane-runbooks');
+
+        let uploadedArchitecture = null;
+
+        // --- Mock Data ---
+        const sampleArchitecture = {
+            "appName": "CloudScale Analytics",
+            "components": [
+                { "name": "React Web UI", "type": "Frontend", "platform": "Vercel", "tech": ["React", "TypeScript"], "security": ["CSP", "HSTS"] },
+                { "name": "Node.js API Gateway", "type": "Backend", "platform": "AWS Lambda", "tech": ["Node.js", "Express"], "security": ["WAF", "JWT Auth"] },
+                { "name": "Python Data Processor", "type": "Microservice", "platform": "AWS ECS", "tech": ["Python", "Pandas"], "dependencies": ["ImageMagick"] },
+                { "name": "PostgreSQL DB", "type": "Database", "platform": "AWS RDS", "config": ["Encryption at Rest"], "version": "14.2" },
+                { "name": "Redis Cache", "type": "Cache", "platform": "AWS ElastiCache", "version": "7.0" },
+                { "name": "Auth0", "type": "Authentication", "provider": "Auth0", "features": ["MFA", "SSO"] }
+            ],
+            "networking": {
+                "vpc": "Yes",
+                "subnets": "Public/Private",
+                "firewall": "AWS Security Groups"
+            }
+        };
+        
+        const generatedPlanData = {
+            executiveSummary: "This AI-generated resilience plan identifies critical vulnerabilities and outlines a multi-layered defense strategy for the CloudScale Analytics application. Key focus areas include mitigating risks from dependency vulnerabilities (Log4j), securing the API gateway against injection attacks, and implementing robust incident response procedures based on the MITRE ATT&CK framework.",
+            risks: [
+                { 
+                    component: "Node.js API Gateway", 
+                    threat: "SQL Injection via Unsanitized Inputs", 
+                    cve: "N/A", 
+                    mitre: "T1505.003 - Server-Side Request Forgery",
+                    severity: "High"
+                },
+                { 
+                    component: "Python Data Processor", 
+                    threat: "Remote Code Execution via Log4j Vulnerability in a transitive dependency.", 
+                    cve: "CVE-2021-44228",
+                    mitre: "T1210 - Exploitation of Remote Services",
+                    severity: "Critical"
+                },
+                {
+                    component: "React Web UI",
+                    threat: "Credential Theft via Phishing",
+                    cve: "N/A",
+                    mitre: "T1566 - Phishing",
+                    severity: "Medium"
+                }
+            ],
+            recommendations: [
+                { area: "Preventative", control: "Implement strict input validation and parameterized queries on the API Gateway.", priority: "High" },
+                { area: "Preventative", control: "Update all dependencies for the Python Data Processor and conduct a Software Bill of Materials (SBoM) audit.", priority: "Critical" },
+                { area: "Detective", control: "Configure AWS WAF with rules to detect and block common injection patterns.", priority: "High" },
+                { area: "Detective", control: "Enable enhanced logging on all components and forward to a centralized SIEM for correlation.", priority: "Medium" },
+                { area: "Responsive", control: "Develop and test incident response runbooks for critical threat scenarios like RCE and data exfiltration.", priority: "High" },
+                { area: "Responsive", control: "Conduct mandatory phishing awareness training for all employees with access to production systems.", priority: "Medium" },
+            ]
+        };
+
+        const generatedRunbooksData = [
+            {
+                title: "Runbook: Potential RCE via Log4j (CVE-2021-44228)",
+                trigger: "Alert from AWS GuardDuty or WAF indicating a suspicious JNDI lookup pattern.",
+                steps: [
+                    { phase: "Identification", action: "Verify the alert is not a false positive. Correlate logs from the API Gateway and Python Data Processor to confirm the exploit attempt.", assignee: "SOC Analyst L1" },
+                    { phase: "Containment", action: "Immediately isolate the affected container instance by modifying its security group to deny all outbound traffic.", assignee: "Cloud Engineer" },
+                    { phase: "Containment", action: "Block the source IP address at the WAF and network ACL level.", assignee: "Security Engineer" },
+                    { phase: "Eradication", action: "Terminate the compromised container and redeploy a patched version from the CI/CD pipeline.", assignee: "DevOps Engineer" },
+                    { phase: "Eradication", action: "Perform a forensic analysis of the compromised instance's snapshot to determine the extent of the breach.", assignee: "Incident Response Lead" },
+                    { phase: "Recovery", action: "Monitor the patched service for any anomalous behavior. Gradually restore outbound traffic permissions.", assignee: "Cloud Engineer" },
+                    { phase: "Post-Mortem", action: "Conduct a root cause analysis (RCA). Update dependency scanning tools to prevent similar vulnerabilities in the future.", assignee: "All Stakeholders" }
+                ]
+            },
+            {
+                title: "Runbook: Phishing Attack & Credential Compromise",
+                trigger: "User reports a suspicious email, or Auth0 reports impossible travel or brute-force login attempts.",
+                steps: [
+                    { phase: "Identification", action: "Analyze email headers and content. Confirm user credentials have been compromised by checking login activity.", assignee: "SOC Analyst L1" },
+                    { phase: "Containment", action: "Force-expire the user's password and terminate all active sessions via the Auth0 dashboard.", assignee: "IT Support" },
+                    { phase: "Containment", action: "Scan user's machine for malware.", assignee: "IT Support" },
+                    { phase: "Eradication", action: "Block the phishing domain and sender in the email gateway.", assignee: "Security Engineer" },
+                    { phase: "Recovery", action: "Once the machine is clean, guide the user through a secure password reset process. Re-enable the account.", assignee: "IT Support" },
+                    { phase: "Post-Mortem", action: "Use the phishing email as a template for the next awareness training campaign.", assignee: "Security Awareness Lead" }
+                ]
+            }
+        ];
+
+        // --- Event Listeners ---
+        architectureFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && file.type === 'application/json') {
+                fileNameDisplay.textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        uploadedArchitecture = JSON.parse(event.target.result);
+                        console.log("Parsed architecture:", uploadedArchitecture);
+                    } catch (error) {
+                        fileNameDisplay.textContent = "Error: Invalid JSON file.";
+                        uploadedArchitecture = null;
+                    }
+                };
+                reader.readAsText(file);
+            } else {
+                fileNameDisplay.textContent = "Please upload a valid JSON file.";
+                uploadedArchitecture = null;
+            }
+        });
+
+        generateBtn.addEventListener('click', () => {
+            if (!uploadedArchitecture) {
+                // For this demo, if no file is uploaded, we'll use the sample data.
+                // In a real app, you might show an error.
+                uploadedArchitecture = sampleArchitecture;
+                 cveInput.value = cveInput.value || "CVE-2021-44228";
+                 frameworkInput.value = frameworkInput.value || "MITRE ATT&CK";
+            }
+            
+            // Simulate AI processing
+            outputPlaceholder.classList.add('hidden');
+            outputContent.classList.add('hidden');
+            outputLoading.classList.remove('hidden');
+
+            setTimeout(() => {
+                renderResiliencePlan(generatedPlanData);
+                renderRunbooks(generatedRunbooksData);
+                outputLoading.classList.add('hidden');
+                outputContent.classList.remove('hidden');
+            }, 2500); // Simulate a 2.5 second API call
+        });
+
+        tabPlan.addEventListener('click', () => {
+            switchTab('plan');
+        });
+
+        tabRunbooks.addEventListener('click', () => {
+            switchTab('runbooks');
+        });
+
+        // --- Functions ---
+        function switchTab(activeTab) {
+            if (activeTab === 'plan') {
+                tabPlan.classList.replace('tab-inactive', 'tab-active');
+                tabRunbooks.classList.replace('tab-active', 'tab-inactive');
+                panePlan.classList.remove('hidden');
+                paneRunbooks.classList.add('hidden');
+            } else {
+                tabRunbooks.classList.replace('tab-inactive', 'tab-active');
+                tabPlan.classList.replace('tab-active', 'tab-inactive');
+                paneRunbooks.classList.remove('hidden');
+                panePlan.classList.add('hidden');
+            }
+        }
+        
+        const severityClasses = {
+            "Critical": "bg-red-800 text-red-200",
+            "High": "bg-orange-800 text-orange-200",
+            "Medium": "bg-yellow-800 text-yellow-200",
+            "Low": "bg-blue-800 text-blue-200"
+        };
+        
+        function renderResiliencePlan(data) {
+            let html = `
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-blue-400">Executive Summary</h3>
+                        <p class="mt-2 text-gray-300">${data.executiveSummary}</p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-xl font-semibold text-blue-400">Identified Risks & Threats</h3>
+                        <div class="mt-2 flow-root">
+                           <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                                <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                                    <table class="min-w-full divide-y divide-gray-700">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-white sm:pl-0">Component</th>
+                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white">Threat</th>
+                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-white">Severity</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-800">
+                                            ${data.risks.map(risk => `
+                                                <tr>
+                                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-white sm:pl-0">${risk.component}</td>
+                                                    <td class="whitespace-normal px-3 py-4 text-sm text-gray-300">
+                                                        ${risk.threat} <br>
+                                                        <span class="text-xs text-gray-500">MITRE: ${risk.mitre} | CVE: ${risk.cve}</span>
+                                                    </td>
+                                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-300">
+                                                        <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${severityClasses[risk.severity] || 'bg-gray-700'}">${risk.severity}</span>
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold text-blue-400">Recommended Controls</h3>
+                         <ul role="list" class="mt-3 divide-y divide-gray-700">
+                            ${data.recommendations.map(rec => `
+                                <li class="py-3">
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm text-gray-300">${rec.control}</p>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="inline-flex items-center rounded-full bg-gray-600 px-2.5 py-0.5 text-xs font-medium text-gray-300">${rec.area}</span>
+                                            <span class="text-xs font-semibold ${rec.priority === 'Critical' ? 'text-red-400' : rec.priority === 'High' ? 'text-orange-400' : 'text-yellow-400'}">${rec.priority} Priority</span>
+                                        </div>
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            panePlan.innerHTML = html;
+        }
+
+        function renderRunbooks(data) {
+            let html = `
+                <div class="space-y-8">
+                    ${data.map(runbook => `
+                        <div class="bg-gray-900/50 p-4 rounded-lg">
+                            <h4 class="text-lg font-bold text-blue-400">${runbook.title}</h4>
+                            <p class="text-sm text-gray-400 mt-1"><span class="font-semibold">Trigger:</span> ${runbook.trigger}</p>
+                            <div class="mt-4 border-t border-gray-700 pt-4">
+                                <ul class="space-y-3">
+                                    ${runbook.steps.map(step => `
+                                        <li class="flex items-start">
+                                            <div class="flex-shrink-0">
+                                                <span class="inline-flex h-8 w-24 items-center justify-center rounded-full bg-gray-700 text-xs font-medium text-gray-300">${step.phase}</span>
+                                            </div>
+                                            <div class="ml-4 flex-1">
+                                                <p class="text-sm text-gray-300">${step.action}</p>
+                                                <p class="text-xs text-gray-500">Assignee: ${step.assignee}</p>
+                                            </div>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            paneRunbooks.innerHTML = html;
+        }
+
+    </script>
+</body>
+</html>
