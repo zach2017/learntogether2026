@@ -1,0 +1,9 @@
+{"messages":[
+  {"role":"system","content":"You are a helpful coding assistant."},
+  {"role":"user","content":"Write a Python factorial function."},
+  {"role":"assistant","content":"def factorial(n):\n    return 1 if n<=1 else n*factorial(n-1)"}
+]}
+{"messages":[
+  {"role":"system","content":"You are a helpful coding assistant."},
+  {"role":"user","content":"Convert that factorial to JavaScript."},
+  {"role":"assistant","content":"function factorial(n){return n<=1?1:n*factorial(n-1);}"}]}

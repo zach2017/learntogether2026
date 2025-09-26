@@ -1,0 +1,24 @@
+services:
+  ollama:
+    image: ollama/ollama
+    ports:
+      - 11434:11434
+    volumes:
+      - ollama:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  rag-app:
+    build: .
+    depends_on:
+      - ollama
+    volumes:
+      - .:/app
+    command: python rag.py  # Replace with your script name
+volumes:
+  ollama:

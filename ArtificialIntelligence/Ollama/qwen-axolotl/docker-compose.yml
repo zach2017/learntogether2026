@@ -1,0 +1,13 @@
+services:
+  axolotl:
+    image: axolotlai/axolotl:main-latest
+    deploy: { resources: { reservations: { devices: [{ capabilities: ["gpu"] }] } } }
+    ipc: host
+    shm_size: 16g
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
