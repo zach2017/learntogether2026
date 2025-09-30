@@ -1,26 +1,29 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import React from 'react';
 import {
-  TextAtom,
-  NumberAtom,
-  DateAtom,
-  ButtonAtom,
-  CalculatedAtom,
-  HeaderAtom,
-  FilterMolecule,
-  CellMolecule,
-  PopupMolecule,
-  RowActionsMolecule,
-  TableOrganism,
   ColumnType,
   HeadingType,
   type ColumnConfig,
 } from './Demo';
 
+// Import all components (you'll need to export these from your main file)
+import { TextAtom } from './Demo';
+import { NumberAtom } from './Demo';
+import { DateAtom } from './Demo';
+import { ButtonAtom } from './Demo';
+import { CalculatedAtom } from './Demo';
+import { HeaderAtom } from './Demo';
+import { FilterMolecule } from './Demo';
+import { CellMolecule } from './Demo';
+import { PopupMolecule } from './Demo';
+import { RowActionsMolecule } from './Demo';
+import { TableOrganism } from './Demo';
+import DemoComponent from './Demo';
+
 // =============== ATOM STORIES ===============
 
 // TextAtom Stories
-export default {
+const TextAtomMeta: Meta<typeof TextAtom> = {
   title: 'Atoms/TextAtom',
   component: TextAtom,
   tags: ['autodocs'],
@@ -28,18 +31,20 @@ export default {
     value: { control: 'text' },
     clickable: { control: 'boolean' },
   },
-} as Meta<typeof TextAtom>;
+};
+
+export default TextAtomMeta;
 
 type TextAtomStory = StoryObj<typeof TextAtom>;
 
-export const Default: TextAtomStory = {
+export const TextDefault: TextAtomStory = {
   args: {
     value: 'Regular text value',
     clickable: false,
   },
 };
 
-export const Clickable: TextAtomStory = {
+export const TextClickable: TextAtomStory = {
   args: {
     value: 'Click me!',
     clickable: true,
@@ -47,7 +52,7 @@ export const Clickable: TextAtomStory = {
   },
 };
 
-export const LongText: TextAtomStory = {
+export const TextLong: TextAtomStory = {
   args: {
     value: 'This is a very long text value that demonstrates how the text atom handles longer content',
     clickable: false,
@@ -55,38 +60,38 @@ export const LongText: TextAtomStory = {
 };
 
 // NumberAtom Stories
-const NumberAtomMeta: Meta<typeof NumberAtom> = {
+export const NumberAtomMeta: Meta<typeof NumberAtom> = {
   title: 'Atoms/NumberAtom',
   component: NumberAtom,
   tags: ['autodocs'],
 };
 
-export const NumberAtomStories = NumberAtomMeta;
-
-export const SimpleNumber: StoryObj<typeof NumberAtom> = {
+export const NumberSimple: StoryObj<typeof NumberAtom> = {
   render: () => <NumberAtom value={42} />,
 };
 
-export const LargeNumber: StoryObj<typeof NumberAtom> = {
+export const NumberLarge: StoryObj<typeof NumberAtom> = {
   render: () => <NumberAtom value={1234567} />,
 };
 
-export const FormattedCurrency: StoryObj<typeof NumberAtom> = {
+export const NumberCurrency: StoryObj<typeof NumberAtom> = {
   render: () => <NumberAtom value={75000} format={(n) => `$${n.toLocaleString()}`} />,
 };
 
-export const FormattedPercentage: StoryObj<typeof NumberAtom> = {
+export const NumberPercentage: StoryObj<typeof NumberAtom> = {
   render: () => <NumberAtom value={0.85} format={(n) => `${(n * 100).toFixed(1)}%`} />,
 };
 
+export const NumberDecimal: StoryObj<typeof NumberAtom> = {
+  render: () => <NumberAtom value={3.14159} format={(n) => n.toFixed(2)} />,
+};
+
 // DateAtom Stories
-const DateAtomMeta: Meta<typeof DateAtom> = {
+export const DateAtomMeta: Meta<typeof DateAtom> = {
   title: 'Atoms/DateAtom',
   component: DateAtom,
   tags: ['autodocs'],
 };
-
-export const DateAtomStories = DateAtomMeta;
 
 export const DateString: StoryObj<typeof DateAtom> = {
   render: () => <DateAtom value="2023-01-15" />,
@@ -96,12 +101,16 @@ export const DateObject: StoryObj<typeof DateAtom> = {
   render: () => <DateAtom value={new Date('2023-06-20')} />,
 };
 
-export const RecentDate: StoryObj<typeof DateAtom> = {
+export const DateRecent: StoryObj<typeof DateAtom> = {
   render: () => <DateAtom value={new Date()} />,
 };
 
+export const DateOld: StoryObj<typeof DateAtom> = {
+  render: () => <DateAtom value="2020-03-15" />,
+};
+
 // ButtonAtom Stories
-const ButtonAtomMeta: Meta<typeof ButtonAtom> = {
+export const ButtonAtomMeta: Meta<typeof ButtonAtom> = {
   title: 'Atoms/ButtonAtom',
   component: ButtonAtom,
   tags: ['autodocs'],
@@ -114,9 +123,7 @@ const ButtonAtomMeta: Meta<typeof ButtonAtom> = {
   },
 };
 
-export const ButtonAtomStories = ButtonAtomMeta;
-
-export const PrimaryButton: StoryObj<typeof ButtonAtom> = {
+export const ButtonPrimary: StoryObj<typeof ButtonAtom> = {
   args: {
     label: 'Primary Action',
     variant: 'primary',
@@ -124,7 +131,7 @@ export const PrimaryButton: StoryObj<typeof ButtonAtom> = {
   },
 };
 
-export const SecondaryButton: StoryObj<typeof ButtonAtom> = {
+export const ButtonSecondary: StoryObj<typeof ButtonAtom> = {
   args: {
     label: 'Secondary Action',
     variant: 'secondary',
@@ -132,7 +139,7 @@ export const SecondaryButton: StoryObj<typeof ButtonAtom> = {
   },
 };
 
-export const DangerButton: StoryObj<typeof ButtonAtom> = {
+export const ButtonDanger: StoryObj<typeof ButtonAtom> = {
   args: {
     label: 'Delete',
     variant: 'danger',
@@ -140,7 +147,7 @@ export const DangerButton: StoryObj<typeof ButtonAtom> = {
   },
 };
 
-export const LongLabel: StoryObj<typeof ButtonAtom> = {
+export const ButtonLongLabel: StoryObj<typeof ButtonAtom> = {
   args: {
     label: 'Very Long Button Label Text',
     variant: 'primary',
@@ -148,8 +155,16 @@ export const LongLabel: StoryObj<typeof ButtonAtom> = {
   },
 };
 
+export const ButtonShortLabel: StoryObj<typeof ButtonAtom> = {
+  args: {
+    label: 'OK',
+    variant: 'primary',
+    onClick: () => {},
+  },
+};
+
 // CalculatedAtom Stories
-const CalculatedAtomMeta: Meta<typeof CalculatedAtom> = {
+export const CalculatedAtomMeta: Meta<typeof CalculatedAtom> = {
   title: 'Atoms/CalculatedAtom',
   component: CalculatedAtom,
   tags: ['autodocs'],
@@ -159,31 +174,36 @@ const CalculatedAtomMeta: Meta<typeof CalculatedAtom> = {
   },
 };
 
-export const CalculatedAtomStories = CalculatedAtomMeta;
-
-export const WithIcon: StoryObj<typeof CalculatedAtom> = {
+export const CalculatedWithIcon: StoryObj<typeof CalculatedAtom> = {
   args: {
     value: '$7,500',
     icon: true,
   },
 };
 
-export const WithoutIcon: StoryObj<typeof CalculatedAtom> = {
+export const CalculatedWithoutIcon: StoryObj<typeof CalculatedAtom> = {
   args: {
     value: '$7,500',
     icon: false,
   },
 };
 
-export const ComplexCalculation: StoryObj<typeof CalculatedAtom> = {
+export const CalculatedComplex: StoryObj<typeof CalculatedAtom> = {
   args: {
     value: '23.4% growth',
     icon: true,
   },
 };
 
+export const CalculatedNegative: StoryObj<typeof CalculatedAtom> = {
+  args: {
+    value: '-$1,250',
+    icon: true,
+  },
+};
+
 // HeaderAtom Stories
-const HeaderAtomMeta: Meta<typeof HeaderAtom> = {
+export const HeaderAtomMeta: Meta<typeof HeaderAtom> = {
   title: 'Atoms/HeaderAtom',
   component: HeaderAtom,
   tags: ['autodocs'],
@@ -197,9 +217,7 @@ const HeaderAtomMeta: Meta<typeof HeaderAtom> = {
   },
 };
 
-export const HeaderAtomStories = HeaderAtomMeta;
-
-export const PrimaryHeader: StoryObj<typeof HeaderAtom> = {
+export const HeaderPrimary: StoryObj<typeof HeaderAtom> = {
   args: {
     title: 'Primary Header',
     type: HeadingType.PRIMARY,
@@ -207,7 +225,7 @@ export const PrimaryHeader: StoryObj<typeof HeaderAtom> = {
   },
 };
 
-export const SecondaryHeader: StoryObj<typeof HeaderAtom> = {
+export const HeaderSecondary: StoryObj<typeof HeaderAtom> = {
   args: {
     title: 'Secondary Header',
     type: HeadingType.SECONDARY,
@@ -215,7 +233,7 @@ export const SecondaryHeader: StoryObj<typeof HeaderAtom> = {
   },
 };
 
-export const TertiaryHeader: StoryObj<typeof HeaderAtom> = {
+export const HeaderTertiary: StoryObj<typeof HeaderAtom> = {
   args: {
     title: 'Tertiary Header',
     type: HeadingType.TERTIARY,
@@ -230,197 +248,293 @@ export const HeaderNoIcon: StoryObj<typeof HeaderAtom> = {
   },
 };
 
+export const HeaderLongTitle: StoryObj<typeof HeaderAtom> = {
+  args: {
+    title: 'Very Long Header Title That Spans Multiple Words',
+    type: HeadingType.PRIMARY,
+    icon: '📋',
+  },
+};
+
 // =============== MOLECULE STORIES ===============
 
 // FilterMolecule Stories
-const FilterMoleculeMeta: Meta<typeof FilterMolecule> = {
+export const FilterMoleculeMeta: Meta<typeof FilterMolecule> = {
   title: 'Molecules/FilterMolecule',
   component: FilterMolecule,
   tags: ['autodocs'],
+  parameters: {
+    docs: {
+      description: {
+        component: 'Input filter component that adapts to different column types (text, number, date)',
+      },
+    },
+  },
 };
 
-export const FilterMoleculeStories = FilterMoleculeMeta;
-
-export const TextFilter: StoryObj<typeof FilterMolecule> = {
+export const FilterText: StoryObj<typeof FilterMolecule> = {
+  name: 'Text Filter',
   render: () => {
     const [value, setValue] = React.useState('');
     return (
-      <FilterMolecule
-        columnType={ColumnType.TEXT}
-        value={value}
-        onChange={setValue}
-        placeholder="Filter by name..."
-      />
+      <div style={{ padding: '20px' }}>
+        <p style={{ marginBottom: '8px', color: '#666' }}>Current value: "{value}"</p>
+        <FilterMolecule
+          columnType={ColumnType.TEXT}
+          value={value}
+          onChange={setValue}
+          placeholder="Filter by name..."
+        />
+      </div>
     );
   },
 };
 
-export const NumberFilter: StoryObj<typeof FilterMolecule> = {
+export const FilterNumber: StoryObj<typeof FilterMolecule> = {
+  name: 'Number Filter',
   render: () => {
     const [value, setValue] = React.useState('');
     return (
-      <FilterMolecule
-        columnType={ColumnType.NUMBER}
-        value={value}
-        onChange={setValue}
-        placeholder="Filter by age..."
-      />
+      <div style={{ padding: '20px' }}>
+        <p style={{ marginBottom: '8px', color: '#666' }}>Current value: {value || 'empty'}</p>
+        <FilterMolecule
+          columnType={ColumnType.NUMBER}
+          value={value}
+          onChange={setValue}
+          placeholder="Filter by age..."
+        />
+      </div>
     );
   },
 };
 
-export const DateFilter: StoryObj<typeof FilterMolecule> = {
+export const FilterDate: StoryObj<typeof FilterMolecule> = {
+  name: 'Date Filter',
   render: () => {
     const [value, setValue] = React.useState('');
     return (
-      <FilterMolecule
-        columnType={ColumnType.DATE}
-        value={value}
-        onChange={setValue}
-      />
+      <div style={{ padding: '20px' }}>
+        <p style={{ marginBottom: '8px', color: '#666' }}>Current value: {value || 'empty'}</p>
+        <FilterMolecule
+          columnType={ColumnType.DATE}
+          value={value}
+          onChange={setValue}
+        />
+      </div>
+    );
+  },
+};
+
+export const FilterWithState: StoryObj<typeof FilterMolecule> = {
+  name: 'Filter with Pre-filled Value',
+  render: () => {
+    const [value, setValue] = React.useState('John');
+    return (
+      <div style={{ padding: '20px' }}>
+        <p style={{ marginBottom: '8px', color: '#666' }}>Current value: "{value}"</p>
+        <FilterMolecule
+          columnType={ColumnType.TEXT}
+          value={value}
+          onChange={setValue}
+          placeholder="Search..."
+        />
+        <button 
+          onClick={() => setValue('')}
+          style={{ marginTop: '8px', padding: '4px 12px', cursor: 'pointer' }}
+        >
+          Clear
+        </button>
+      </div>
     );
   },
 };
 
 // CellMolecule Stories
-const CellMoleculeMeta: Meta<typeof CellMolecule> = {
+export const CellMoleculeMeta: Meta<typeof CellMolecule> = {
   title: 'Molecules/CellMolecule',
   component: CellMolecule,
   tags: ['autodocs'],
+  parameters: {
+    docs: {
+      description: {
+        component: 'Universal cell component that renders different types of content based on column type',
+      },
+    },
+  },
 };
 
-export const CellMoleculeStories = CellMoleculeMeta;
-
-export const TextCell: StoryObj<typeof CellMolecule> = {
+export const CellText: StoryObj<typeof CellMolecule> = {
+  name: 'Text Cell',
   render: () => (
-    <CellMolecule
-      value="John Doe"
-      columnType={ColumnType.TEXT}
-      columnConfig={{
-        id: 'name',
-        header: 'Name',
-        type: ColumnType.TEXT,
-      }}
-      row={{ name: 'John Doe' }}
-    />
+    <div style={{ padding: '20px' }}>
+      <CellMolecule
+        value="John Doe"
+        columnType={ColumnType.TEXT}
+        columnConfig={{
+          id: 'name',
+          header: 'Name',
+          type: ColumnType.TEXT,
+        }}
+        row={{ name: 'John Doe' }}
+      />
+    </div>
   ),
 };
 
-export const NumberCell: StoryObj<typeof CellMolecule> = {
+export const CellNumber: StoryObj<typeof CellMolecule> = {
+  name: 'Number Cell',
   render: () => (
-    <CellMolecule
-      value={75000}
-      columnType={ColumnType.NUMBER}
-      columnConfig={{
-        id: 'salary',
-        header: 'Salary',
-        type: ColumnType.NUMBER,
-        format: (value) => `$${value.toLocaleString()}`,
-      }}
-      row={{ salary: 75000 }}
-    />
+    <div style={{ padding: '20px' }}>
+      <CellMolecule
+        value={75000}
+        columnType={ColumnType.NUMBER}
+        columnConfig={{
+          id: 'salary',
+          header: 'Salary',
+          type: ColumnType.NUMBER,
+          format: (value) => `$${value.toLocaleString()}`,
+        }}
+        row={{ salary: 75000 }}
+      />
+    </div>
   ),
 };
 
-export const DateCell: StoryObj<typeof CellMolecule> = {
+export const CellDate: StoryObj<typeof CellMolecule> = {
+  name: 'Date Cell',
   render: () => (
-    <CellMolecule
-      value="2023-01-15"
-      columnType={ColumnType.DATE}
-      columnConfig={{
-        id: 'joinDate',
-        header: 'Join Date',
-        type: ColumnType.DATE,
-      }}
-      row={{ joinDate: '2023-01-15' }}
-    />
+    <div style={{ padding: '20px' }}>
+      <CellMolecule
+        value="2023-01-15"
+        columnType={ColumnType.DATE}
+        columnConfig={{
+          id: 'joinDate',
+          header: 'Join Date',
+          type: ColumnType.DATE,
+        }}
+        row={{ joinDate: '2023-01-15' }}
+      />
+    </div>
   ),
 };
 
-export const ClickableCell: StoryObj<typeof CellMolecule> = {
+export const CellClickable: StoryObj<typeof CellMolecule> = {
+  name: 'Clickable Cell with Tooltip',
   render: () => (
-    <CellMolecule
-      value="John Doe"
-      columnType={ColumnType.TEXT}
-      columnConfig={{
-        id: 'name',
-        header: 'Name',
-        type: ColumnType.TEXT,
-        clickable: {
-          enabled: true,
-          onClick: () => alert('Cell clicked!'),
-          tooltip: 'Click to view profile',
-        },
-      }}
-      row={{ name: 'John Doe' }}
-    />
+    <div style={{ padding: '20px' }}>
+      <p style={{ marginBottom: '12px', color: '#666' }}>Hover over the cell to see tooltip</p>
+      <CellMolecule
+        value="John Doe"
+        columnType={ColumnType.TEXT}
+        columnConfig={{
+          id: 'name',
+          header: 'Name',
+          type: ColumnType.TEXT,
+          clickable: {
+            enabled: true,
+            onClick: (row) => alert(`Clicked on ${row.name}`),
+            tooltip: 'Click to view profile',
+          },
+        }}
+        row={{ name: 'John Doe' }}
+      />
+    </div>
   ),
 };
 
 export const CellWithPopup: StoryObj<typeof CellMolecule> = {
+  name: 'Cell with Popup',
   render: () => (
-    <CellMolecule
-      value="john@example.com"
-      columnType={ColumnType.TEXT}
-      columnConfig={{
-        id: 'email',
-        header: 'Email',
-        type: ColumnType.TEXT,
-        popup: {
-          enabled: true,
-          title: 'Contact Details',
-          content: (row) => <div><p>Email: {row.email}</p></div>,
-        },
-      }}
-      row={{ email: 'john@example.com' }}
-    />
+    <div style={{ padding: '20px' }}>
+      <p style={{ marginBottom: '12px', color: '#666' }}>Click the cell to open popup</p>
+      <CellMolecule
+        value="john@example.com"
+        columnType={ColumnType.TEXT}
+        columnConfig={{
+          id: 'email',
+          header: 'Email',
+          type: ColumnType.TEXT,
+          popup: {
+            enabled: true,
+            title: 'Contact Details',
+            content: (row) => (
+              <div>
+                <p><strong>Email:</strong> {row.email}</p>
+                <p><strong>Department:</strong> Engineering</p>
+                <p><strong>Status:</strong> Active</p>
+              </div>
+            ),
+            actions: [
+              {
+                label: 'Send Email',
+                onClick: (row) => alert(`Sending email to ${row.email}`),
+                variant: 'primary',
+              },
+            ],
+          },
+        }}
+        row={{ email: 'john@example.com' }}
+      />
+    </div>
   ),
 };
 
-export const ButtonCell: StoryObj<typeof CellMolecule> = {
+export const CellButton: StoryObj<typeof CellMolecule> = {
+  name: 'Button Cell',
   render: () => (
-    <CellMolecule
-      value="Send Message"
-      columnType={ColumnType.BUTTON}
-      columnConfig={{
-        id: 'action',
-        header: 'Action',
-        type: ColumnType.BUTTON,
-        clickable: {
-          enabled: true,
-          onClick: () => alert('Button clicked!'),
-        },
-      }}
-      row={{}}
-    />
+    <div style={{ padding: '20px' }}>
+      <CellMolecule
+        value="Send Message"
+        columnType={ColumnType.BUTTON}
+        columnConfig={{
+          id: 'action',
+          header: 'Action',
+          type: ColumnType.BUTTON,
+          clickable: {
+            enabled: true,
+            onClick: () => alert('Message sent!'),
+          },
+        }}
+        row={{ name: 'John Doe' }}
+      />
+    </div>
   ),
 };
 
-export const CalculatedCell: StoryObj<typeof CellMolecule> = {
+export const CellCalculated: StoryObj<typeof CellMolecule> = {
+  name: 'Calculated Cell',
   render: () => (
-    <CellMolecule
-      value="$7,500"
-      columnType={ColumnType.CALCULATED}
-      columnConfig={{
-        id: 'bonus',
-        header: 'Bonus',
-        type: ColumnType.CALCULATED,
-      }}
-      row={{ salary: 75000 }}
-    />
+    <div style={{ padding: '20px' }}>
+      <CellMolecule
+        value="$7,500"
+        columnType={ColumnType.CALCULATED}
+        columnConfig={{
+          id: 'bonus',
+          header: 'Bonus',
+          type: ColumnType.CALCULATED,
+        }}
+        row={{ salary: 75000 }}
+      />
+    </div>
   ),
 };
 
 // PopupMolecule Stories
-const PopupMoleculeMeta: Meta<typeof PopupMolecule> = {
+export const PopupMoleculeMeta: Meta<typeof PopupMolecule> = {
   title: 'Molecules/PopupMolecule',
   component: PopupMolecule,
   tags: ['autodocs'],
+  parameters: {
+    docs: {
+      description: {
+        component: 'Modal popup component with configurable content and actions',
+      },
+    },
+  },
 };
 
-export const PopupMoleculeStories = PopupMoleculeMeta;
-
-export const SimplePopup: StoryObj<typeof PopupMolecule> = {
+export const PopupSimple: StoryObj<typeof PopupMolecule> = {
+  name: 'Simple Popup',
   render: () => (
     <PopupMolecule
       config={{
@@ -445,12 +559,20 @@ export const SimplePopup: StoryObj<typeof PopupMolecule> = {
 };
 
 export const PopupWithActions: StoryObj<typeof PopupMolecule> = {
+  name: 'Popup with Multiple Actions',
   render: () => (
     <PopupMolecule
       config={{
         enabled: true,
         title: 'Confirm Action',
-        content: () => <p>Are you sure you want to proceed with this action?</p>,
+        content: () => (
+          <div>
+            <p>Are you sure you want to proceed with this action?</p>
+            <p style={{ color: '#666', fontSize: '14px', marginTop: '12px' }}>
+              This will update the employee's status in the system.
+            </p>
+          </div>
+        ),
         actions: [
           {
             label: 'Confirm',
@@ -470,14 +592,20 @@ export const PopupWithActions: StoryObj<typeof PopupMolecule> = {
   ),
 };
 
-export const PopupWithDangerAction: StoryObj<typeof PopupMolecule> = {
+export const PopupDanger: StoryObj<typeof PopupMolecule> = {
+  name: 'Popup with Danger Action',
   render: () => (
     <PopupMolecule
       config={{
         enabled: true,
         title: 'Delete Employee',
         content: (row) => (
-          <p>Are you sure you want to delete <strong>{row.name}</strong>? This action cannot be undone.</p>
+          <div>
+            <p>Are you sure you want to delete <strong>{row.name}</strong>?</p>
+            <p style={{ color: '#dc3545', marginTop: '8px' }}>
+              ⚠️ This action cannot be undone.
+            </p>
+          </div>
         ),
         actions: [
           {
@@ -493,58 +621,120 @@ export const PopupWithDangerAction: StoryObj<typeof PopupMolecule> = {
   ),
 };
 
+export const PopupLongContent: StoryObj<typeof PopupMolecule> = {
+  name: 'Popup with Long Content',
+  render: () => (
+    <PopupMolecule
+      config={{
+        enabled: true,
+        title: 'Employee Full Profile',
+        content: (row) => (
+          <div style={{ lineHeight: 1.8 }}>
+            <h3 style={{ marginTop: 0 }}>Personal Information</h3>
+            <p><strong>Name:</strong> {row.name}</p>
+            <p><strong>Email:</strong> {row.email}</p>
+            <p><strong>Department:</strong> {row.department}</p>
+            
+            <h3>Work Information</h3>
+            <p><strong>Position:</strong> Senior Developer</p>
+            <p><strong>Manager:</strong> Jane Smith</p>
+            <p><strong>Office:</strong> Building A, Floor 3</p>
+            
+            <h3>Performance Metrics</h3>
+            <p><strong>Projects Completed:</strong> 24</p>
+            <p><strong>Average Rating:</strong> 4.8/5.0</p>
+            <p><strong>Team Satisfaction:</strong> 95%</p>
+          </div>
+        ),
+        actions: [
+          {
+            label: 'Edit Profile',
+            onClick: () => alert('Edit mode activated'),
+            variant: 'primary',
+          },
+          {
+            label: 'View Reports',
+            onClick: () => alert('Opening reports'),
+            variant: 'secondary',
+          },
+        ],
+      }}
+      row={{
+        name: 'John Doe',
+        email: 'john@example.com',
+        department: 'Engineering',
+      }}
+      onClose={() => {}}
+    />
+  ),
+};
+
 // RowActionsMolecule Stories
-const RowActionsMoleculeMeta: Meta<typeof RowActionsMolecule> = {
+export const RowActionsMoleculeMeta: Meta<typeof RowActionsMolecule> = {
   title: 'Molecules/RowActionsMolecule',
   component: RowActionsMolecule,
   tags: ['autodocs'],
+  parameters: {
+    docs: {
+      description: {
+        component: 'Action buttons for table rows (View, Edit, Delete)',
+      },
+    },
+  },
 };
 
-export const RowActionsMoleculeStories = RowActionsMoleculeMeta;
-
-export const AllActions: StoryObj<typeof RowActionsMolecule> = {
+export const RowActionsAll: StoryObj<typeof RowActionsMolecule> = {
+  name: 'All Actions',
   render: () => (
-    <RowActionsMolecule
-      row={{ id: 1, name: 'John Doe' }}
-      onView={(row) => alert(`Viewing ${row.name}`)}
-      onEdit={(row) => alert(`Editing ${row.name}`)}
-      onDelete={(row) => alert(`Deleting ${row.name}`)}
-    />
+    <div style={{ padding: '20px' }}>
+      <RowActionsMolecule
+        row={{ id: 1, name: 'John Doe' }}
+        onView={(row) => alert(`Viewing ${row.name}`)}
+        onEdit={(row) => alert(`Editing ${row.name}`)}
+        onDelete={(row) => alert(`Deleting ${row.name}`)}
+      />
+    </div>
   ),
 };
 
-export const ViewAndEdit: StoryObj<typeof RowActionsMolecule> = {
+export const RowActionsViewEdit: StoryObj<typeof RowActionsMolecule> = {
+  name: 'View and Edit Only',
   render: () => (
-    <RowActionsMolecule
-      row={{ id: 1, name: 'John Doe' }}
-      onView={(row) => alert(`Viewing ${row.name}`)}
-      onEdit={(row) => alert(`Editing ${row.name}`)}
-    />
+    <div style={{ padding: '20px' }}>
+      <RowActionsMolecule
+        row={{ id: 1, name: 'John Doe' }}
+        onView={(row) => alert(`Viewing ${row.name}`)}
+        onEdit={(row) => alert(`Editing ${row.name}`)}
+      />
+    </div>
   ),
 };
 
-export const OnlyDelete: StoryObj<typeof RowActionsMolecule> = {
+export const RowActionsDeleteOnly: StoryObj<typeof RowActionsMolecule> = {
+  name: 'Delete Only',
   render: () => (
-    <RowActionsMolecule
-      row={{ id: 1, name: 'John Doe' }}
-      onDelete={(row) => alert(`Deleting ${row.name}`)}
-    />
+    <div style={{ padding: '20px' }}>
+      <RowActionsMolecule
+        row={{ id: 1, name: 'John Doe' }}
+        onDelete={(row) => alert(`Deleting ${row.name}`)}
+      />
+    </div>
+  ),
+};
+
+export const RowActionsViewOnly: StoryObj<typeof RowActionsMolecule> = {
+  name: 'View Only',
+  render: () => (
+    <div style={{ padding: '20px' }}>
+      <RowActionsMolecule
+        row={{ id: 1, name: 'John Doe' }}
+        onView={(row) => alert(`Viewing ${row.name}`)}
+      />
+    </div>
   ),
 };
 
 // =============== ORGANISM STORIES ===============
-
-// TableOrganism Stories
-const TableOrganismMeta: Meta<typeof TableOrganism> = {
-  title: 'Organisms/TableOrganism',
-  component: TableOrganism,
-  tags: ['autodocs'],
-  parameters: {
-    layout: 'padded',
-  },
-};
-
-export const TableOrganismStories = TableOrganismMeta;
 
 const sampleData = [
   {
@@ -587,6 +777,16 @@ const sampleData = [
     department: 'Engineering',
     status: 'Active',
   },
+  {
+    id: 5,
+    name: 'Charlie Wilson',
+    age: 29,
+    email: 'charlie@example.com',
+    joinDate: '2023-09-12',
+    salary: 65000,
+    department: 'Marketing',
+    status: 'Active',
+  },
 ];
 
 const basicColumns: ColumnConfig[] = [
@@ -617,7 +817,22 @@ const basicColumns: ColumnConfig[] = [
   },
 ];
 
-export const BasicTable: StoryObj<typeof TableOrganism> = {
+export const TableOrganismMeta: Meta<typeof TableOrganism> = {
+  title: 'Organisms/TableOrganism',
+  component: TableOrganism,
+  tags: ['autodocs'],
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component: 'Complete table component with filtering, sorting, and row actions',
+      },
+    },
+  },
+};
+
+export const TableBasic: StoryObj<typeof TableOrganism> = {
+  name: 'Basic Table',
   render: () => (
     <TableOrganism
       columns={basicColumns}
@@ -628,7 +843,8 @@ export const BasicTable: StoryObj<typeof TableOrganism> = {
   ),
 };
 
-export const WithGlobalFilter: StoryObj<typeof TableOrganism> = {
+export const TableWithGlobalFilter: StoryObj<typeof TableOrganism> = {
+  name: 'With Global Filter',
   render: () => (
     <TableOrganism
       columns={basicColumns}
@@ -639,7 +855,8 @@ export const WithGlobalFilter: StoryObj<typeof TableOrganism> = {
   ),
 };
 
-export const WithRowActions: StoryObj<typeof TableOrganism> = {
+export const TableWithRowActions: StoryObj<typeof TableOrganism> = {
+  name: 'With Row Actions',
   render: () => (
     <TableOrganism
       columns={basicColumns}
@@ -718,9 +935,16 @@ const advancedColumns: ColumnConfig[] = [
     headingType: HeadingType.TERTIARY,
     calculationFn: (row) => `$${(row.salary * 0.1).toLocaleString()}`,
   },
+  {
+    id: 'status',
+    header: 'Status',
+    type: ColumnType.TEXT,
+    accessor: 'status',
+  },
 ];
 
-export const FullFeaturedTable: StoryObj<typeof TableOrganism> = {
+export const TableFullFeatured: StoryObj<typeof TableOrganism> = {
+  name: 'Full Featured Table',
   render: () => (
     <TableOrganism
       columns={advancedColumns}
@@ -734,18 +958,40 @@ export const FullFeaturedTable: StoryObj<typeof TableOrganism> = {
   ),
 };
 
-export const EmptyTable: StoryObj<typeof TableOrganism> = {
+export const TableEmpty: StoryObj<typeof TableOrganism> = {
+  name: 'Empty Table',
+  render: () => (
+    <div>
+      <p style={{ marginBottom: '16px', color: '#666' }}>
+        Example of table with no data
+      </p>
+      <TableOrganism
+        columns={basicColumns}
+        data={[]}
+        enableGlobalFilter={true}
+        enableRowActions={false}
+      />
+    </div>
+  ),
+};
+
+export const TableSingleRow: StoryObj<typeof TableOrganism> = {
+  name: 'Single Row',
   render: () => (
     <TableOrganism
       columns={basicColumns}
-      data={[]}
-      enableGlobalFilter={true}
-      enableRowActions={false}
+      data={[sampleData[0]]}
+      enableGlobalFilter={false}
+      enableRowActions={true}
+      onRowView={(row) => alert(`Viewing ${row.name}`)}
+      onRowEdit={(row) => alert(`Editing ${row.name}`)}
+      onRowDelete={(row) => alert(`Deleting ${row.name}`)}
     />
   ),
 };
 
-export const LargeDataset: StoryObj<typeof TableOrganism> = {
+export const TableLargeDataset: StoryObj<typeof TableOrganism> = {
+  name: 'Large Dataset (50 rows)',
   render: () => {
     const largeData = Array.from({ length: 50 }, (_, i) => ({
       id: i + 1,
@@ -770,4 +1016,78 @@ export const LargeDataset: StoryObj<typeof TableOrganism> = {
       />
     );
   },
+};
+
+export const TableWithButtonColumn: StoryObj<typeof TableOrganism> = {
+  name: 'With Button Column',
+  render: () => {
+    const columnsWithButton: ColumnConfig[] = [
+      ...basicColumns,
+      {
+        id: 'action',
+        header: 'Quick Action',
+        type: ColumnType.BUTTON,
+        accessor: () => 'Message',
+        clickable: {
+          enabled: true,
+          onClick: (row) => alert(`Sending message to ${row.name}`),
+        },
+      },
+    ];
+
+    return (
+      <TableOrganism
+        columns={columnsWithButton}
+        data={sampleData}
+        enableGlobalFilter={false}
+        enableRowActions={false}
+      />
+    );
+  },
+};
+
+// =============== PAGE STORIES ===============
+
+export const DemoMeta: Meta<typeof DemoComponent> = {
+  title: 'Pages/DemoPage',
+  component: DemoComponent,
+  tags: ['autodocs'],
+  parameters: {
+    layout: 'fullscreen',
+    docs: {
+      description: {
+        component: 'Complete demo page showcasing all table features and capabilities',
+      },
+    },
+  },
+};
+
+export const FullDemo: StoryObj<typeof DemoComponent> = {
+  name: 'Complete Demo Page',
+  render: () => <DemoComponent />,
+};
+
+export const DemoInteractive: StoryObj<typeof DemoComponent> = {
+  name: 'Interactive Demo',
+  render: () => (
+    <div>
+      <div style={{ 
+        padding: '16px', 
+        backgroundColor: '#e3f2fd', 
+        borderRadius: '4px',
+        marginBottom: '16px'
+      }}>
+        <h3 style={{ margin: '0 0 8px 0', color: '#1976d2' }}>Interactive Demo Guide</h3>
+        <ul style={{ margin: 0, paddingLeft: '20px' }}>
+          <li>Click on employee names to trigger alerts</li>
+          <li>Click on email addresses to open popup dialogs</li>
+          <li>Use column filters to narrow down results</li>
+          <li>Click column headers to sort data</li>
+          <li>Try the global search to filter across all columns</li>
+          <li>Use row action buttons (view, edit, delete)</li>
+        </ul>
+      </div>
+      <DemoComponent />
+    </div>
+  ),
 };
