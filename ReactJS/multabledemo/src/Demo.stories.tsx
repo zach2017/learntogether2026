@@ -6,19 +6,21 @@ import {
   type ColumnConfig,
 } from './Demo';
 
-// Import all components (you'll need to export these from your main file)
-import { TextAtom } from './Demo';
-import { NumberAtom } from './Demo';
-import { DateAtom } from './Demo';
-import { ButtonAtom } from './Demo';
-import { CalculatedAtom } from './Demo';
-import { HeaderAtom } from './Demo';
-import { FilterMolecule } from './Demo';
-import { CellMolecule } from './Demo';
-import { PopupMolecule } from './Demo';
-import { RowActionsMolecule } from './Demo';
-import { TableOrganism } from './Demo';
-import DemoComponent from './Demo';
+// Import components
+import {
+  TextAtom,
+  NumberAtom,
+  DateAtom,
+  ButtonAtom,
+  CalculatedAtom,
+  HeaderAtom,
+  FilterMolecule,
+  CellMolecule,
+  PopupMolecule,
+  RowActionsMolecule,
+  TableOrganism,
+} from './Demo'; // ensure these are exported from Demo
+import DemoComponent, { setEmployees, useDemoStore } from './Demo'; // bring in the store API
 
 // =============== ATOM STORIES ===============
 
@@ -32,7 +34,6 @@ const TextAtomMeta: Meta<typeof TextAtom> = {
     clickable: { control: 'boolean' },
   },
 };
-
 export default TextAtomMeta;
 
 type TextAtomStory = StoryObj<typeof TextAtom>;
@@ -54,7 +55,8 @@ export const TextClickable: TextAtomStory = {
 
 export const TextLong: TextAtomStory = {
   args: {
-    value: 'This is a very long text value that demonstrates how the text atom handles longer content',
+    value:
+      'This is a very long text value that demonstrates how the text atom handles longer content',
     clickable: false,
   },
 };
@@ -75,11 +77,15 @@ export const NumberLarge: StoryObj<typeof NumberAtom> = {
 };
 
 export const NumberCurrency: StoryObj<typeof NumberAtom> = {
-  render: () => <NumberAtom value={75000} format={(n) => `$${n.toLocaleString()}`} />,
+  render: () => (
+    <NumberAtom value={75000} format={(n) => `$${n.toLocaleString()}`} />
+  ),
 };
 
 export const NumberPercentage: StoryObj<typeof NumberAtom> = {
-  render: () => <NumberAtom value={0.85} format={(n) => `${(n * 100).toFixed(1)}%`} />,
+  render: () => (
+    <NumberAtom value={0.85} format={(n) => `${(n * 100).toFixed(1)}%`} />
+  ),
 };
 
 export const NumberDecimal: StoryObj<typeof NumberAtom> = {
@@ -266,7 +272,8 @@ export const FilterMoleculeMeta: Meta<typeof FilterMolecule> = {
   parameters: {
     docs: {
       description: {
-        component: 'Input filter component that adapts to different column types (text, number, date)',
+        component:
+          'Input filter component that adapts to different column types (text, number, date)',
       },
     },
   },
@@ -278,7 +285,9 @@ export const FilterText: StoryObj<typeof FilterMolecule> = {
     const [value, setValue] = React.useState('');
     return (
       <div style={{ padding: '20px' }}>
-        <p style={{ marginBottom: '8px', color: '#666' }}>Current value: "{value}"</p>
+        <p style={{ marginBottom: '8px', color: '#666' }}>
+          Current value: "{value}"
+        </p>
         <FilterMolecule
           columnType={ColumnType.TEXT}
           value={value}
@@ -296,7 +305,9 @@ export const FilterNumber: StoryObj<typeof FilterMolecule> = {
     const [value, setValue] = React.useState('');
     return (
       <div style={{ padding: '20px' }}>
-        <p style={{ marginBottom: '8px', color: '#666' }}>Current value: {value || 'empty'}</p>
+        <p style={{ marginBottom: '8px', color: '#666' }}>
+          Current value: {value || 'empty'}
+        </p>
         <FilterMolecule
           columnType={ColumnType.NUMBER}
           value={value}
@@ -314,12 +325,10 @@ export const FilterDate: StoryObj<typeof FilterMolecule> = {
     const [value, setValue] = React.useState('');
     return (
       <div style={{ padding: '20px' }}>
-        <p style={{ marginBottom: '8px', color: '#666' }}>Current value: {value || 'empty'}</p>
-        <FilterMolecule
-          columnType={ColumnType.DATE}
-          value={value}
-          onChange={setValue}
-        />
+        <p style={{ marginBottom: '8px', color: '#666' }}>
+          Current value: {value || 'empty'}
+        </p>
+        <FilterMolecule columnType={ColumnType.DATE} value={value} onChange={setValue} />
       </div>
     );
   },
@@ -331,14 +340,16 @@ export const FilterWithState: StoryObj<typeof FilterMolecule> = {
     const [value, setValue] = React.useState('John');
     return (
       <div style={{ padding: '20px' }}>
-        <p style={{ marginBottom: '8px', color: '#666' }}>Current value: "{value}"</p>
+        <p style={{ marginBottom: '8px', color: '#666' }}>
+          Current value: "{value}"
+        </p>
         <FilterMolecule
           columnType={ColumnType.TEXT}
           value={value}
           onChange={setValue}
           placeholder="Search..."
         />
-        <button 
+        <button
           onClick={() => setValue('')}
           style={{ marginTop: '8px', padding: '4px 12px', cursor: 'pointer' }}
         >
@@ -357,7 +368,8 @@ export const CellMoleculeMeta: Meta<typeof CellMolecule> = {
   parameters: {
     docs: {
       description: {
-        component: 'Universal cell component that renders different types of content based on column type',
+        component:
+          'Universal cell component that renders different types of content based on column type',
       },
     },
   },
@@ -422,7 +434,9 @@ export const CellClickable: StoryObj<typeof CellMolecule> = {
   name: 'Clickable Cell with Tooltip',
   render: () => (
     <div style={{ padding: '20px' }}>
-      <p style={{ marginBottom: '12px', color: '#666' }}>Hover over the cell to see tooltip</p>
+      <p style={{ marginBottom: '12px', color: '#666' }}>
+        Hover over the cell to see tooltip
+      </p>
       <CellMolecule
         value="John Doe"
         columnType={ColumnType.TEXT}
@@ -446,7 +460,9 @@ export const CellWithPopup: StoryObj<typeof CellMolecule> = {
   name: 'Cell with Popup',
   render: () => (
     <div style={{ padding: '20px' }}>
-      <p style={{ marginBottom: '12px', color: '#666' }}>Click the cell to open popup</p>
+      <p style={{ marginBottom: '12px', color: '#666' }}>
+        Click the cell to open popup
+      </p>
       <CellMolecule
         value="john@example.com"
         columnType={ColumnType.TEXT}
@@ -459,9 +475,15 @@ export const CellWithPopup: StoryObj<typeof CellMolecule> = {
             title: 'Contact Details',
             content: (row) => (
               <div>
-                <p><strong>Email:</strong> {row.email}</p>
-                <p><strong>Department:</strong> Engineering</p>
-                <p><strong>Status:</strong> Active</p>
+                <p>
+                  <strong>Email:</strong> {row.email}
+                </p>
+                <p>
+                  <strong>Department:</strong> Engineering
+                </p>
+                <p>
+                  <strong>Status:</strong> Active
+                </p>
               </div>
             ),
             actions: [
@@ -542,9 +564,15 @@ export const PopupSimple: StoryObj<typeof PopupMolecule> = {
         title: 'Employee Details',
         content: (row) => (
           <div>
-            <p><strong>Name:</strong> {row.name}</p>
-            <p><strong>Email:</strong> {row.email}</p>
-            <p><strong>Department:</strong> {row.department}</p>
+            <p>
+              <strong>Name:</strong> {row.name}
+            </p>
+            <p>
+              <strong>Email:</strong> {row.email}
+            </p>
+            <p>
+              <strong>Department:</strong> {row.department}
+            </p>
           </div>
         ),
       }}
@@ -568,7 +596,9 @@ export const PopupWithActions: StoryObj<typeof PopupMolecule> = {
         content: () => (
           <div>
             <p>Are you sure you want to proceed with this action?</p>
-            <p style={{ color: '#666', fontSize: '14px', marginTop: '12px' }}>
+            <p
+              style={{ color: '#666', fontSize: '14px', marginTop: '12px' }}
+            >
               This will update the employee's status in the system.
             </p>
           </div>
@@ -601,7 +631,9 @@ export const PopupDanger: StoryObj<typeof PopupMolecule> = {
         title: 'Delete Employee',
         content: (row) => (
           <div>
-            <p>Are you sure you want to delete <strong>{row.name}</strong>?</p>
+            <p>
+              Are you sure you want to delete <strong>{row.name}</strong>?
+            </p>
             <p style={{ color: '#dc3545', marginTop: '8px' }}>
               ⚠️ This action cannot be undone.
             </p>
@@ -631,19 +663,37 @@ export const PopupLongContent: StoryObj<typeof PopupMolecule> = {
         content: (row) => (
           <div style={{ lineHeight: 1.8 }}>
             <h3 style={{ marginTop: 0 }}>Personal Information</h3>
-            <p><strong>Name:</strong> {row.name}</p>
-            <p><strong>Email:</strong> {row.email}</p>
-            <p><strong>Department:</strong> {row.department}</p>
-            
+            <p>
+              <strong>Name:</strong> {row.name}
+            </p>
+            <p>
+              <strong>Email:</strong> {row.email}
+            </p>
+            <p>
+              <strong>Department:</strong> {row.department}
+            </p>
+
             <h3>Work Information</h3>
-            <p><strong>Position:</strong> Senior Developer</p>
-            <p><strong>Manager:</strong> Jane Smith</p>
-            <p><strong>Office:</strong> Building A, Floor 3</p>
-            
+            <p>
+              <strong>Position:</strong> Senior Developer
+            </p>
+            <p>
+              <strong>Manager:</strong> Jane Smith
+            </p>
+            <p>
+              <strong>Office:</strong> Building A, Floor 3
+            </p>
+
             <h3>Performance Metrics</h3>
-            <p><strong>Projects Completed:</strong> 24</p>
-            <p><strong>Average Rating:</strong> 4.8/5.0</p>
-            <p><strong>Team Satisfaction:</strong> 95%</p>
+            <p>
+              <strong>Projects Completed:</strong> 24
+            </p>
+            <p>
+              <strong>Average Rating:</strong> 4.8/5.0
+            </p>
+            <p>
+              <strong>Team Satisfaction:</strong> 95%
+            </p>
           </div>
         ),
         actions: [
@@ -825,7 +875,8 @@ export const TableOrganismMeta: Meta<typeof TableOrganism> = {
     layout: 'padded',
     docs: {
       description: {
-        component: 'Complete table component with filtering, sorting, and row actions',
+        component:
+          'Complete table component with filtering, sorting, and row actions',
       },
     },
   },
@@ -900,9 +951,15 @@ const advancedColumns: ColumnConfig[] = [
       title: 'Contact Information',
       content: (row) => (
         <div>
-          <p><strong>Email:</strong> {row.email}</p>
-          <p><strong>Department:</strong> {row.department}</p>
-          <p><strong>Status:</strong> {row.status}</p>
+          <p>
+            <strong>Email:</strong> {row.email}
+          </p>
+          <p>
+            <strong>Department:</strong> {row.department}
+          </p>
+          <p>
+            <strong>Status:</strong> {row.status}
+          </p>
         </div>
       ),
       actions: [
@@ -999,7 +1056,7 @@ export const TableLargeDataset: StoryObj<typeof TableOrganism> = {
       age: 25 + (i % 30),
       email: `employee${i + 1}@example.com`,
       joinDate: `2023-${String((i % 12) + 1).padStart(2, '0')}-15`,
-      salary: 50000 + (i * 1000),
+      salary: 50000 + i * 1000,
       department: ['Engineering', 'Design', 'Marketing', 'Sales'][i % 4],
       status: i % 5 === 0 ? 'On Leave' : 'Active',
     }));
@@ -1056,7 +1113,8 @@ export const DemoMeta: Meta<typeof DemoComponent> = {
     layout: 'fullscreen',
     docs: {
       description: {
-        component: 'Complete demo page showcasing all table features and capabilities',
+        component:
+          'Complete demo page showcasing all table features and capabilities',
       },
     },
   },
@@ -1071,13 +1129,17 @@ export const DemoInteractive: StoryObj<typeof DemoComponent> = {
   name: 'Interactive Demo',
   render: () => (
     <div>
-      <div style={{ 
-        padding: '16px', 
-        backgroundColor: '#e3f2fd', 
-        borderRadius: '4px',
-        marginBottom: '16px'
-      }}>
-        <h3 style={{ margin: '0 0 8px 0', color: '#1976d2' }}>Interactive Demo Guide</h3>
+      <div
+        style={{
+          padding: '16px',
+          backgroundColor: '#e3f2fd',
+          borderRadius: '4px',
+          marginBottom: '16px',
+        }}
+      >
+        <h3 style={{ margin: '0 0 8px 0', color: '#1976d2' }}>
+          Interactive Demo Guide
+        </h3>
         <ul style={{ margin: 0, paddingLeft: '20px' }}>
           <li>Click on employee names to trigger alerts</li>
           <li>Click on email addresses to open popup dialogs</li>
@@ -1090,4 +1152,136 @@ export const DemoInteractive: StoryObj<typeof DemoComponent> = {
       <DemoComponent />
     </div>
   ),
+};
+
+// =============== LIVE STORE / TOGGLE STORIES ===============
+//
+// These stories demonstrate real-time updates using the external store.
+// Each story seeds (or re-seeds) the store to avoid cross-story contamination.
+//
+
+// A tiny badge component for use in live stories
+const ActiveCountBadge: React.FC = () => {
+  const count = useDemoStore(
+    (s) => s.employees.filter((e) => e.status === 'Active').length
+  );
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        padding: '4px 10px',
+        border: '1px solid #2e7d32',
+        color: '#2e7d32',
+        background: '#2e7d3210',
+        borderRadius: 16,
+        fontSize: 12,
+        marginLeft: 8,
+      }}
+    >
+      Active: {count}
+    </span>
+  );
+};
+
+// Helper wrapper to seed store with `sampleData` on mount
+const SeedStore: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // seed only once per mount
+  React.useEffect(() => {
+    setEmployees(() => [...sampleData]);
+  }, []);
+  return <>{children}</>;
+};
+
+export const DemoLiveToggle: StoryObj = {
+  name: 'Live: Toggle John Doe Status',
+  render: () => (
+    <SeedStore>
+      <div style={{ padding: 16 }}>
+        <div style={{ marginBottom: 12 }}>
+          <ButtonAtom
+            label="Toggle John Doe Status"
+            onClick={() => {
+              setEmployees((list) =>
+                list.map((e) =>
+                  e.name === 'John Doe'
+                    ? {
+                        ...e,
+                        status: e.status === 'Active' ? 'On Leave' : 'Active',
+                      }
+                    : e
+                )
+              );
+            }}
+            variant="primary"
+          />
+          <ActiveCountBadge />
+        </div>
+        <DemoComponent />
+      </div>
+    </SeedStore>
+  ),
+};
+
+export const DemoLiveRandomize: StoryObj = {
+  name: 'Live: Randomize Salaries',
+  render: () => (
+    <SeedStore>
+      <div style={{ padding: 16 }}>
+        <div style={{ marginBottom: 12 }}>
+          <ButtonAtom
+            label="Randomize All Salaries"
+            onClick={() => {
+              setEmployees((list) =>
+                list.map((e) => ({
+                  ...e,
+                  salary: Math.round(60000 + Math.random() * 40000),
+                }))
+              );
+            }}
+            variant="secondary"
+          />
+        </div>
+        <DemoComponent />
+      </div>
+    </SeedStore>
+  ),
+};
+
+export const TableOrganismLive: StoryObj = {
+  name: 'Live: TableOrganism bound to Store',
+  render: () => {
+    // Consume live data from the store directly
+    const LiveTable: React.FC = () => {
+      const data = useDemoStore((s) => s.employees);
+      React.useEffect(() => {
+        // ensure we start from a consistent dataset
+        setEmployees(() => [...sampleData]);
+      }, []);
+      return (
+        <div style={{ padding: 16 }}>
+          <div style={{ marginBottom: 12 }}>
+            <ButtonAtom
+              label="Give Everyone +$500"
+              onClick={() =>
+                setEmployees((list) =>
+                  list.map((e) => ({ ...e, salary: e.salary + 500 }))
+                )
+              }
+            />
+            <ActiveCountBadge />
+          </div>
+          <TableOrganism
+            columns={advancedColumns}
+            data={data}
+            enableGlobalFilter
+            enableRowActions
+            onRowView={(row) => alert(`Viewing ${row.name}`)}
+            onRowEdit={(row) => alert(`Editing ${row.name}`)}
+            onRowDelete={(row) => alert(`Deleting ${row.name}`)}
+          />
+        </div>
+      );
+    };
+    return <LiveTable />;
+  },
 };
