@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
+// add useSyncExternalStore
+import React, { useState, useMemo, useCallback, useSyncExternalStore, useEffect } from 'react';
 
 // =============== TYPE DEFINITIONS ===============
 
@@ -825,10 +826,7 @@ const buildColumnsFromJSON = (
 };
 
 // =============== DEMO COMPONENT ===============
-
-const DemoComponent: React.FC = () => {
-  // Load JSON data
-  const jsonData = {
+ const jsonData = {
     "pageConfig": {
       "title": "Atomic Design Table System Demo",
       "subtitle": "This demo showcases a table built using Atomic Design principles. It demonstrates various column types, filtering, sorting, clickable cells, and popup dialogs.",
@@ -869,8 +867,55 @@ const DemoComponent: React.FC = () => {
       { "id": 5, "name": "Charlie Wilson", "age": 29, "email": "charlie@example.com", "joinDate": "2023-09-12", "salary": 65000, "department": "Marketing", "status": "Active" }
     ]
   };
+  
+// =============== REAL-TIME STORE (no prop drilling) ===============
+type Employee = typeof jsonData.employees[number];
 
-  const [data, setData] = useState(jsonData.employees);
+type DemoState = { employees: Employee[] };
+
+// initialize with your demo data
+let demoState: DemoState = { employees: jsonData.employees };
+
+const listeners = new Set<() => void>();
+const emit = () => listeners.forEach(l => l());
+
+export const subscribe = (listener: () => void) => {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+};
+
+export const getSnapshot = () => demoState;
+
+// Single setter—call from anywhere (buttons, websockets, timers…)
+export const setEmployees = (updater: (list: Employee[]) => Employee[]) => {
+  demoState = { employees: updater(demoState.employees) };
+  emit();
+};
+
+// Hook any component can use to read live state (and auto re-render)
+export function useDemoStore<T>(selector: (s: DemoState) => T) {
+  return useSyncExternalStore(subscribe, () => selector(getSnapshot()));
+}
+
+  
+const DemoComponent: React.FC = () => {
+  // Load JSON data
+ 
+
+  // In DemoComponent (or a small useEffect hook component)
+ useEffect(() => {
+  const ws = new WebSocket('ws://localhost:3001'); // your endpoint
+  ws.onmessage = (e) => {
+    const incoming = JSON.parse(e.data) as Partial<Employee> & { id: number };
+    setEmployees(list =>
+      list.map(emp => (emp.id === incoming.id ? { ...emp, ...incoming } : emp))
+    );
+  };
+  return () => ws.close();
+}, []);
+
+
+   const data = useDemoStore(s => s.employees);
 
   // Event handlers
   const handleCellClick = (row: any, columnId: string) => {
@@ -881,12 +926,16 @@ const DemoComponent: React.FC = () => {
   const handleRowEdit = (row: any) => {
     console.log('Edit row:', row);
     alert(`Editing ${row.name}`);
+    // Example edit: give +$500 raise
+    setEmployees(list =>
+      list.map(e => (e.id === row.id ? { ...e, salary: e.salary + 500 } : e))
+    );
   };
 
   const handleRowDelete = (row: any) => {
     console.log('Delete row:', row);
     if (confirm(`Are you sure you want to delete ${row.name}?`)) {
-      setData(data.filter((d) => d.id !== row.id));
+      setEmployees(list => list.filter(d => d.id !== row.id));
     }
   };
 
@@ -896,10 +945,27 @@ const DemoComponent: React.FC = () => {
   };
 
   // Build columns from JSON
-  const columns = buildColumnsFromJSON(jsonData.columns, {
-    handleCellClick,
-  });
+  const columns = buildColumnsFromJSON(jsonData.columns, { handleCellClick });
 
+  // --- Extra: a small component that also “listens” to changes
+  const ActiveCountChip: React.FC = () => {
+    const active = useDemoStore(s => s.employees.filter(e => e.status === 'Active').length);
+    return (
+      <span
+        style={{
+          ...styles.chip,
+          borderColor: '#2e7d32',
+          color: '#2e7d32',
+          backgroundColor: '#2e7d3210',
+        }}
+      >
+        Active Employees: {active}
+      </span>
+    );
+  };
+
+
+  
   return (
     <div style={styles.container}>
       <div style={styles.card}>
@@ -907,18 +973,48 @@ const DemoComponent: React.FC = () => {
         <p style={styles.subtitle}>{jsonData.pageConfig.subtitle}</p>
         <div style={styles.chipContainer}>
           {Object.entries(jsonData.pageConfig.chipColors).map(([label, color]) => (
-            <span 
+            <span
               key={label}
-              style={{ 
-                ...styles.chip, 
-                borderColor: color,
-                color: color,
-                backgroundColor: `${color}10`
+              style={{
+                ...styles.chip,
+                borderColor: color as string,
+                color: color as string,
+                backgroundColor: `${color}10`,
               }}
             >
               {label}
             </span>
           ))}
+          {/* Live badge that updates whenever the table data changes */}
+          <ActiveCountChip />
+        </div>
+
+        {/* DEMO: Toggle data button (flip John’s status) */}
+        <ButtonAtom
+          label="Toggle John Doe Status"
+          onClick={() => {
+            setEmployees(list =>
+              list.map(e =>
+                e.name === 'John Doe'
+                  ? { ...e, status: e.status === 'Active' ? 'On Leave' : 'Active' }
+                  : e
+              )
+            );
+          }}
+          variant="primary"
+        />
+
+        {/* DEMO: Randomize all salaries to see calculated column update */}
+        <div style={{ marginTop: 8 }}>
+          <ButtonAtom
+            label="Randomize Salaries"
+            onClick={() => {
+              setEmployees(list =>
+                list.map(e => ({ ...e, salary: Math.round(60000 + Math.random() * 40000) }))
+              );
+            }}
+            variant="secondary"
+          />
         </div>
       </div>
 
