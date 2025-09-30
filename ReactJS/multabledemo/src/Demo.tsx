@@ -61,7 +61,7 @@ export interface TableConfig<T = any> {
 
 // =============== STYLES ===============
 
-const styles = {
+export const styles = {
   // Atomic components
   text: {
     fontSize: '14px',
@@ -280,7 +280,7 @@ const styles = {
 // =============== ATOMS ===============
 
 // Text Atom
-const TextAtom: React.FC<{ 
+export const TextAtom: React.FC<{ 
   value: string; 
   onClick?: () => void; 
   clickable?: boolean 
@@ -304,7 +304,7 @@ const TextAtom: React.FC<{
 };
 
 // Number Atom
-const NumberAtom: React.FC<{ 
+export const NumberAtom: React.FC<{ 
   value: number; 
   format?: (n: number) => string 
 }> = ({ value, format }) => (
@@ -314,7 +314,7 @@ const NumberAtom: React.FC<{
 );
 
 // Date Atom
-const DateAtom: React.FC<{ value: string | Date }> = ({ value }) => {
+export const DateAtom: React.FC<{ value: string | Date }> = ({ value }) => {
   const formatDate = (date: string | Date) => {
     const d = typeof date === 'string' ? new Date(date) : date;
     return d.toLocaleDateString('en-US', { 
@@ -328,7 +328,7 @@ const DateAtom: React.FC<{ value: string | Date }> = ({ value }) => {
 };
 
 // Button Atom
-const ButtonAtom: React.FC<{ 
+export const ButtonAtom: React.FC<{ 
   label: string; 
   onClick: () => void; 
   variant?: 'primary' | 'secondary' | 'danger' 
@@ -358,7 +358,7 @@ const ButtonAtom: React.FC<{
 };
 
 // Calculated Value Atom
-const CalculatedAtom: React.FC<{ value: any; icon?: boolean }> = ({ value, icon }) => (
+export const CalculatedAtom: React.FC<{ value: any; icon?: boolean }> = ({ value, icon }) => (
   <span style={styles.calculated}>
     {icon && <span>📊</span>}
     {String(value)}
@@ -366,7 +366,7 @@ const CalculatedAtom: React.FC<{ value: any; icon?: boolean }> = ({ value, icon 
 );
 
 // Header Atom
-const HeaderAtom: React.FC<{ 
+export const HeaderAtom: React.FC<{ 
   title: string; 
   type: HeadingType; 
   icon?: string 
@@ -388,7 +388,7 @@ const HeaderAtom: React.FC<{
 // =============== MOLECULES ===============
 
 // Filter Molecule
-const FilterMolecule: React.FC<{
+export const FilterMolecule: React.FC<{
   columnType: ColumnType;
   value: any;
   onChange: (value: any) => void;
@@ -416,7 +416,7 @@ const FilterMolecule: React.FC<{
 };
 
 // Cell Molecule
-const CellMolecule: React.FC<{
+export const CellMolecule: React.FC<{
   value: any;
   columnType: ColumnType;
   columnConfig: ColumnConfig;
@@ -434,7 +434,7 @@ const CellMolecule: React.FC<{
     }
   };
 
-  const renderCell = () => {
+   const renderCell = () => {
     switch (columnType) {
       case ColumnType.TEXT:
         return (
@@ -502,7 +502,7 @@ const CellMolecule: React.FC<{
 };
 
 // Popup Molecule
-const PopupMolecule: React.FC<{
+export const PopupMolecule: React.FC<{
   config: PopupConfig;
   row: any;
   onClose: () => void;
@@ -536,7 +536,7 @@ const PopupMolecule: React.FC<{
 );
 
 // Row Actions Molecule
-const RowActionsMolecule: React.FC<{
+export const RowActionsMolecule: React.FC<{
   row: any;
   onEdit?: (row: any) => void;
   onDelete?: (row: any) => void;
@@ -769,7 +769,7 @@ export const TableOrganism = <T extends Record<string, any>>({
 
 // =============== DEMO COMPONENT ===============
 
-const DemoComponent: React.FC = () => {
+export const DemoComponent: React.FC = () => {
   const [data, setData] = useState([
     {
       id: 1,
