@@ -279,7 +279,6 @@ export const styles = {
 
 // =============== ATOMS ===============
 
-// Text Atom
 export const TextAtom: React.FC<{ 
   value: string; 
   onClick?: () => void; 
@@ -303,7 +302,6 @@ export const TextAtom: React.FC<{
   );
 };
 
-// Number Atom
 export const NumberAtom: React.FC<{ 
   value: number; 
   format?: (n: number) => string 
@@ -313,7 +311,6 @@ export const NumberAtom: React.FC<{
   </span>
 );
 
-// Date Atom
 export const DateAtom: React.FC<{ value: string | Date }> = ({ value }) => {
   const formatDate = (date: string | Date) => {
     const d = typeof date === 'string' ? new Date(date) : date;
@@ -327,7 +324,6 @@ export const DateAtom: React.FC<{ value: string | Date }> = ({ value }) => {
   return <span style={styles.date}>{formatDate(value)}</span>;
 };
 
-// Button Atom
 export const ButtonAtom: React.FC<{ 
   label: string; 
   onClick: () => void; 
@@ -357,7 +353,6 @@ export const ButtonAtom: React.FC<{
   );
 };
 
-// Calculated Value Atom
 export const CalculatedAtom: React.FC<{ value: any; icon?: boolean }> = ({ value, icon }) => (
   <span style={styles.calculated}>
     {icon && <span>📊</span>}
@@ -365,7 +360,6 @@ export const CalculatedAtom: React.FC<{ value: any; icon?: boolean }> = ({ value
   </span>
 );
 
-// Header Atom
 export const HeaderAtom: React.FC<{ 
   title: string; 
   type: HeadingType; 
@@ -387,7 +381,6 @@ export const HeaderAtom: React.FC<{
 
 // =============== MOLECULES ===============
 
-// Filter Molecule
 export const FilterMolecule: React.FC<{
   columnType: ColumnType;
   value: any;
@@ -415,7 +408,6 @@ export const FilterMolecule: React.FC<{
   );
 };
 
-// Cell Molecule
 export const CellMolecule: React.FC<{
   value: any;
   columnType: ColumnType;
@@ -501,7 +493,6 @@ export const CellMolecule: React.FC<{
   );
 };
 
-// Popup Molecule
 export const PopupMolecule: React.FC<{
   config: PopupConfig;
   row: any;
@@ -535,7 +526,6 @@ export const PopupMolecule: React.FC<{
   </div>
 );
 
-// Row Actions Molecule
 export const RowActionsMolecule: React.FC<{
   row: any;
   onEdit?: (row: any) => void;
@@ -575,7 +565,6 @@ export const RowActionsMolecule: React.FC<{
 
 // =============== ORGANISMS ===============
 
-// Table Organism
 export const TableOrganism = <T extends Record<string, any>>({
   columns,
   data,
@@ -767,62 +756,123 @@ export const TableOrganism = <T extends Record<string, any>>({
   );
 };
 
+// =============== HELPER FUNCTIONS ===============
+
+const buildColumnsFromJSON = (
+  jsonColumns: any[],
+  handlers: {
+    handleCellClick: (row: any, columnId: string) => void;
+  }
+): ColumnConfig[] => {
+  return jsonColumns.map((col) => {
+    const columnConfig: ColumnConfig = {
+      id: col.id,
+      header: col.header,
+      type: col.type as ColumnType,
+      headingType: col.headingType ? col.headingType as HeadingType : HeadingType.SECONDARY,
+      accessor: col.accessor,
+      width: col.width,
+    };
+
+    // Handle clickable configuration
+    if (col.clickable?.enabled) {
+      columnConfig.clickable = {
+        enabled: true,
+        onClick: handlers.handleCellClick,
+        tooltip: col.clickable.tooltip,
+      };
+    }
+
+    // Handle popup configuration
+    if (col.popup?.enabled) {
+      columnConfig.popup = {
+        enabled: true,
+        title: col.popup.title,
+        content: (row) => (
+          <div>
+            <p><strong>Email:</strong> {row.email}</p>
+            <p><strong>Department:</strong> {row.department}</p>
+            <p><strong>Status:</strong> {row.status}</p>
+          </div>
+        ),
+        actions: [
+          {
+            label: 'Send Email',
+            onClick: (row) => console.log('Send email to:', row.email),
+            variant: 'primary',
+          },
+        ],
+      };
+    }
+
+    // Handle format types
+    if (col.formatType === 'currency') {
+      columnConfig.format = (value) => `$${value.toLocaleString()}`;
+    }
+
+    // Handle calculated columns
+    if (col.type === 'calculated' && col.calculationType === 'salaryBonus') {
+      columnConfig.calculationFn = (row) => `$${(row.salary * 0.1).toLocaleString()}`;
+    }
+
+    // Handle button columns
+    if (col.type === 'button') {
+      columnConfig.accessor = () => col.buttonLabel || 'Action';
+    }
+
+    return columnConfig;
+  });
+};
+
 // =============== DEMO COMPONENT ===============
 
-export const DemoComponent: React.FC = () => {
-  const [data, setData] = useState([
-    {
-      id: 1,
-      name: 'John Doe',
-      age: 32,
-      email: 'john@example.com',
-      joinDate: '2023-01-15',
-      salary: 75000,
-      department: 'Engineering',
-      status: 'Active',
+const DemoComponent: React.FC = () => {
+  // Load JSON data
+  const jsonData = {
+    "pageConfig": {
+      "title": "Atomic Design Table System Demo",
+      "subtitle": "This demo showcases a table built using Atomic Design principles. It demonstrates various column types, filtering, sorting, clickable cells, and popup dialogs.",
+      "chipColors": {
+        "Text Columns": "#1976d2",
+        "Number Columns": "#9c27b0",
+        "Date Columns": "#2e7d32",
+        "Button Columns": "#ed6c02",
+        "Calculated Columns": "#0288d1"
+      },
+      "features": [
+        { "title": "Atomic Design Structure", "description": "Components built from atoms → molecules → organisms" },
+        { "title": "Column Types", "description": "Text, Number, Date, Button, and Calculated columns" },
+        { "title": "Interactive Features", "description": "Clickable cells with tooltips and popup dialogs" },
+        { "title": "Filtering", "description": "Type-specific filters for each column" },
+        { "title": "Sorting", "description": "Click column headers to sort (ascending/descending)" },
+        { "title": "Row Actions", "description": "View, Edit, and Delete operations" },
+        { "title": "Heading Types", "description": "Primary, Secondary, and Tertiary headers with icons" },
+        { "title": "Global Search", "description": "Search across all columns simultaneously" }
+      ]
     },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      age: 28,
-      email: 'jane@example.com',
-      joinDate: '2023-03-20',
-      salary: 68000,
-      department: 'Design',
-      status: 'Active',
-    },
-    {
-      id: 3,
-      name: 'Bob Johnson',
-      age: 45,
-      email: 'bob@example.com',
-      joinDate: '2022-11-10',
-      salary: 92000,
-      department: 'Management',
-      status: 'On Leave',
-    },
-    {
-      id: 4,
-      name: 'Alice Brown',
-      age: 35,
-      email: 'alice@example.com',
-      joinDate: '2023-06-05',
-      salary: 78000,
-      department: 'Engineering',
-      status: 'Active',
-    },
-    {
-      id: 5,
-      name: 'Charlie Wilson',
-      age: 29,
-      email: 'charlie@example.com',
-      joinDate: '2023-09-12',
-      salary: 65000,
-      department: 'Marketing',
-      status: 'Active',
-    },
-  ]);
+    "tableConfig": { "enableGlobalFilter": true, "enableRowActions": true },
+    "columns": [
+      { "id": "name", "header": "Employee Name", "type": "text", "headingType": "primary", "accessor": "name", "clickable": { "enabled": true, "tooltip": "Click to view profile" } },
+      { "id": "age", "header": "Age", "type": "number", "headingType": "secondary", "accessor": "age", "width": 100 },
+      { "id": "email", "header": "Email", "type": "text", "headingType": "secondary", "accessor": "email", "popup": { "enabled": true, "title": "Contact Information" } },
+      { "id": "joinDate", "header": "Join Date", "type": "date", "headingType": "secondary", "accessor": "joinDate" },
+      { "id": "salary", "header": "Salary", "type": "number", "headingType": "primary", "accessor": "salary", "formatType": "currency" },
+      { "id": "annualBonus", "header": "Annual Bonus (10%)", "type": "calculated", "headingType": "tertiary", "calculationType": "salaryBonus" },
+      { "id": "status", "header": "Status", "type": "text", "accessor": "status" },
+      { "id": "action", "header": "Quick Action", "type": "button", "buttonLabel": "Message", "clickable": { "enabled": true } }
+    ],
+    "employees": [
+      { "id": 1, "name": "John Doe", "age": 32, "email": "john@example.com", "joinDate": "2023-01-15", "salary": 75000, "department": "Engineering", "status": "Active" },
+      { "id": 2, "name": "Jane Smith", "age": 28, "email": "jane@example.com", "joinDate": "2023-03-20", "salary": 68000, "department": "Design", "status": "Active" },
+      { "id": 3, "name": "Bob Johnson", "age": 45, "email": "bob@example.com", "joinDate": "2022-11-10", "salary": 92000, "department": "Management", "status": "On Leave" },
+      { "id": 4, "name": "Alice Brown", "age": 35, "email": "alice@example.com", "joinDate": "2023-06-05", "salary": 78000, "department": "Engineering", "status": "Active" },
+      { "id": 5, "name": "Charlie Wilson", "age": 29, "email": "charlie@example.com", "joinDate": "2023-09-12", "salary": 65000, "department": "Marketing", "status": "Active" }
+    ]
+  };
 
+  const [data, setData] = useState(jsonData.employees);
+
+  // Event handlers
   const handleCellClick = (row: any, columnId: string) => {
     console.log(`Clicked on ${columnId} for row:`, row);
     alert(`You clicked on ${row.name}'s ${columnId}`);
@@ -845,110 +895,18 @@ export const DemoComponent: React.FC = () => {
     alert(`Viewing details for ${row.name}`);
   };
 
-  const columns: ColumnConfig[] = [
-    {
-      id: 'name',
-      header: 'Employee Name',
-      type: ColumnType.TEXT,
-      headingType: HeadingType.PRIMARY,
-      accessor: 'name',
-      clickable: {
-        enabled: true,
-        onClick: handleCellClick,
-        tooltip: 'Click to view profile',
-      },
-    },
-    {
-      id: 'age',
-      header: 'Age',
-      type: ColumnType.NUMBER,
-      headingType: HeadingType.SECONDARY,
-      accessor: 'age',
-      width: 100,
-    },
-    {
-      id: 'email',
-      header: 'Email',
-      type: ColumnType.TEXT,
-      headingType: HeadingType.SECONDARY,
-      accessor: 'email',
-      popup: {
-        enabled: true,
-        title: 'Contact Information',
-        content: (row) => (
-          <div>
-            <p><strong>Email:</strong> {row.email}</p>
-            <p><strong>Department:</strong> {row.department}</p>
-            <p><strong>Status:</strong> {row.status}</p>
-          </div>
-        ),
-        actions: [
-          {
-            label: 'Send Email',
-            onClick: (row) => console.log('Send email to:', row.email),
-            variant: 'primary',
-          },
-        ],
-      },
-    },
-    {
-      id: 'joinDate',
-      header: 'Join Date',
-      type: ColumnType.DATE,
-      headingType: HeadingType.SECONDARY,
-      accessor: 'joinDate',
-    },
-    {
-      id: 'salary',
-      header: 'Salary',
-      type: ColumnType.NUMBER,
-      headingType: HeadingType.PRIMARY,
-      accessor: 'salary',
-      format: (value) => `$${value.toLocaleString()}`,
-    },
-    {
-      id: 'annualBonus',
-      header: 'Annual Bonus (10%)',
-      type: ColumnType.CALCULATED,
-      headingType: HeadingType.TERTIARY,
-      calculationFn: (row) => `$${(row.salary * 0.1).toLocaleString()}`,
-    },
-    {
-      id: 'status',
-      header: 'Status',
-      type: ColumnType.TEXT,
-      accessor: 'status',
-    },
-    {
-      id: 'action',
-      header: 'Quick Action',
-      type: ColumnType.BUTTON,
-      accessor: () => 'Message',
-      clickable: {
-        enabled: true,
-        onClick: (row) => alert(`Sending message to ${row.name}`),
-      },
-    },
-  ];
-
-  const chipColors = {
-    'Text Columns': '#1976d2',
-    'Number Columns': '#9c27b0',
-    'Date Columns': '#2e7d32',
-    'Button Columns': '#ed6c02',
-    'Calculated Columns': '#0288d1',
-  };
+  // Build columns from JSON
+  const columns = buildColumnsFromJSON(jsonData.columns, {
+    handleCellClick,
+  });
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.title}>Atomic Design Table System Demo</h1>
-        <p style={styles.subtitle}>
-          This demo showcases a table built using Atomic Design principles. 
-          It demonstrates various column types, filtering, sorting, clickable cells, and popup dialogs.
-        </p>
+        <h1 style={styles.title}>{jsonData.pageConfig.title}</h1>
+        <p style={styles.subtitle}>{jsonData.pageConfig.subtitle}</p>
         <div style={styles.chipContainer}>
-          {Object.entries(chipColors).map(([label, color]) => (
+          {Object.entries(jsonData.pageConfig.chipColors).map(([label, color]) => (
             <span 
               key={label}
               style={{ 
@@ -967,8 +925,8 @@ export const DemoComponent: React.FC = () => {
       <TableOrganism
         columns={columns}
         data={data}
-        enableGlobalFilter={true}
-        enableRowActions={true}
+        enableGlobalFilter={jsonData.tableConfig.enableGlobalFilter}
+        enableRowActions={jsonData.tableConfig.enableRowActions}
         onRowEdit={handleRowEdit}
         onRowDelete={handleRowDelete}
         onRowView={handleRowView}
@@ -977,14 +935,11 @@ export const DemoComponent: React.FC = () => {
       <div style={styles.card}>
         <h2 style={{ fontSize: '20px', marginBottom: '12px' }}>Features Demonstrated:</h2>
         <ul style={{ lineHeight: 1.8, color: '#555' }}>
-          <li><strong>Atomic Design Structure:</strong> Components built from atoms → molecules → organisms</li>
-          <li><strong>Column Types:</strong> Text, Number, Date, Button, and Calculated columns</li>
-          <li><strong>Interactive Features:</strong> Clickable cells with tooltips and popup dialogs</li>
-          <li><strong>Filtering:</strong> Type-specific filters for each column</li>
-          <li><strong>Sorting:</strong> Click column headers to sort (ascending/descending)</li>
-          <li><strong>Row Actions:</strong> View, Edit, and Delete operations</li>
-          <li><strong>Heading Types:</strong> Primary, Secondary, and Tertiary headers with icons</li>
-          <li><strong>Global Search:</strong> Search across all columns simultaneously</li>
+          {jsonData.pageConfig.features.map((feature, index) => (
+            <li key={index}>
+              <strong>{feature.title}:</strong> {feature.description}
+            </li>
+          ))}
         </ul>
       </div>
     </div>
