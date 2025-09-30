@@ -1,4 +1,3 @@
-// add useSyncExternalStore
 import React, { useState, useMemo, useCallback, useSyncExternalStore, useEffect } from 'react';
 
 // =============== TYPE DEFINITIONS ===============
@@ -58,6 +57,7 @@ export interface TableConfig<T = any> {
   onRowEdit?: (row: T) => void;
   onRowDelete?: (row: T) => void;
   onRowView?: (row: T) => void;
+  mobileBreakpoint?: number; // New: Optional breakpoint for mobile view
 }
 
 // =============== STYLES ===============
@@ -142,6 +142,10 @@ export const styles = {
     gap: '8px',
   },
   // Table styles
+  tableContainer: {
+    overflowX: 'auto' as const,
+    WebkitOverflowScrolling: 'touch',
+  },
   table: {
     width: '100%',
     borderCollapse: 'collapse' as const,
@@ -149,6 +153,7 @@ export const styles = {
     borderRadius: '8px',
     overflow: 'hidden',
     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    minWidth: '600px', // Ensures table content doesn't get too cramped before scrolling
   },
   th: {
     backgroundColor: '#f5f5f5',
@@ -233,7 +238,7 @@ export const styles = {
   },
   // Container styles
   container: {
-    padding: '32px',
+    padding: '16px', // Adjusted for better mobile padding
     backgroundColor: '#f0f2f5',
     minHeight: '100vh',
   },
@@ -271,10 +276,49 @@ export const styles = {
   globalFilter: {
     marginBottom: '16px',
     padding: '10px 16px',
-    width: '300px',
+    width: '100%',
+    maxWidth: '400px',
     border: '1px solid #ccc',
     borderRadius: '4px',
     fontSize: '14px',
+    boxSizing: 'border-box' as const,
+  },
+  // New Mobile View Styles
+  mobileCard: {
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    padding: '16px',
+    marginBottom: '12px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+    borderLeft: '4px solid #1976d2',
+  },
+  mobileCardHeader: {
+    fontSize: '18px',
+    fontWeight: 600,
+    marginBottom: '12px',
+    color: '#333',
+  },
+  mobileCardRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '8px 0',
+    borderBottom: '1px solid #f0f0f0',
+  },
+  mobileCardLabel: {
+    fontWeight: 500,
+    color: '#555',
+    fontSize: '14px',
+  },
+  mobileCardValue: {
+    textAlign: 'right' as const,
+  },
+  mobileCardActions: {
+    display: 'flex',
+    gap: '8px',
+    justifyContent: 'flex-end',
+    marginTop: '12px',
+    paddingTop: '8px',
+    borderTop: '1px solid #f0f0f0',
   },
 };
 
@@ -564,7 +608,90 @@ export const RowActionsMolecule: React.FC<{
   </div>
 );
 
+// New MobileCardMolecule
+const MobileCardMolecule: React.FC<{
+  row: any;
+  columns: ColumnConfig[];
+  onRowEdit?: (row: any) => void;
+  onRowDelete?: (row: any) => void;
+  onRowView?: (row: any) => void;
+}> = ({ row, columns, onRowEdit, onRowDelete, onRowView }) => {
+  const primaryColumn = columns[0]; // Assume first column is the primary display
+  const primaryValue = row[primaryColumn.accessor as string] || row[primaryColumn.id];
+
+  return (
+    <div style={styles.mobileCard}>
+      <div style={styles.mobileCardHeader}>{primaryValue}</div>
+      {columns.map(column => {
+        // Don't repeat the primary header in the body
+        if (column.id === primaryColumn.id) return null; 
+        
+        const value = column.type === ColumnType.CALCULATED && column.calculationFn
+          ? column.calculationFn(row)
+          : column.accessor
+            ? typeof column.accessor === 'function'
+              ? column.accessor(row)
+              : row[column.accessor as string]
+            : row[column.id];
+
+        // Don't render empty rows
+        if (value === null || value === undefined) return null;
+
+        return (
+          <div key={column.id} style={styles.mobileCardRow}>
+            <span style={styles.mobileCardLabel}>{column.header}</span>
+            <div style={styles.mobileCardValue}>
+              <CellMolecule
+                value={value}
+                columnType={column.type}
+                columnConfig={column}
+                row={row}
+              />
+            </div>
+          </div>
+        );
+      })}
+      {(onRowEdit || onRowDelete || onRowView) && (
+        <div style={styles.mobileCardActions}>
+          <RowActionsMolecule
+            row={row}
+            onEdit={onRowEdit}
+            onDelete={onRowDelete}
+            onView={onRowView}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+
 // =============== ORGANISMS ===============
+
+// New MobileCardListOrganism
+const MobileCardListOrganism = <T extends Record<string, any>>({
+  columns,
+  data,
+  onRowEdit,
+  onRowDelete,
+  onRowView,
+}: TableConfig<T>) => {
+  return (
+    <div>
+      {data.map((row, index) => (
+        <MobileCardMolecule
+          key={index}
+          row={row}
+          columns={columns}
+          onRowEdit={onRowEdit}
+          onRowDelete={onRowDelete}
+          onRowView={onRowView}
+        />
+      ))}
+    </div>
+  );
+};
+
 
 export const TableOrganism = <T extends Record<string, any>>({
   columns,
@@ -574,6 +701,7 @@ export const TableOrganism = <T extends Record<string, any>>({
   onRowEdit,
   onRowDelete,
   onRowView,
+  mobileBreakpoint = 768, // Default mobile breakpoint
 }: TableConfig<T>) => {
   const [filters, setFilters] = useState<Record<string, any>>({});
   const [sortConfig, setSortConfig] = useState<{
@@ -581,6 +709,10 @@ export const TableOrganism = <T extends Record<string, any>>({
     direction: 'asc' | 'desc';
   }>({ key: null, direction: 'asc' });
   const [globalFilter, setGlobalFilter] = useState('');
+
+  // Responsive Hook
+  const { width } = useWindowSize();
+  const isMobile = width <= mobileBreakpoint;
 
   const getColumnIcon = (type: ColumnType): string => {
     const icons = {
@@ -603,31 +735,33 @@ export const TableOrganism = <T extends Record<string, any>>({
   const processedData = useMemo(() => {
     let filtered = [...data];
 
-    // Apply column filters
-    Object.entries(filters).forEach(([columnId, filterValue]) => {
-      if (filterValue !== '' && filterValue != null) {
-        const column = columns.find(col => col.id === columnId);
-        if (column) {
-          filtered = filtered.filter(row => {
-            const value = column.accessor
-              ? typeof column.accessor === 'function'
-                ? column.accessor(row)
-                : row[column.accessor as string]
-              : column.type === ColumnType.CALCULATED && column.calculationFn
-                ? column.calculationFn(row)
-                : row[columnId];
+    // Apply column filters (only for desktop view for simplicity)
+    if (!isMobile) {
+      Object.entries(filters).forEach(([columnId, filterValue]) => {
+        if (filterValue !== '' && filterValue != null) {
+          const column = columns.find(col => col.id === columnId);
+          if (column) {
+            filtered = filtered.filter(row => {
+              const value = column.accessor
+                ? typeof column.accessor === 'function'
+                  ? column.accessor(row)
+                  : row[column.accessor as string]
+                : column.type === ColumnType.CALCULATED && column.calculationFn
+                  ? column.calculationFn(row)
+                  : row[columnId];
 
-            if (column.type === ColumnType.NUMBER) {
-              return Number(value) === Number(filterValue);
-            }
-            
-            const stringValue = String(value).toLowerCase();
-            const stringFilter = String(filterValue).toLowerCase();
-            return stringValue.includes(stringFilter);
-          });
+              if (column.type === ColumnType.NUMBER) {
+                return Number(value) === Number(filterValue);
+              }
+              
+              const stringValue = String(value).toLowerCase();
+              const stringFilter = String(filterValue).toLowerCase();
+              return stringValue.includes(stringFilter);
+            });
+          }
         }
-      }
-    });
+      });
+    }
 
     // Apply global filter
     if (globalFilter) {
@@ -661,7 +795,7 @@ export const TableOrganism = <T extends Record<string, any>>({
     }
 
     return filtered;
-  }, [data, filters, sortConfig, globalFilter, columns]);
+  }, [data, filters, sortConfig, globalFilter, columns, isMobile]);
 
   return (
     <div>
@@ -669,95 +803,121 @@ export const TableOrganism = <T extends Record<string, any>>({
         <input
           type="text"
           style={styles.globalFilter}
-          placeholder="Search all columns..."
+          placeholder="Search..."
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
         />
       )}
       
-      <table style={styles.table}>
-        <thead>
-          <tr>
-            {columns.map((column) => (
-              <th key={column.id} style={{ ...styles.th, width: column.width }}>
-                <div>
-                  <div 
-                    style={{ cursor: column.sortable !== false ? 'pointer' : 'default' }}
-                    onClick={() => column.sortable !== false && handleSort(column.id)}
-                  >
-                    <HeaderAtom
-                      title={column.header}
-                      type={column.headingType || HeadingType.SECONDARY}
-                      icon={getColumnIcon(column.type)}
-                    />
-                    {sortConfig.key === column.id && (
-                      <span style={{ marginLeft: '4px' }}>
-                        {sortConfig.direction === 'asc' ? '▲' : '▼'}
-                      </span>
-                    )}
-                  </div>
-                  {column.filterable !== false && (
-                    <FilterMolecule
-                      columnType={column.type}
-                      value={filters[column.id]}
-                      onChange={(value) => 
-                        setFilters(prev => ({ ...prev, [column.id]: value }))
-                      }
-                    />
-                  )}
-                </div>
-              </th>
-            ))}
-            {enableRowActions && <th style={styles.th}>Actions</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {processedData.map((row, index) => (
-            <tr 
-              key={index} 
-              style={styles.tr}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
-            >
-              {columns.map((column) => {
-                const value = column.type === ColumnType.CALCULATED && column.calculationFn
-                  ? column.calculationFn(row)
-                  : column.accessor
-                    ? typeof column.accessor === 'function'
-                      ? column.accessor(row)
-                      : row[column.accessor as string]
-                    : row[column.id];
+      {isMobile ? (
+        <MobileCardListOrganism
+            columns={columns}
+            data={processedData}
+            onRowEdit={onRowEdit}
+            onRowDelete={onRowDelete}
+            onRowView={onRowView}
+        />
+      ) : (
+        <div style={styles.tableContainer}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                {columns.map((column) => (
+                  <th key={column.id} style={{ ...styles.th, width: column.width }}>
+                    <div>
+                      <div 
+                        style={{ cursor: column.sortable !== false ? 'pointer' : 'default' }}
+                        onClick={() => column.sortable !== false && handleSort(column.id)}
+                      >
+                        <HeaderAtom
+                          title={column.header}
+                          type={column.headingType || HeadingType.SECONDARY}
+                          icon={getColumnIcon(column.type)}
+                        />
+                        {sortConfig.key === column.id && (
+                          <span style={{ marginLeft: '4px' }}>
+                            {sortConfig.direction === 'asc' ? '▲' : '▼'}
+                          </span>
+                        )}
+                      </div>
+                      {column.filterable !== false && (
+                        <FilterMolecule
+                          columnType={column.type}
+                          value={filters[column.id]}
+                          onChange={(value) => 
+                            setFilters(prev => ({ ...prev, [column.id]: value }))
+                          }
+                        />
+                      )}
+                    </div>
+                  </th>
+                ))}
+                {enableRowActions && <th style={styles.th}>Actions</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {processedData.map((row, index) => (
+                <tr 
+                  key={index} 
+                  style={styles.tr}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = ''}
+                >
+                  {columns.map((column) => {
+                    const value = column.type === ColumnType.CALCULATED && column.calculationFn
+                      ? column.calculationFn(row)
+                      : column.accessor
+                        ? typeof column.accessor === 'function'
+                          ? column.accessor(row)
+                          : row[column.accessor as string]
+                        : row[column.id];
 
-                return (
-                  <td key={column.id} style={styles.td}>
-                    <CellMolecule
-                      value={value}
-                      columnType={column.type}
-                      columnConfig={column}
-                      row={row}
-                    />
-                  </td>
-                );
-              })}
-              {enableRowActions && (
-                <td style={styles.td}>
-                  <RowActionsMolecule
-                    row={row}
-                    onEdit={onRowEdit}
-                    onDelete={onRowDelete}
-                    onView={onRowView}
-                  />
-                </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                    return (
+                      <td key={column.id} style={styles.td}>
+                        <CellMolecule
+                          value={value}
+                          columnType={column.type}
+                          columnConfig={column}
+                          row={row}
+                        />
+                      </td>
+                    );
+                  })}
+                  {enableRowActions && (
+                    <td style={styles.td}>
+                      <RowActionsMolecule
+                        row={row}
+                        onEdit={onRowEdit}
+                        onDelete={onRowDelete}
+                        onView={onRowView}
+                      />
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };
 
 // =============== HELPER FUNCTIONS ===============
+
+// New: A hook to get window size
+const useWindowSize = () => {
+  const [size, setSize] = useState([window.innerWidth, window.innerHeight]);
+  useEffect(() => {
+    const handleResize = () => {
+      setSize([window.innerWidth, window.innerHeight]);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  return { width: size[0], height: size[1] };
+};
+
 
 const buildColumnsFromJSON = (
   jsonColumns: any[],
@@ -808,7 +968,7 @@ const buildColumnsFromJSON = (
 
     // Handle format types
     if (col.formatType === 'currency') {
-      columnConfig.format = (value) => `$${value.toLocaleString()}`;
+      columnConfig.format = (value) => `$${Number(value).toLocaleString()}`;
     }
 
     // Handle calculated columns
@@ -839,13 +999,11 @@ const buildColumnsFromJSON = (
       },
       "features": [
         { "title": "Atomic Design Structure", "description": "Components built from atoms → molecules → organisms" },
-        { "title": "Column Types", "description": "Text, Number, Date, Button, and Calculated columns" },
+        { "title": "Fully Responsive", "description": "Switches to a card view on mobile and supports horizontal scrolling on tablets." },
+        { "title": "State Management", "description": "Uses `useSyncExternalStore` for reactive, prop-drilling-free state." },
         { "title": "Interactive Features", "description": "Clickable cells with tooltips and popup dialogs" },
-        { "title": "Filtering", "description": "Type-specific filters for each column" },
-        { "title": "Sorting", "description": "Click column headers to sort (ascending/descending)" },
-        { "title": "Row Actions", "description": "View, Edit, and Delete operations" },
-        { "title": "Heading Types", "description": "Primary, Secondary, and Tertiary headers with icons" },
-        { "title": "Global Search", "description": "Search across all columns simultaneously" }
+        { "title": "Filtering & Sorting", "description": "Global search works on all devices; column filters and sorting are available on desktop." },
+        { "title": "Row Actions", "description": "View, Edit, and Delete operations available on all views." },
       ]
     },
     "tableConfig": { "enableGlobalFilter": true, "enableRowActions": true },
@@ -899,19 +1057,18 @@ export function useDemoStore<T>(selector: (s: DemoState) => T) {
 
   
 const DemoComponent: React.FC = () => {
-  // Load JSON data
- 
-
-  // In DemoComponent (or a small useEffect hook component)
+  // Mock WebSocket updates
  useEffect(() => {
-  const ws = new WebSocket('ws://localhost:3001'); // your endpoint
-  ws.onmessage = (e) => {
-    const incoming = JSON.parse(e.data) as Partial<Employee> & { id: number };
-    setEmployees(list =>
-      list.map(emp => (emp.id === incoming.id ? { ...emp, ...incoming } : emp))
-    );
-  };
-  return () => ws.close();
+    console.log("Mock WebSocket connection initialized. State changes will be simulated via UI buttons.");
+    // In a real app, you would have WebSocket logic here:
+    // const ws = new WebSocket('ws://localhost:3001'); 
+    // ws.onmessage = (e) => {
+    //   const incoming = JSON.parse(e.data) as Partial<Employee> & { id: number };
+    //   setEmployees(list =>
+    //     list.map(emp => (emp.id === incoming.id ? { ...emp, ...incoming } : emp))
+    //   );
+    // };
+    // return () => ws.close();
 }, []);
 
 
@@ -1028,9 +1185,9 @@ const DemoComponent: React.FC = () => {
         onRowView={handleRowView}
       />
 
-      <div style={styles.card}>
+      <div style={{ ...styles.card, marginTop: '24px' }}>
         <h2 style={{ fontSize: '20px', marginBottom: '12px' }}>Features Demonstrated:</h2>
-        <ul style={{ lineHeight: 1.8, color: '#555' }}>
+        <ul style={{ lineHeight: 1.8, color: '#555', paddingLeft: '20px' }}>
           {jsonData.pageConfig.features.map((feature, index) => (
             <li key={index}>
               <strong>{feature.title}:</strong> {feature.description}
