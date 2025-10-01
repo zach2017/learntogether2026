@@ -141,3 +141,5 @@ vite.config.ts.timestamp-*
 *.xcuserstate
 Java/learn2026/sentry-opentelemetry-agent-8.21.1.jar
 ReactJS/multabledemo/.yarn/install-state.gz
+Java/learn2026/frontend/node
+Java/learn2026/target/

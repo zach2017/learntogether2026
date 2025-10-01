@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI‑Powered Resilience Plan & Runbooks Generator (Simulated)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Tailwind config for nicer fonts & container widths
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Ubuntu", "Cantarell", "Noto Sans", "Helvetica Neue", "Arial", ""],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* Simple spinner */
+    .spinner { border: 3px solid rgba(0,0,0,0.1); border-left-color: currentColor; border-radius: 50%; width: 1.25rem; height: 1.25rem; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    details > summary::-webkit-details-marker { display:none; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-violet-50 via-sky-50 to-emerald-50 text-slate-800 min-h-screen">
+  <!-- Header -->
+  <header class="sticky top-0 z-20 border-b border-violet-200/50 backdrop-blur bg-white/90 shadow-lg shadow-violet-100/50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-indigo-600 shadow-lg shadow-violet-200"></div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-bold tracking-tight bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">AI‑Powered Resilience Plan & Runbooks Generator</h1>
+          <p class="text-sm text-slate-500 -mt-0.5">Simulated local generator • Tailwind UI • Works with your JSON architecture + ATT&CK + CVEs</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btnPrint" class="px-3 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-orange-400 to-amber-400 text-white hover:from-orange-500 hover:to-amber-500 shadow-lg shadow-orange-200 transition-all duration-200">Print</button>
+        <button id="btnExportMd" class="px-3 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-200 transition-all duration-200">Export Markdown</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Left Column: Input Panel -->
+    <aside class="lg:col-span-4 space-y-6">
+      <section class="bg-gradient-to-br from-blue-50 to-indigo-50 shadow-xl rounded-2xl border border-blue-200/50 backdrop-blur-sm">
+        <div class="p-5 border-b border-blue-200/50 bg-gradient-to-r from-blue-500/10 to-indigo-500/10">
+          <h2 class="font-semibold text-blue-900">1) Provide Inputs</h2>
+          <p class="text-sm text-blue-700">Upload or paste a JSON describing your system architecture, ATT&CK techniques, and known CVEs.</p>
+        </div>
+        <div class="p-5 space-y-4">
+          <label class="block text-sm font-medium text-blue-900">Upload JSON file</label>
+          <input id="fileInput" type="file" accept="application/json" class="block w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-gradient-to-r file:from-purple-500 file:to-indigo-500 file:text-white hover:file:from-purple-600 hover:file:to-indigo-600 file:shadow-lg file:shadow-purple-200 file:transition-all file:duration-200" />
+
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-blue-600">or</span>
+            <button id="btnLoadSample" class="text-xs px-2 py-1 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 shadow-lg shadow-cyan-200 transition-all duration-200">Load Sample JSON</button>
+          </div>
+
+          <label class="block text-sm font-medium text-blue-900">Paste JSON</label>
+          <textarea id="jsonInput" rows="10" class="w-full rounded-xl border-blue-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white/70 backdrop-blur-sm" placeholder='{"architecture":{...}, "attack":{...}, "cves":[...]}'></textarea>
+
+          <div class="flex items-center gap-2">
+            <button id="btnValidate" class="px-3 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-rose-400 to-pink-500 text-white hover:from-rose-500 hover:to-pink-600 shadow-lg shadow-rose-200 transition-all duration-200">Validate</button>
+            <button id="btnGenerate" class="px-3 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-emerald-500 to-green-500 text-white hover:from-emerald-600 hover:to-green-600 shadow-lg shadow-emerald-200 transition-all duration-200">Generate Plan & Runbooks</button>
+          </div>
+          <p id="validateMsg" class="text-xs text-slate-500"></p>
+        </div>
+      </section>
+
+      <section class="bg-gradient-to-br from-amber-50 to-orange-50 shadow-xl rounded-2xl border border-amber-200/50 backdrop-blur-sm">
+        <div class="p-5 border-b border-amber-200/50 bg-gradient-to-r from-amber-500/10 to-orange-500/10">
+          <h2 class="font-semibold text-amber-900">Assumptions & Scope</h2>
+        </div>
+        <div class="p-5 text-sm text-amber-800 space-y-3">
+          <p>This demo runs locally in your browser and <span class="font-semibold text-orange-700">simulates</span> an AI pipeline. No data leaves your device. The generation uses static knowledge packs and heuristic rules.</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Maps components (e.g., Java Spring, React, Postgres, NGINX) to ATT&CK techniques.</li>
+            <li>Drafts a resilience plan (RTO/RPO, backup/DR, monitoring, controls) and incident runbooks.</li>
+            <li>Expands CVEs into remediation tasks and compensating controls.</li>
+            <li>Applies current best practices (OWASP ASVS/Cheat Sheets, CIS Benchmarks, TLS, OIDC/OAuth2).</li>
+          </ul>
+        </div>
+      </section>
+    </aside>
+
+    <!-- Right Column: Output Panel -->
+    <section class="lg:col-span-8 space-y-6">
+      <div class="bg-gradient-to-br from-violet-50 to-indigo-50 shadow-xl rounded-2xl border border-violet-200/50 backdrop-blur-sm">
+        <div class="p-5 border-b border-violet-200/50 bg-gradient-to-r from-violet-500/10 to-indigo-500/10 flex items-center justify-between">
+          <div>
+            <h2 class="font-semibold text-violet-900">2) Results</h2>
+            <p class="text-sm text-violet-700">Overview, Resilience Plan, Runbooks, ATT&CK mapping, CVEs, and Best Practices</p>
+          </div>
+          <div id="loading" class="hidden items-center gap-3 text-violet-600">
+            <span class="spinner border-violet-400"></span>
+            <span class="text-sm font-medium">Synthesizing…</span>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="px-5 pt-4">
+          <nav id="tabs" class="flex flex-wrap gap-2">
+            <button data-tab="overview" class="tab-btn active">Overview</button>
+            <button data-tab="plan" class="tab-btn">Resilience Plan</button>
+            <button data-tab="runbooks" class="tab-btn">Runbooks</button>
+            <button data-tab="attack" class="tab-btn">ATT&CK Mapping</button>
+            <button data-tab="cves" class="tab-btn">CVE Tasks</button>
+            <button data-tab="best" class="tab-btn">Best Practices</button>
+            <button data-tab="export" class="tab-btn">Export</button>
+          </nav>
+        </div>
+
+        <div class="p-5">
+          <div id="panel-overview" class="tab-panel"></div>
+          <div id="panel-plan" class="tab-panel hidden"></div>
+          <div id="panel-runbooks" class="tab-panel hidden"></div>
+          <div id="panel-attack" class="tab-panel hidden"></div>
+          <div id="panel-cves" class="tab-panel hidden"></div>
+          <div id="panel-best" class="tab-panel hidden"></div>
+          <div id="panel-export" class="tab-panel hidden"></div>
+        </div>
+      </div>
+
+      <!-- Knowledge Packs (collapsible) -->
+      <section class="bg-gradient-to-br from-emerald-50 to-teal-50 shadow-xl rounded-2xl border border-emerald-200/50 backdrop-blur-sm">
+        <details open>
+          <summary class="cursor-pointer select-none px-5 py-4 border-b border-emerald-200/50 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 flex items-center justify-between hover:from-emerald-500/20 hover:to-teal-500/20 transition-all duration-200">
+            <span class="font-semibold text-emerald-900">Built‑in Knowledge Packs (Simulated)</span>
+            <span class="text-xs text-emerald-600 font-medium">Click to toggle</span>
+          </summary>
+          <div class="p-5 grid sm:grid-cols-2 gap-6 text-sm text-emerald-800">
+            <div>
+              <h3 class="font-semibold mb-2">ATT&CK Technique Library (subset)</h3>
+              <ul class="list-disc pl-5 space-y-1" id="libAttack"></ul>
+            </div>
+            <div>
+              <h3 class="font-semibold mb-2">Best Practices Library (subset)</h3>
+              <ul class="list-disc pl-5 space-y-1" id="libBest"></ul>
+            </div>
+          </div>
+        </details>
+      </section>
+    </section>
+  </main>
+
+  <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 text-xs text-violet-600/80">
+    <p>Demo only. Generated content is for planning and educational purposes; validate before production use.</p>
+  </footer>
+
+  <script>
+    // ---------- Static Knowledge Packs (Simulated AI) ----------
+    const KNOWLEDGE = {
+      attackTechniques: [
+        { id: "T1190", name: "Exploit Public-Facing Application", phase: "Initial Access" },
+        { id: "T1133", name: "External Remote Services", phase: "Initial Access" },
+        { id: "T1566", name: "Phishing", phase: "Initial Access" },
+        { id: "T1059", name: "Command and Scripting Interpreter", phase: "Execution" },
+        { id: "T1203", name: "Exploitation for Client Execution", phase: "Execution" },
+        { id: "T1053", name: "Scheduled Task/Job", phase: "Persistence" },
+        { id: "T1136", name: "Create Account", phase: "Persistence" },
+        { id: "T1547", name: "Boot or Logon Autostart Execution", phase: "Persistence" },
+        { id: "T1055", name: "Process Injection", phase: "Privilege Escalation" },
+        { id: "T1068", name: "Exploitation for Privilege Escalation", phase: "Privilege Escalation" },
+        { id: "T1003", name: "OS Credential Dumping", phase: "Credential Access" },
+        { id: "T1552", name: "Unsecured Credentials", phase: "Credential Access" },
+        { id: "T1041", name: "Exfiltration Over C2 Channel", phase: "Exfiltration" },
+        { id: "T1046", name: "Network Service Discovery", phase: "Discovery" },
+        { id: "T1021", name: "Remote Services", phase: "Lateral Movement" },
+        { id: "T1486", name: "Data Encrypted for Impact", phase: "Impact" },
+        { id: "T1499", name: "Endpoint DoS", phase: "Impact" },
+      ],
+      bestPractices: [
+        { tag: "web", text: "Enforce HTTPS (TLS 1.2+) with HSTS; use modern ciphers and disable TLS 1.0/1.1." },
+        { tag: "api", text: "Implement OAuth2/OIDC with short‑lived access tokens, refresh tokens, and PKCE for public clients." },
+        { tag: "api", text: "Rate limit and apply circuit breakers; include idempotency keys for mutating requests." },
+        { tag: "frontend", text: "Set strict CSP, SRI, X‑Content‑Type‑Options, Referrer‑Policy, and disable inline scripts." },
+        { tag: "frontend", text: "Use SAMEORIGIN iframes, secure cookies (HttpOnly, Secure, SameSite=Lax/Strict)." },
+        { tag: "backend", text: "Adopt input validation + output encoding; leverage parameterized queries and ORM escaping." },
+        { tag: "backend", text: "Use secrets manager (no secrets in env vars), rotate keys, and enforce mTLS for east‑west." },
+        { tag: "db", text: "Encrypt data at rest and in transit; use least‑privilege roles and row‑level security if available." },
+        { tag: "ops", text: "Zero‑Trust: strong device posture, SSO + MFA, just‑in‑time privileged access, session recording." },
+        { tag: "ops", text: "Backups: 3‑2‑1 strategy, cross‑region, periodic restore tests; document RPO/RTO." },
+        { tag: "ops", text: "Observability: OpenTelemetry traces + metrics + logs; anomaly detection and SLOs with error budgets." },
+        { tag: "ops", text: "Supply chain: SBOM (CycloneDX), signed artifacts (Sigstore), dependency scanning, container scanning." },
+        { tag: "platform", text: "Harden base OS (CIS), auto‑patch kernel/userspace; enable ASLR/DEP, auditd, and FIM." },
+        { tag: "platform", text: "Use container sandboxing (seccomp, AppArmor) and minimal distros (distroless)." },
+        { tag: "network", text: "Segment with L3/L7 policies; WAF for edge, IDS/IPS, egress allow‑lists, DNS sinkhole for C2." },
+      ],
+      componentHints: {
+        "java-spring": ["T1190", "T1059", "T1547", "T1552", "T1021", "T1486"],
+        "react-frontend": ["T1566", "T1203", "T1059"],
+        "postgres": ["T1046", "T1021", "T1486", "T1003"],
+        "nginx": ["T1190", "T1499"],
+        "os-linux": ["T1068", "T1003", "T1499"],
+      },
+      runbookTemplate(techId, name) {
+        return {
+          title: `${techId} • ${name}`,
+          steps: [
+            { h: "Detection", b: [
+              "Correlate alerts across WAF, EDR, and APM traces (OpenTelemetry).",
+              "Query recent auth anomalies and error spikes; check 4xx/5xx ratios and new processes." ] },
+            { h: "Triage", b: [
+              "Confirm scope (systems/users/data) and attack path; gather IOC list.",
+              "Assign IC and comms; start incident timeline." ] },
+            { h: "Containment", b: [
+              "Block offending IPs/users/tokens; rotate creds and revoke sessions.",
+              "Quarantine hosts/pods; apply WAF rules and feature flags for risky endpoints." ] },
+            { h: "Eradication", b: [
+              "Remove malicious artifacts; patch vulnerable components; validate SBOM integrity.",
+              "Reimage where required; reset secrets from vault; verify baseline drift corrections." ] },
+            { h: "Recovery", b: [
+              "Gradual traffic ramp; monitor SLOs and error budgets.",
+              "Run regression tests; announce recovery; close comms channel." ] },
+            { h: "Post‑Incident", b: [
+              "5‑Whys + RCA; update controls and dashboards; add detection rules.",
+              "Tabletop rehearsal updates; share learnings; track action items to closure." ] },
+          ]
+        }
+      },
+    }
+
+    // ---------- Sample Input ----------
+    const SAMPLE = {
+      architecture: {
+        name: "Reference Web App",
+        environment: "prod",
+        rtoHours: 4,
+        rpoMinutes: 30,
+        components: [
+          { id: "gw", name: "NGINX Gateway", type: "nginx", tags: ["edge", "waf"], 
+            endpoints: ["/api/*", "/auth/*"], dependencies: ["api", "auth"] },
+          { id: "api", name: "Spring Boot API", type: "java-spring", tags: ["backend", "otel"], 
+            endpoints: ["/v1/orders", "/v1/users"], dependencies: ["db", "auth"] },
+          { id: "ui", name: "React Frontend", type: "react-frontend", tags: ["frontend"], 
+            endpoints: ["/"], dependencies: ["api", "auth"] },
+          { id: "db", name: "PostgreSQL", type: "postgres", tags: ["database"], 
+            endpoints: [], dependencies: [] },
+          { id: "auth", name: "Keycloak", type: "oidc-provider", tags: ["auth"], 
+            endpoints: ["/.well-known/openid-configuration"], dependencies: [] },
+          { id: "os1", name: "Linux Hosts", type: "os-linux", tags: ["platform"],
+            endpoints: [], dependencies: [] },
+        ]
+      },
+      attack: {
+        // Techniques already observed as relevant or in scope for testing
+        techniques: ["T1190", "T1566", "T1059", "T1003", "T1499", "T1486"]
+      },
+      cves: [
+        { id: "CVE-2022-22965", title: "Spring4Shell RCE", componentType: "java-spring", severity: "critical" },
+        { id: "CVE-2023-43261", title: "NGINX HTTP/2 Rapid Reset DoS", componentType: "nginx", severity: "high" },
+        { id: "CVE-2024-1597", title: "Postgres liblz4 extension vulnerability", componentType: "postgres", severity: "medium" }
+      ],
+      standards: ["OWASP ASVS", "CIS Benchmarks", "NIST SP 800‑53 (selected controls)"]
+    }
+
+    // ---------- Helpers ----------
+    const $ = (sel) => document.querySelector(sel);
+    const byId = (id) => document.getElementById(id);
+
+    function toast(msg, ok=true) {
+      const el = byId('validateMsg');
+      el.textContent = msg;
+      el.className = `text-xs ${ok ? 'text-emerald-600' : 'text-rose-600'}`;
+      setTimeout(() => { el.textContent = ''; }, 6000);
+    }
+
+    function readInputJSON() {
+      const raw = byId('jsonInput').value.trim();
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch (e) { toast('Invalid JSON: ' + e.message, false); return null; }
+    }
+
+    function summarizeArchitecture(arch) {
+      const comps = arch?.components || [];
+      return `Environment: ${arch?.environment ?? 'n/a'} • Components: ${comps.length} • RTO: ${arch?.rtoHours ?? '—'}h • RPO: ${arch?.rpoMinutes ?? '—'}m`;
+    }
+
+    function groupBy(arr, keyFn) {
+      return arr.reduce((acc, item) => {
+        const k = keyFn(item);
+        (acc[k] ||= []).push(item);
+        return acc;
+      }, {});
+    }
+
+    function mdEscape(s) { return String(s).replace(/[|`*_#<>\\\[\]]/g, '\\$&'); }
+
+    // ---------- Generation Logic (Simulated AI) ----------
+    function synthesize(input) {
+      const arch = input.architecture ?? { components: [] };
+      const attack = input.attack?.techniques ?? [];
+      const cves = input.cves ?? [];
+
+      // Map techniques per component type using hints + input ATT&CK
+      const compMappings = arch.components.map(c => {
+        const hints = KNOWLEDGE.componentHints[c.type] || [];
+        const merged = Array.from(new Set([ ...hints, ...attack ]));
+        const details = merged.map(id => {
+          const t = KNOWLEDGE.attackTechniques.find(x => x.id === id);
+          return t ? { id: t.id, name: t.name, phase: t.phase } : { id, name: 'Unknown', phase: '—' };
+        });
+        return { component: c, techniques: details };
+      });
+
+      // Resilience plan skeleton
+      const plan = {
+        summary: {
+          name: arch.name || 'System',
+          environment: arch.environment || 'n/a',
+          rtoHours: arch.rtoHours ?? 4,
+          rpoMinutes: arch.rpoMinutes ?? 30,
+          standards: input.standards ?? [],
+        },
+        strategy: [
+          { h: 'Business Objectives', b: [
+            'Define critical services, data classes, and SLOs with error budgets.',
+            'Map RTO/RPO to each service; document failover order and dependencies.' ] },
+          { h: 'Architecture Resilience', b: [
+            'Multi‑AZ/region where feasible; graceful degradation; feature flags for risky paths.',
+            'State isolation: separate read/write, apply backpressure, and implement bulkheads.' ] },
+          { h: 'Backups & DR', b: [
+            '3‑2‑1 backups; encrypt at rest; immutable backups for ransomware.',
+            'Restore‑test schedule: monthly full, weekly differential, daily incremental.' ] },
+          { h: 'Observability & Response', b: [
+            'OpenTelemetry traces/metrics/logs; golden signals dashboards; anomaly alerts.',
+            'On‑call runbooks (this doc); paging policies; exec comms templates.' ] },
+          { h: 'Security Controls', b: [
+            'SSO/MFA; least privilege; network segmentation; WAF/IDS/IPS; egress control.',
+            'SBOM, signed artifacts, dependency/container scanning, policy as code.' ] },
+        ],
+      };
+
+      // Runbooks per technique
+      const runbooks = Array.from(new Set(compMappings.flatMap(m => m.techniques.map(t => t.id))))
+        .map(id => {
+          const t = KNOWLEDGE.attackTechniques.find(x => x.id === id) || { id, name: 'Unknown Technique' };
+          return KNOWLEDGE.runbookTemplate(t.id, t.name);
+        });
+
+      // CVE task expansion
+      const cveTasks = cves.map(c => ({
+        id: c.id,
+        title: c.title,
+        componentType: c.componentType,
+        severity: c.severity || 'unknown',
+        tasks: [
+          'Verify version exposure and affected components via SBOM and running inventory.',
+          'Apply vendor patch or upgrade to fixed version; document change window and rollback. ',
+          'If patch is not possible: apply compensating WAF rules and feature flags to disable risky code paths.',
+          'Rotate secrets/keys potentially exposed; reissue tokens; invalidate sessions.',
+          'Expand detection rules (EDR/SIEM) for known IOCs and anomalous patterns.',
+          'Post‑patch validation: regression tests, fuzz critical endpoints, and review error budgets.',
+        ]
+      }));
+
+      // Best practices aligned to present components
+      const bestByTag = groupBy(KNOWLEDGE.bestPractices, x => x.tag);
+
+      return { compMappings, plan, runbooks, cveTasks, bestByTag };
+    }
+
+    // ---------- Rendering ----------
+
+    function renderLibrary() {
+      const libA = byId('libAttack');
+      libA.innerHTML = KNOWLEDGE.attackTechniques.map(t => `<li><span class="font-medium">${t.id}</span> — ${t.name} <span class="text-slate-500">(${t.phase})</span></li>`).join('');
+      const libB = byId('libBest');
+      libB.innerHTML = KNOWLEDGE.bestPractices.map(b => `<li><span class="uppercase text-slate-500 text-[11px] tracking-wide">${b.tag}</span> ${b.text}</li>`).join('');
+    }
+
+    function renderOverview(input, out) {
+      const arch = input.architecture || { components: [] };
+      const sum = summarizeArchitecture(arch);
+      const comps = arch.components.map(c => `<li><span class="font-medium text-indigo-700">${c.name}</span> <span class="text-slate-500">(${c.type})</span> — deps: ${c.dependencies?.join(', ') || 'none'}</li>`).join('');
+      byId('panel-overview').innerHTML = `
+        <div class="space-y-4">
+          <div class="p-4 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
+            <div class="text-sm text-blue-800 font-medium">${sum}</div>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-2 text-slate-800">Components</h3>
+            <ul class="list-disc pl-5 space-y-1">${comps}</ul>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-2 text-slate-800">Technique Coverage (by component)</h3>
+            <div class="grid sm:grid-cols-2 gap-4">
+              ${out.compMappings.map((m, i) => {
+                const colors = ['from-red-50 to-rose-50 border-red-200', 'from-blue-50 to-indigo-50 border-blue-200', 'from-green-50 to-emerald-50 border-green-200', 'from-yellow-50 to-amber-50 border-yellow-200', 'from-purple-50 to-violet-50 border-purple-200', 'from-pink-50 to-fuchsia-50 border-pink-200'];
+                const colorClass = colors[i % colors.length];
+                return `
+                <div class="p-4 rounded-xl bg-gradient-to-br ${colorClass} shadow-sm">
+                  <div class="font-semibold text-slate-800">${m.component.name}</div>
+                  <ul class="mt-2 list-disc pl-5 text-sm space-y-1">
+                    ${m.techniques.map(t => `<li><span class="font-medium text-red-600">${t.id}</span> ${t.name} <span class="text-slate-500">(${t.phase})</span></li>`).join('')}
+                  </ul>
+                </div>
+              `}).join('')}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function renderPlan(input, out) {
+      const p = out.plan;
+      const strategyColors = ['border-blue-200 bg-blue-50', 'border-green-200 bg-green-50', 'border-purple-200 bg-purple-50', 'border-orange-200 bg-orange-50', 'border-pink-200 bg-pink-50'];
+      const strategy = p.strategy.map((s, i) => `
+        <details class="group border ${strategyColors[i % strategyColors.length]} rounded-xl shadow-sm">
+          <summary class="cursor-pointer px-4 py-3 font-semibold bg-gradient-to-r from-white/50 to-white/80 rounded-xl group-open:rounded-b-none hover:from-white/80 hover:to-white transition-all duration-200">${s.h}</summary>
+          <div class="px-4 py-3 border-t border-slate-200 rounded-b-xl bg-white/30">
+            <ul class="list-disc pl-5 space-y-1 text-sm">${s.b.map(x => `<li>${x}</li>`).join('')}</ul>
+          </div>
+        </details>`).join('');
+
+      byId('panel-plan').innerHTML = `
+        <div class="space-y-4">
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div class="p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 shadow-sm">
+              <div class="text-xs text-indigo-600 font-medium">System</div>
+              <div class="font-semibold text-indigo-900">${p.summary.name}</div>
+            </div>
+            <div class="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 shadow-sm">
+              <div class="grid grid-cols-3 gap-2 text-center">
+                <div><div class="text-xs text-emerald-600 font-medium">Env</div><div class="font-semibold text-emerald-900">${p.summary.environment}</div></div>
+                <div><div class="text-xs text-blue-600 font-medium">RTO</div><div class="font-semibold text-blue-900">${p.summary.rtoHours}h</div></div>
+                <div><div class="text-xs text-purple-600 font-medium">RPO</div><div class="font-semibold text-purple-900">${p.summary.rpoMinutes}m</div></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-2 text-slate-800">Standards</h3>
+            <div class="flex flex-wrap gap-2">
+              ${p.summary.standards.map((s, i) => {
+                const badgeColors = ['bg-gradient-to-r from-blue-400 to-indigo-500', 'bg-gradient-to-r from-green-400 to-emerald-500', 'bg-gradient-to-r from-purple-400 to-violet-500'];
+                return `<span class="px-3 py-1 rounded-full ${badgeColors[i % badgeColors.length]} text-white text-xs font-medium shadow-lg">${s}</span>`;
+              }).join('')}
+            </div>
+          </div>
+          <div class="space-y-3">${strategy}</div>
+        </div>`;
+    }
+
+    function renderRunbooks(input, out) {
+      const blocks = out.runbooks.map(r => `
+        <details class="group border border-slate-200 rounded-xl">
+          <summary class="cursor-pointer px-4 py-3 font-semibold bg-slate-50 rounded-xl group-open:rounded-b-none">${r.title}</summary>
+          <div class="px-4 py-3 border-t border-slate-200 rounded-b-xl">
+            ${r.steps.map(sec => `
+              <div class="mb-3">
+                <div class="text-sm font-semibold mb-1">${sec.h}</div>
+                <ul class="list-disc pl-5 text-sm space-y-1">${sec.b.map(x => `<li>${x}</li>`).join('')}</ul>
+              </div>`).join('')}
+          </div>
+        </details>
+      `).join('');
+      byId('panel-runbooks').innerHTML = `<div class="space-y-3">${blocks}</div>`;
+    }
+
+    function renderAttack(input, out) {
+      const phases = groupBy(out.compMappings.flatMap(m => m.techniques), t => t.phase);
+      const phaseOrder = ["Initial Access", "Execution", "Persistence", "Privilege Escalation", "Credential Access", "Discovery", "Lateral Movement", "Exfiltration", "Impact", "—"];
+      const grid = phaseOrder.map(ph => {
+        const items = (phases[ph] || []);
+        if (!items.length) return '';
+        const list = groupBy(items, x => x.id);
+        return `
+          <div class="p-4 rounded-xl border border-slate-200">
+            <div class="font-semibold mb-2">${ph}</div>
+            <ul class="list-disc pl-5 text-sm space-y-1">
+              ${Object.values(list).map(arr => `<li><span class=\"font-medium\">${arr[0].id}</span> ${arr[0].name}</li>`).join('')}
+            </ul>
+          </div>`;
+      }).join('');
+      byId('panel-attack').innerHTML = `<div class="grid sm:grid-cols-2 gap-4">${grid}</div>`;
+    }
+
+    function renderCVEs(input, out) {
+      const getSeverityColor = (severity) => {
+        switch(severity.toLowerCase()) {
+          case 'critical': return 'border-red-300 bg-gradient-to-br from-red-50 to-rose-50';
+          case 'high': return 'border-orange-300 bg-gradient-to-br from-orange-50 to-amber-50';  
+          case 'medium': return 'border-yellow-300 bg-gradient-to-br from-yellow-50 to-amber-50';
+          case 'low': return 'border-green-300 bg-gradient-to-br from-green-50 to-emerald-50';
+          default: return 'border-gray-300 bg-gradient-to-br from-gray-50 to-slate-50';
+        }
+      };
+      
+      const getSeverityTextColor = (severity) => {
+        switch(severity.toLowerCase()) {
+          case 'critical': return 'text-red-700';
+          case 'high': return 'text-orange-700';  
+          case 'medium': return 'text-yellow-700';
+          case 'low': return 'text-green-700';
+          default: return 'text-gray-700';
+        }
+      };
+      
+      byId('panel-cves').innerHTML = out.cveTasks.map(c => `
+        <details class="group border ${getSeverityColor(c.severity)} rounded-xl shadow-sm">
+          <summary class="cursor-pointer px-4 py-3 font-semibold bg-gradient-to-r from-white/50 to-white/80 rounded-xl group-open:rounded-b-none hover:from-white/80 hover:to-white transition-all duration-200">
+            ${c.id} • ${c.title} 
+            <span class="text-xs ${getSeverityTextColor(c.severity)} font-bold ml-2">(${c.componentType} • ${c.severity.toUpperCase()})</span>
+          </summary>
+          <div class="px-4 py-3 border-t border-slate-200 rounded-b-xl bg-white/30">
+            <ol class="list-decimal pl-6 text-sm space-y-1">${c.tasks.map(t => `<li>${t}</li>`).join('')}</ol>
+          </div>
+        </details>
+      `).join('');
+    }
+
+    function renderBest(input, out) {
+      const getTagColor = (tag) => {
+        const colors = {
+          'web': 'border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50',
+          'api': 'border-green-200 bg-gradient-to-br from-green-50 to-emerald-50', 
+          'frontend': 'border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50',
+          'backend': 'border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50',
+          'db': 'border-red-200 bg-gradient-to-br from-red-50 to-rose-50',
+          'ops': 'border-cyan-200 bg-gradient-to-br from-cyan-50 to-teal-50',
+          'platform': 'border-pink-200 bg-gradient-to-br from-pink-50 to-fuchsia-50',
+          'network': 'border-yellow-200 bg-gradient-to-br from-yellow-50 to-amber-50'
+        };
+        return colors[tag] || 'border-gray-200 bg-gradient-to-br from-gray-50 to-slate-50';
+      };
+      
+      const getTagTextColor = (tag) => {
+        const colors = {
+          'web': 'text-blue-600',
+          'api': 'text-green-600', 
+          'frontend': 'text-purple-600',
+          'backend': 'text-orange-600',
+          'db': 'text-red-600',
+          'ops': 'text-cyan-600',
+          'platform': 'text-pink-600',
+          'network': 'text-yellow-600'
+        };
+        return colors[tag] || 'text-gray-600';
+      };
+      
+      const blocks = Object.entries(out.bestByTag).map(([tag, arr]) => `
+        <div class="p-4 rounded-xl ${getTagColor(tag)} border shadow-sm">
+          <div class="uppercase text-[11px] tracking-wide ${getTagTextColor(tag)} font-bold mb-2">${tag}</div>
+          <ul class="list-disc pl-5 text-sm space-y-1 text-slate-700">${arr.map(x => `<li>${x.text}</li>`).join('')}</ul>
+        </div>`).join('');
+      byId('panel-best').innerHTML = `<div class="grid sm:grid-cols-2 gap-4">${blocks}</div>`;
+    }
+
+    function exportMarkdown(input, out) {
+      const lines = [];
+      const arch = input.architecture || {};
+      lines.push(`# Resilience Plan & Runbooks\n`);
+      lines.push(`**System:** ${mdEscape(arch.name || 'System')}  `);
+      lines.push(`**Environment:** ${mdEscape(arch.environment || 'n/a')}  `);
+      lines.push(`**RTO:** ${arch.rtoHours ?? '—'}h • **RPO:** ${arch.rpoMinutes ?? '—'}m\n`);
+
+      lines.push(`## Strategy`);
+      for (const s of out.plan.strategy) {
+        lines.push(`### ${mdEscape(s.h)}`);
+        for (const b of s.b) lines.push(`- ${mdEscape(b)}`);
+        lines.push('');
+      }
+
+      lines.push(`## Runbooks`);
+      for (const r of out.runbooks) {
+        lines.push(`### ${mdEscape(r.title)}`);
+        for (const sec of r.steps) {
+          lines.push(`**${mdEscape(sec.h)}**`);
+          for (const b of sec.b) lines.push(`- ${mdEscape(b)}`);
+        }
+        lines.push('');
+      }
+
+      lines.push(`## CVE Tasks`);
+      for (const c of out.cveTasks) {
+        lines.push(`### ${c.id} • ${mdEscape(c.title)} (${c.componentType} / ${c.severity})`);
+        let i = 1; for (const t of c.tasks) { lines.push(`${i}. ${mdEscape(t)}`); i++; }
+        lines.push('');
+      }
+
+      lines.push(`## Best Practices`);
+      for (const [tag, arr] of Object.entries(out.bestByTag)) {
+        lines.push(`### ${tag}`);
+        for (const b of arr) lines.push(`- ${mdEscape(b.text)}`);
+      }
+
+      return lines.join('\n');
+    }
+
+    function download(filename, text) {
+      const blob = new Blob([text], {type: 'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 500);
+    }
+
+    function renderExport(input, out) {
+      byId('panel-export').innerHTML = `
+        <div class="space-y-3">
+          <div class="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 text-sm shadow-sm">Export your generated content as Markdown or JSON for your wiki/runbooks repository.</div>
+          <div class="flex flex-wrap gap-3">
+            <button id="btnDlMd" class="px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-200 transition-all duration-200">📄 Download Markdown</button>
+            <button id="btnDlJson" class="px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-violet-500 to-purple-500 text-white hover:from-violet-600 hover:to-purple-600 shadow-lg shadow-violet-200 transition-all duration-200">📋 Download JSON</button>
+          </div>
+        </div>`;
+
+      byId('btnDlMd').onclick = () => {
+        const md = exportMarkdown(state.input, state.output);
+        download('resilience-plan-and-runbooks.md', md);
+      };
+      byId('btnDlJson').onclick = () => {
+        download('resilience-plan-and-runbooks.json', JSON.stringify(state, null, 2));
+      };
+    }
+
+    // ---------- Tabs ----------
+    function setupTabs() {
+      const btns = Array.from(document.querySelectorAll('.tab-btn'));
+      const panels = {
+        overview: byId('panel-overview'),
+        plan: byId('panel-plan'),
+        runbooks: byId('panel-runbooks'),
+        attack: byId('panel-attack'),
+        cves: byId('panel-cves'),
+        best: byId('panel-best'),
+        export: byId('panel-export'),
+      };
+      
+      // Color schemes for different tabs
+      const tabColors = {
+        overview: 'from-blue-500 to-indigo-500',
+        plan: 'from-green-500 to-emerald-500', 
+        runbooks: 'from-purple-500 to-violet-500',
+        attack: 'from-red-500 to-rose-500',
+        cves: 'from-orange-500 to-amber-500',
+        best: 'from-teal-500 to-cyan-500',
+        export: 'from-pink-500 to-fuchsia-500'
+      };
+      
+      btns.forEach(b => {
+        b.classList.add('px-3','py-2','rounded-xl','text-sm','font-medium','bg-white/70','border','border-slate-200/50','hover:bg-white','hover:shadow-lg','transition-all','duration-200','backdrop-blur-sm');
+      });
+      
+      function activate(name) {
+        btns.forEach(b => {
+          const isActive = b.dataset.tab === name;
+          b.classList.toggle('bg-gradient-to-r', isActive);
+          if (isActive) {
+            b.className = b.className.replace(/from-\w+-\d+\s+to-\w+-\d+/g, '');
+            b.classList.add(...tabColors[name].split(' '));
+            b.classList.add('text-white', 'shadow-lg', 'border-transparent');
+          } else {
+            b.className = b.className.replace(/from-\w+-\d+\s+to-\w+-\d+/g, '');
+            b.classList.remove('text-white', 'shadow-lg', 'border-transparent');
+            b.classList.add('text-slate-700', 'border-slate-200/50');
+          }
+        });
+        Object.entries(panels).forEach(([k, p]) => p.classList.toggle('hidden', k !== name));
+      }
+      document.getElementById('tabs').addEventListener('click', (e) => {
+        if (e.target.matches('.tab-btn')) activate(e.target.dataset.tab);
+      });
+      activate('overview');
+    }
+
+    // ---------- State ----------
+    const state = {
+      input: SAMPLE,
+      output: null,
+    };
+
+    // ---------- Events ----------
+    function wireUI() {
+      byId('btnLoadSample').onclick = () => {
+        byId('jsonInput').value = JSON.stringify(SAMPLE, null, 2);
+        toast('Sample JSON loaded.');
+      };
+
+      byId('fileInput').addEventListener('change', async (e) => {
+        const f = e.target.files?.[0];
+        if (!f) return;
+        const text = await f.text();
+        byId('jsonInput').value = text;
+        toast('File loaded into editor. Click Validate.');
+      });
+
+      byId('btnValidate').onclick = () => {
+        const obj = readInputJSON();
+        if (!obj) return;
+        if (!obj.architecture || !Array.isArray(obj.architecture.components)) { toast('Missing architecture.components array', false); return; }
+        toast('JSON looks valid.');
+      };
+
+      byId('btnGenerate').onclick = () => {
+        const obj = readInputJSON() || state.input; // fallback to state or sample
+        byId('loading').classList.remove('hidden');
+        setTimeout(() => { // simulate API latency
+          state.input = obj;
+          state.output = synthesize(obj);
+          renderAll();
+          byId('loading').classList.add('hidden');
+          toast('Generated successfully.');
+        }, 700);
+      };
+
+      byId('btnExportMd').onclick = () => {
+        if (!state.output) { toast('Please generate first.', false); return; }
+        const md = exportMarkdown(state.input, state.output);
+        download('resilience-plan-and-runbooks.md', md);
+      };
+
+      byId('btnPrint').onclick = () => window.print();
+    }
+
+    function renderAll() {
+      renderOverview(state.input, state.output);
+      renderPlan(state.input, state.output);
+      renderRunbooks(state.input, state.output);
+      renderAttack(state.input, state.output);
+      renderCVEs(state.input, state.output);
+      renderBest(state.input, state.output);
+      renderExport(state.input, state.output);
+    }
+
+    // ---------- Init ----------
+    document.addEventListener('DOMContentLoaded', () => {
+      renderLibrary();
+      setupTabs();
+      wireUI();
+      // Preload sample and first render
+      byId('jsonInput').value = JSON.stringify(SAMPLE, null, 2);
+      state.output = synthesize(SAMPLE);
+      renderAll();
+    });
+  </script>
+</body>
+</html>

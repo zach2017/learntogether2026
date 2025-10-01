@@ -1,27 +1,19 @@
-// ===================================
-// FILE: EddystoneBeaconDetector.swift
-// Location: YourAppName/EddystoneBeaconDetector.swift
-// FIXED: URL updates properly when switching between beacons
-// ===================================
 
 import Foundation
 import CoreBluetooth
 import SwiftUI
 
-// Define a structure to hold information about each target beacon
 struct TargetBeacon {
     let namespace: String
     let instance: String
     let url: String
     
-    // A unique identifier for this beacon configuration
     var identifier: String {
         return "\(namespace)-\(instance)".uppercased()
     }
 }
 
 class EddystoneBeaconDetector: NSObject, ObservableObject {
-    // MARK: - Published Properties
     @Published var statusText = "Scanning for Old Town Montgomery beacons..."
     @Published var isDetected = false
     @Published var beaconType = "Unknown"
@@ -31,7 +23,7 @@ class EddystoneBeaconDetector: NSObject, ObservableObject {
     @Published var distanceString = "Unknown"
     @Published var isBluetoothOn = true
     @Published var shouldOpenURL = false
-    @Published var detectedURL: URL? // This will hold the URL of the detected beacon
+    @Published var detectedURL: URL?
     
     // MARK: - Configuration
     // IMPORTANT: Configure your list of Eddystone beacons and their URLs here
@@ -45,8 +37,23 @@ class EddystoneBeaconDetector: NSObject, ObservableObject {
             namespace: "00000000000000000001",
             instance: "000000000001", // A different instance for the second beacon
             url: "https://touroldalabamatown.com/living-block/pole-barn" // A different URL
-        )
-        // Add more TargetBeacon objects here as needed
+        ),
+    TargetBeacon(
+        namespace: "00000000000000000001",
+        instance: "000000000002",
+        url: "https://touroldalabamatown.com/living-block/lucas-tavern"
+    ),
+    TargetBeacon(
+        namespace: "00000000000000000001",
+        instance: "000000000003",
+        url: "https://touroldalabamatown.com/living-block/church"
+    ),
+    TargetBeacon(
+        namespace: "00000000000000000001",
+        instance: "000000000005",
+        url: "https://touroldalabamatown.com/living-block/corner-grocery-store"
+    )
+ 
     ]
     
     // MARK: - Properties
