@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Movement Record Form</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', 'Arial', sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .form-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .form-header {
+            background: #1976d2;
+            color: white;
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .form-header h1 {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .form-header .subtitle {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .form-header .privacy-notice {
+            font-size: 11px;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        .section {
+            border: 1px solid #e0e0e0;
+            margin: 16px;
+        }
+        
+        .section-header {
+            background: #f5f5f5;
+            padding: 8px 16px;
+            font-weight: 500;
+            font-size: 14px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .section-content {
+            padding: 16px;
+        }
+        
+        .field-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .field-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .field-group.narrow {
+            flex: 0.3;
+            min-width: 80px;
+        }
+        
+        .field-group.medium {
+            flex: 0.5;
+            min-width: 120px;
+        }
+        
+        .field-group.wide {
+            flex: 2;
+            min-width: 200px;
+        }
+        
+        .field-group.full {
+            flex: 1 1 100%;
+        }
+        
+        label {
+            display: block;
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        input[type="tel"],
+        input[type="email"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #1976d2;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        .checkbox-group label {
+            margin-bottom: 0;
+            text-transform: none;
+            font-weight: normal;
+            color: #333;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0;
+            text-transform: none;
+        }
+        
+        .radio-group input[type="radio"] {
+            margin-right: 4px;
+        }
+        
+        .vital-signs-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        
+        .vital-signs-table th,
+        .vital-signs-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        .vital-signs-table th {
+            background: #f5f5f5;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .equipment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .clinical-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .diet-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 12px;
+        }
+        
+        .signature-section {
+            display: flex;
+            gap: 32px;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .signature-field {
+            flex: 1;
+        }
+        
+        .s-marker {
+            font-size: 10px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .form-footer {
+            padding: 16px;
+            background: #f5f5f5;
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .form-container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="form-header">
+            <h1>PATIENT MOVEMENT RECORD</h1>
+            <div class="subtitle">PERMANENT MEDICAL RECORD</div>
+            <div class="privacy-notice">DATA PROTECTED BY PRIVACY ACT OF 1974</div>
+            <div class="subtitle" style="margin-top: 8px;">(S) - Information needed to submit patient movement record</div>
+        </div>
+        
+        <!-- SECTION I: PATIENT IDENTIFICATION -->
+        <div class="section">
+            <div class="section-header">SECTION I - PATIENT IDENTIFICATION</div>
+            <div class="section-content">
+                <div class="field-row">
+                    <div class="field-group wide">
+                        <label><span class="s-marker">(s)</span> NAME (Last, First, Middle Initial)</label>
+                        <input type="text" name="patient_name">
+                    </div>
+                    <div class="field-group">
+                        <label><span class="s-marker">(s)</span> SSN</label>
+                        <input type="text" name="ssn" pattern="\d{3}-\d{2}-\d{4}">
+                    </div>
+                    <div class="field-group">
+                        <label>DATE OF BIRTH</label>
+                        <input type="date" name="dob">
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-group narrow">
+                        <label><span class="s-marker">(s)</span> AGE</label>
+                        <input type="number" name="age" min="0" max="150">
+                    </div>
+                    <div class="field-group narrow">
+                        <label><span class="s-marker">(s)</span> SEX</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="sex" value="M"> M</label>
+                            <label><input type="radio" name="sex" value="F"> F</label>
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label><span class="s-marker">(s)</span> STATUS</label>
+                        <input type="text" name="status">
+                    </div>
+                    <div class="field-group">
+                        <label><span class="s-marker">(s)</span> SERVICE</label>
+                        <input type="text" name="service">
+                    </div>
+                    <div class="field-group narrow">
+                        <label><span class="s-marker">(s)</span> GRADE</label>
+                        <input type="text" name="grade">
+                    </div>
+                    <div class="field-group wide">
+                        <label><span class="s-marker">(s)</span> UNIT OF RECORD AND PHONE NUMBER</label>
+                        <input type="text" name="unit_record_phone">
+                    </div>
+                    <div class="field-group">
+                        <label>CITE NUMBER</label>
+                        <input type="text" name="cite_number">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECTION II: VALIDATION INFORMATION -->
+        <div class="section">
+            <div class="section-header">SECTION II - VALIDATION INFORMATION</div>
+            <div class="section-content">
+                <div class="field-row">
+                    <div class="field-group wide">
+                        <label><span class="s-marker">(s)</span> Medical Treatment Facility Origination and Phone Number</label>
+                        <input type="text" name="mtf_origination">
+                    </div>
+                    <div class="field-group">
+                        <label><span class="s-marker">(s)</span> Ready Date (Julian Date)</label>
+                        <input type="text" name="ready_date">
+                    </div>
+                    <div class="field-group">
+                        <label>APPOINTMENT DATE</label>
+                        <input type="date" name="appointment_date">
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-group wide">
+                        <label><span class="s-marker">(s)</span> Medical Treatment Facility Destination and Phone Number</label>
+                        <input type="text" name="mtf_destination">
+                    </div>
+                    <div class="field-group">
+                        <label>NUMBER OF ATTENDANTS</label>
+                        <div style="display: flex; gap: 16px; margin-top: 4px;">
+                            <div>
+                                <label style="font-size: 10px;"><span class="s-marker">(s)</span> MEDICAL</label>
+                                <input type="number" name="attendants_medical" style="width: 60px;">
+                            </div>
+                            <div>
+                                <label style="font-size: 10px;"><span class="s-marker">(s)</span> NON-MED</label>
+                                <input type="number" name="attendants_nonmed" style="width: 60px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-group">
+                        <label><span class="s-marker">(s)</span> CLASSIFICATION 1A-5F</label>
+                        <input type="text" name="classification">
+                    </div>
+                    <div class="field-group">
+                        <label>AMBULATORY/LITTER</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="ambulatory_litter" value="ambulatory"> Ambulatory</label>
+                            <label><input type="radio" name="ambulatory_litter" value="litter"> Litter</label>
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label><span class="s-marker">(s)</span> PRECEDENCE</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="precedence" value="U"> U</label>
+                            <label><input type="radio" name="precedence" value="P"> P</label>
+                            <label><input type="radio" name="precedence" value="R"> R</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-group">
+                        <label><span class="s-marker">(s)</span> Reason Regulated</label>
+                        <input type="text" name="reason_regulated">
+                    </div>
+                    <div class="field-group narrow">
+                        <label>Max # Stops</label>
+                        <input type="number" name="max_stops">
+                    </div>
+                    <div class="field-group narrow">
+                        <label>Max # RONS</label>
+                        <input type="number" name="max_rons">
+                    </div>
+                    <div class="field-group">
+                        <label>Altitude Restriction</label>
+                        <input type="text" name="altitude_restriction">
+                    </div>
+                    <div class="field-group">
+                        <label><span class="s-marker">(s)</span> CCATT Required</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="ccatt_required" value="yes"> Yes</label>
+                            <label><input type="radio" name="ccatt_required" value="no"> No</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-group full">
+                        <label>Name, sex, weight, rank of attendants:</label>
+                        <textarea name="attendants_details"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECTION III: OTHER INFORMATION -->
+        <div class="section">
+            <div class="section-header">SECTION III - OTHER INFORMATION</div>
+            <div class="section-content">
+                <div class="field-row">
+                    <div class="field-group full">
+                        <label><span class="s-marker">(s)</span> Attending Physician name, Phone Number and e-mail</label>
+                        <input type="text" name="attending_physician">
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-group full">
+                        <label><span class="s-marker">(s)</span> Accepting Physician name, Phone Number and e-mail</label>
+                        <input type="text" name="accepting_physician">
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-group">
+                        <label><span class="s-marker">(s)</span> Origination Transportation 24 Hour Phone Number</label>
+                        <input type="tel" name="origination_transport_phone">
+                    </div>
+                    <div class="field-group">
+                        <label><span class="s-marker">(s)</span> Destination Transportation 24 Hour Phone Number</label>
+                        <input type="tel" name="destination_transport_phone">
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-group">
+                        <label><span class="s-marker">(s)</span> Insurance Company</label>
+                        <input type="text" name="insurance_company">
+                    </div>
+                    <div class="field-group">
+                        <label>Address</label>
+                        <input type="text" name="insurance_address">
+                    </div>
+                    <div class="field-group">
+                        <label>Phone #</label>
+                        <input type="tel" name="insurance_phone">
+                    </div>
+                    <div class="field-group">
+                        <label>Policy #</label>
+                        <input type="text" name="insurance_policy">
+                    </div>
+                    <div class="field-group">
+                        <label>Relationship to policy holder</label>
+                        <input type="text" name="insurance_relationship">
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-group full">
+                        <label><span class="s-marker">(s)</span> Waivers (med equip, etc)</label>
+                        <textarea name="waivers"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECTION IV: CLINICAL INFORMATION -->
+        <div class="section">
+            <div class="section-header">SECTION IV - CLINICAL INFORMATION</div>
+            <div class="section-content">
+                <div class="field-row">
+                    <div class="field-group wide">
+                        <label><span class="s-marker">(s)</span> Diagnosis</label>
+                        <textarea name="diagnosis"></textarea>
+                    </div>
+                    <div class="field-group wide">
+                        <label><span class="s-marker">(s)</span> Allergies</label>
+                        <textarea name="allergies"></textarea>
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-group">
+                        <label><span class="s-marker">(s)</span> WEIGHT:</label>
+                        <input type="text" name="weight">
+                    </div>
+                    <div class="field-group">
+                        <label><span class="s-marker">(s)</span> Blood type:</label>
+                        <input type="text" name="blood_type">
+                    </div>
+                    <div class="field-group">
+                        <label>Battle casualty</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="battle_casualty">
+                            <label>Battle casualty</label>
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label>Disease</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="disease">
+                            <label>Disease</label>
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label>Non-battle injury</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="non_battle_injury">
+                            <label>Non-battle injury</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- LABS Section -->
+                <div style="margin-top: 16px;">
+                    <label style="font-weight: 500; margin-bottom: 8px; display: block;">LABS (Date and time drawn in Zulu)</label>
+                    <div class="field-row">
+                        <div class="field-group narrow">
+                            <label>WBC</label>
+                            <input type="text" name="lab_wbc">
+                        </div>
+                        <div class="field-group narrow">
+                            <label>HGB</label>
+                            <input type="text" name="lab_hgb">
+                        </div>
+                        <div class="field-group narrow">
+                            <label>HCT</label>
+                            <input type="text" name="lab_hct">
+                        </div>
+                        <div class="field-group wide">
+                            <label>Other Labs</label>
+                            <input type="text" name="other_labs">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Vital Signs Table -->
+                <div style="margin-top: 16px;">
+                    <label style="font-weight: 500; margin-bottom: 8px; display: block;">Vital Signs (Date and time taken in Zulu)</label>
+                    <table class="vital-signs-table">
+                        <thead>
+                            <tr>
+                                <th>Date Time (Zulu)</th>
+                                <th>B/P</th>
+                                <th>Pulse</th>
+                                <th>Resp</th>
+                                <th>Temp</th>
+                                <th>Baseline O2 Sat If Applicable</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="text" name="vital_datetime"></td>
+                                <td><input type="text" name="vital_bp"></td>
+                                <td><input type="text" name="vital_pulse"></td>
+                                <td><input type="text" name="vital_resp"></td>
+                                <td><input type="text" name="vital_temp"></td>
+                                <td><input type="text" name="vital_o2sat"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="field-row" style="margin-top: 16px;">
+                    <div class="field-group">
+                        <label>Pain Level: ___/10</label>
+                        <input type="number" name="pain_level" min="0" max="10">
+                    </div>
+                    <div class="field-group">
+                        <label>Last Pain Med:</label>
+                        <input type="text" name="last_pain_med">
+                    </div>
+                    <div class="field-group">
+                        <label>O2/LPM:</label>
+                        <input type="text" name="o2_lpm">
+                    </div>
+                    <div class="field-group">
+                        <label>Route:</label>
+                        <input type="text" name="route">
+                    </div>
+                </div>
+                
+                <!-- Clinical Issues -->
+                <div style="margin-top: 16px;">
+                    <label style="font-weight: 500; margin-bottom: 8px; display: block;">CLINICAL ISSUES</label>
+                    <div class="field-row">
+                        <div class="field-group">
+                            <label>Infection Control Precautions:</label>
+                            <input type="text" name="infection_control">
+                        </div>
+                        <div class="field-group">
+                            <label>LMP:</label>
+                            <input type="text" name="lmp">
+                        </div>
+                        <div class="field-group">
+                            <label>Date of last bowel movement:</label>
+                            <input type="date" name="last_bowel_movement">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Special Equipment -->
+                <div style="margin-top: 16px;">
+                    <label style="font-weight: 500; margin-bottom: 8px; display: block;">SPECIAL EQUIPMENT (Check all that apply)</label>
+                    <div class="equipment-grid">
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="eq_suction">
+                            <label>Suction</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="eq_traction">
+                            <label>Traction</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="eq_orthopedic">
+                            <label>Orthopedic devices</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="eq_ng_tube">
+                            <label>NG Tube</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="eq_monitor">
+                            <label>Monitor</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="eq_restraints">
+                            <label>Restraints</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="eq_foley">
+                            <label>Foley</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="eq_trach">
+                            <label>Trach</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="eq_chest_tubes">
+                            <label>Chest Tubes</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="eq_incubator">
+                            <label>Incubator</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="eq_iv_pumps">
+                            <label>IV Pumps</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" name="eq_ventilator">
+                            <label>Ventilator</label>
+                        </div>
+                    </div>
+                    
+                    <div class="field-row" style="margin-top: 12px;">
+                        <div class="field-group">
+                            <label>IV Location:</label>
+                            <input type="text" name="iv_location">
+                        </div>
+                        <div class="field-group">
+                            <label>Cast/Location:</label>
+                            <input type="text" name="cast_location">
+                        </div>
+                        <div class="field-group">
+                            <label>Bivalved:</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="bivalved" value="yes"> Yes</label>
+                                <label><input type="radio" name="bivalved" value="no"> No</label>
+                            </div>
+                        </div>
+                        <div class="field-group">
+                            <label>Ventilator Settings:</label>
+                            <input type="text" name="ventilator_settings">
+                        </div>
+                    </div>
+                    
+                    <div class="field-group full" style="margin-top: 12px;">
+                        <label>OTHER:</label>
+                        <input type="text" name="equipment_other">
+                    </div>
+                </div>
+                
+                <!-- High Risk for Skin Breakdown -->
+                <div class="field-row" style="margin-top: 16px;">
+                    <div class="field-group">
+                        <label>High Risk for Skin Breakdown</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="skin_breakdown_risk" value="yes"> Yes</label>
+                            <label><input type="radio" name="skin_breakdown_risk" value="no"> No</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Clinical Checkboxes -->
+                <div style="margin-top: 16px;">
+                    <label style="font-weight: 500; margin-bottom: 8px; display: block;">Initial appropriate boxes:</label>
+                    <div class="clinical-checkboxes">
+                        <div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="hearing_impaired">
+                                <label>Hearing Impaired</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="communication_barriers">
+                                <label>Communication Barriers</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="vision_impaired">
+                                <label>Vision Impaired</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="cardiac_hx">
+                                <label>Cardiac Hx</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="diabetes">
+                                <label>Diabetes</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="motion_sickness">
+                                <label>Motion Sickness</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="ears_sinus_problems">
+                                <label>Ears/Sinus Problems</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="respiratory_difficulty">
+                                <label>Respiratory difficulty</label>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="hypertension">
+                                <label>Hypertension</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="dizziness">
+                                <label>Dizziness</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="voiding_difficulty">
+                                <label>Voiding difficulty</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="takes_longterm_meds">
+                                <label>*Takes long-term meds</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="will_self_medicate">
+                                <label>*Will self-medicate</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" name="has_adequate_meds">
+                                <label>Has adequate supply of meds</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; margin-top: 8px; color: #666;">
+                        *Medication listed on physician's orders
+                    </div>
+                </div>
+                
+                <!-- Diet Information -->
+                <div style="margin-top: 16px;">
+                    <label style="font-weight: 500; margin-bottom: 8px; display: block;">DIET INFORMATION (Check all that apply)</label>
+                    <div class="diet-checkboxes">
+                        <div class="checkbox-group">
