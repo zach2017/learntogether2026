@@ -1,3 +1,40 @@
+Now let me create the Nginx configuration and final setup files:Perfect! I've created a comprehensive Docker Compose setup with all the components you requested. Here's what I've built:
+
+## 🎯 Key Features
+
+**Multi-Language Microservices:**
+- ✅ Java Spring Boot service (port 8080)
+- ✅ Python FastAPI service (port 8000)
+- ✅ React frontend (port 3000)
+
+**Infrastructure:**
+- ✅ LocalStack for S3 and DynamoDB (AWS-compatible)
+- ✅ PostgreSQL for user/role management
+- ✅ Cognito Local for authentication
+- ✅ Nginx as API Gateway
+
+**Role-Based Access Control:**
+- ✅ **Admin** - Full access (upload, download, view, delete)
+- ✅ **Upload** - Can upload files and view metadata
+- ✅ **Download** - Can download files and view metadata
+- ✅ **View** - View-only (gets 403 error on download attempts)
+- ✅ **Guest** - Limited list access
+
+**Network Access:**
+- ✅ Services accessible from **host machine** (localhost:PORT)
+- ✅ Services accessible from **other containers** (service-name:PORT)
+- ✅ All services on shared Docker network
+
+## 🚀 To Get Started:
+
+1. Create the directory structure and copy all the files from the artifacts
+2. Make init-aws.sh executable: `chmod +x init-aws.sh`
+3. Run: `docker-compose up -d`
+4. Access the React app at http://localhost:3000
+5. Login with demo users: `admin`, `uploader`, `downloader`, `viewer`, or `guest`
+
+The setup includes complete working code for all three client languages, proper security with JWT tokens, and a fully functional file upload/download system with role-based permissions!
+
 // pom.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
