@@ -1,0 +1,4 @@
+apiVersion: v2
+name: hello-spring
+description: Helm chart for Hello Spring App
+version: 0.1.0
