@@ -1,0 +1,47 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: client-app
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: spring-client
+            client-secret: your-client-secret-here
+            scope: openid, profile, email, roles
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/spring-realm
+            user-name-attribute: preferred_username
+
+resource:
+  server:
+    url: http://localhost:8081
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            redirect-uri: "http://localhost:8082/login/oauth2/code/keycloak"
+        provider:
+          keycloak:
+            issuer-uri: http://keycloak:8080/realms/spring-realm
+
+resource:
+  server:
+    url: http://resource-server:8081
