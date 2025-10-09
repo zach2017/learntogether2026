@@ -1,0 +1,152 @@
+version: '3.8'
+
+services:
+  # LocalStack for S3 and DynamoDB
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - "4566:4566"  # LocalStack gateway
+      - "4571:4571"  # S3
+    environment:
+      - SERVICES=s3,dynamodb
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "./localstack-data:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh"
+    networks:
+      - microservices-net
+
+  # Cognito Local (using cognito-local)
+  cognito-local:
+    image: jagregory/cognito-local:latest
+    container_name: cognito-local
+    ports:
+      - "9229:9229"
+    volumes:
+      - "./cognito-local-data:/app/.cognito"
+    environment:
+      - COGNITO_LOCAL_DEVMODE=1
+    networks:
+      - microservices-net
+
+  # PostgreSQL for user-role mappings
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin123
+      - POSTGRES_DB=fileservice
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - "./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql"
+    networks:
+      - microservices-net
+
+  # Java Spring Boot Microservice
+  java-service:
+    build:
+      context: ./java-service
+      dockerfile: Dockerfile
+    container_name: java-file-service
+    ports:
+      - "8080:8080"
+    environment:
+      - AWS_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - S3_BUCKET_NAME=file-uploads
+      - DYNAMODB_TABLE_NAME=file-metadata
+      - COGNITO_ENDPOINT=http://cognito-local:9229
+      - COGNITO_USER_POOL_ID=local_pool
+      - COGNITO_CLIENT_ID=local_client
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=fileservice
+      - DB_USER=admin
+      - DB_PASSWORD=admin123
+    depends_on:
+      - localstack
+      - cognito-local
+      - postgres
+    networks:
+      - microservices-net
+
+  # Python FastAPI Microservice
+  python-service:
+    build:
+      context: ./python-service
+      dockerfile: Dockerfile
+    container_name: python-file-service
+    ports:
+      - "8000:8000"
+    environment:
+      - AWS_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - S3_BUCKET_NAME=file-uploads
+      - DYNAMODB_TABLE_NAME=file-metadata
+      - COGNITO_ENDPOINT=http://cognito-local:9229
+      - COGNITO_USER_POOL_ID=local_pool
+      - COGNITO_CLIENT_ID=local_client
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=fileservice
+      - DB_USER=admin
+      - DB_PASSWORD=admin123
+    depends_on:
+      - localstack
+      - cognito-local
+      - postgres
+    networks:
+      - microservices-net
+
+  # React Frontend
+  react-frontend:
+    build:
+      context: ./react-frontend
+      dockerfile: Dockerfile
+    container_name: react-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_JAVA_API_URL=http://localhost:8080
+      - REACT_APP_PYTHON_API_URL=http://localhost:8000
+      - REACT_APP_COGNITO_ENDPOINT=http://localhost:9229
+      - REACT_APP_COGNITO_USER_POOL_ID=local_pool
+      - REACT_APP_COGNITO_CLIENT_ID=local_client
+    depends_on:
+      - java-service
+      - python-service
+    networks:
+      - microservices-net
+
+  # Nginx API Gateway (optional, for routing)
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-gateway
+    ports:
+      - "80:80"
+    volumes:
+      - "./nginx.conf:/etc/nginx/nginx.conf:ro"
+    depends_on:
+      - java-service
+      - python-service
+      - react-frontend
+    networks:
+      - microservices-net
+
+networks:
+  microservices-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
