@@ -1,0 +1,69 @@
+{
+  "realm": "springrealm",
+  "enabled": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "owner"
+      },
+      {
+        "name": "guest"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "client-service",
+      "secret": "client-secret-123",
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "redirectUris": [
+        "*"
+      ]
+    },
+    {
+      "clientId": "api-service",
+      "bearerOnly": true,
+      "publicClient": false
+    }
+  ],
+  "users": [
+    {
+      "username": "owneruser",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password"
+        }
+      ],
+      "realmRoles": [
+        "owner"
+      ]
+    },
+    {
+      "username": "guestuser",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password"
+        }
+      ],
+      "realmRoles": [
+        "guest"
+      ]
+    },
+    {
+      "username": "service-account-client-service",
+      "enabled": true,
+      "serviceAccountClientId": "client-service",
+      "realmRoles": [
+        "owner"
+      ]
+    }
+  ]
+}
