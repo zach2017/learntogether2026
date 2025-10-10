@@ -1,0 +1,18 @@
+server:
+  port: 8082
+
+api:
+  base-url: http://api-service:8081
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: client-service
+            client-secret: client-secret-123
+            authorization-grant-type: client_credentials
+        provider:
+          keycloak:
+            token-uri: http://keycloak:8080/realms/springrealm/protocol/openid-connect/token

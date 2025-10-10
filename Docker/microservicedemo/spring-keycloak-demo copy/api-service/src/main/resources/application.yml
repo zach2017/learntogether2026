@@ -1,0 +1,15 @@
+server:
+  port: 8081
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8080/realms/springrealm
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

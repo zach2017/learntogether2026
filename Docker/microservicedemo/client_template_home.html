@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Home - OAuth2 Client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .user-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .nav {
+            margin: 20px 0;
+        }
+        .nav a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .nav a:hover {
+            background-color: #0056b3;
+        }
+        .logout {
+            background-color: #dc3545;
+        }
+        .logout:hover {
+            background-color: #c82333;
+        }
+        .role-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 3px;
+            margin-right: 5px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome, <span th:text="${name}"></span>!</h1>
+        
+        <div class="user-info">
+            <h3>User Information:</h3>
+            <p><strong>Username:</strong> <span th:text="${username}"></span></p>
+            <p><strong>Email:</strong> <span th:text="${email}"></span></p>
+            <p><strong>Roles:</strong> 
+                <span th:each="role : ${roles}" class="role-badge" th:text="${role}"></span>
+            </p>
+        </div>
+
+        <div class="nav">
+            <h3>Available Actions:</h3>
+            <a href="/profile">View Profile from Resource Server</a>
+            <a href="/owner-data">Access Owner Data (OWNER role required)</a>
+            <a href="/public-info">View Public Information</a>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="nav a logout" style="border: none; cursor: pointer;">Logout</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
