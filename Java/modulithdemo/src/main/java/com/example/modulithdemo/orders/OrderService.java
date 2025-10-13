@@ -16,4 +16,14 @@ public class OrderService {
         System.out.println("[ORDERS] Placing order: " + orderId);
         publisher.publishEvent(new OrderPlacedEvent(orderId));
     }
+
+    public Long createOrder(OrderRequest orderRequest) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'createOrder'");
+    }
+
+    public OrderResponse getOrder(Long id) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getOrder'");
+    }
 }
