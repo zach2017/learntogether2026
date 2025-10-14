@@ -1,0 +1,44 @@
+
+
+server:
+  port: 8080
+  
+spring:
+  application:
+    name: modulith-demo
+  modulith:
+    # Detect incomplete module dependencies
+    detection-strategy: explicitly-annotated
+    # Expose events
+    events:
+      enabled: true
+      externalization:
+        enabled: true
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+    filter: true
+    syntax-highlight:
+      activated: true
+  packages-to-scan: com.example.modulithdemo
+  # Optional: Specify paths to match
+  # paths-to-match: /api/**, /orders/**
+  # paths-to-exclude: /admin/**
+
+# Logging for debugging
+logging:
+  level:
+    root: INFO
+    org.springdoc: DEBUG
+    org.springframework.web: DEBUG
+    com.example.modulithdemo: DEBUG
+  
+

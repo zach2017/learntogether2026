@@ -7,7 +7,7 @@ import io.swagger.v3.oas.models.info.License;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration
+/*@Configuration
 public class OpenApiConfig {
 
     @Bean
@@ -19,9 +19,10 @@ public class OpenApiConfig {
                         .description("API documentation for Modulith Demo")
                         .contact(new Contact()
                                 .name("API Support")
-                                .email("support@example.com"))
+                                .email("demo@example.com"))
                         .license(new License()
                                 .name("Apache 2.0")
                                 .url("https://www.apache.org/licenses/LICENSE-2.0.html")));
     }
 } 
+    */
