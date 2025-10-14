@@ -28,7 +28,9 @@ springdoc:
     filter: true
     syntax-highlight:
       activated: true
-  packages-to-scan: com.example.modulithdemo
+  packages-to-scan: 
+   - com.example.modulithdemo.orders
+   - com.example.modulithdemo.controllers.Test
   # Optional: Specify paths to match
   # paths-to-match: /api/**, /orders/**
   # paths-to-exclude: /admin/**

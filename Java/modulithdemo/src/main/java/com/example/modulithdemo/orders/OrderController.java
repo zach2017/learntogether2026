@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @RestController
+ @org.springframework.modulith.PackageInfo
 @RequestMapping("/orders")
 @Tag(name = "Orders", description = "Operations related to orders")
 public class OrderController {

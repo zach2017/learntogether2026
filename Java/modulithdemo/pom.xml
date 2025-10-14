@@ -67,6 +67,14 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.modulith</groupId>
+
+            <artifactId>spring-modulith-bom</artifactId>
+            <version>${spring-modulith.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.modulith</groupId>
             <artifactId>spring-modulith-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
