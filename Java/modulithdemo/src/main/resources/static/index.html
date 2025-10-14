@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Spring API Client</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Optional: smooth scrolling for hash links */
+    html { scroll-behavior: smooth; }
+    .kbd {
+      @apply inline-flex items-center gap-1 px-2 py-0.5 rounded border text-xs;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <div class="max-w-6xl mx-auto p-6">
+    <header class="mb-6 flex items-center justify-between">
+      <h1 class="text-2xl font-bold">Spring API Client</h1>
+      <div class="text-sm text-gray-500">Generated • Tailwind + Vanilla JS</div>
+    </header>
+
+    <section class="mb-6">
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-sm font-medium mb-1">Base URL</label>
+          <input id="baseUrl" type="text" class="w-full px-3 py-2 border rounded focus:outline-none focus:ring"
+                 placeholder="http://localhost:8080" value="http://localhost:8080" />
+        </div>
+        <div class="flex items-end">
+          <button id="btnCheck" class="w-full md:w-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Check Server</button>
+        </div>
+      </div>
+      <p id="status" class="mt-2 text-sm"></p>
+    </section>
+
+    <section class="mb-8">
+      <h2 class="text-xl font-semibold mb-3">Discovered Endpoints</h2>
+      <div class="overflow-x-auto bg-white border rounded">
+        <table class="min-w-full text-sm">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="text-left p-2">Method</th>
+              <th class="text-left p-2">Path</th>
+              <th class="text-left p-2">Source</th>
+              <th class="text-left p-2">Action</th>
+            </tr>
+          </thead>
+          <tbody id="endpointTable"></tbody>
+        </table>
+      </div>
+      <p class="text-xs text-gray-500 mt-2">Endpoints parsed from your source. Some paths may require path variables or query params—adjust below.</p>
+    </section>
+
+    <section class="mb-12">
+      <h2 class="text-xl font-semibold mb-3">Request Builder</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium mb-1">HTTP Method</label>
+            <select id="method" class="w-full px-3 py-2 border rounded">
+              <option>GET</option>
+              <option>POST</option>
+              <option>PUT</option>
+              <option>PATCH</option>
+              <option>DELETE</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Path (relative to Base URL)</label>
+            <input id="path" type="text" class="w-full px-3 py-2 border rounded" placeholder="/api/example"/>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Query Params (JSON)</label>
+            <textarea id="query" rows="3" class="w-full px-3 py-2 border rounded" placeholder='{"q":"test","page":1}'></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Headers (JSON)</label>
+            <textarea id="headers" rows="3" class="w-full px-3 py-2 border rounded" placeholder='{"Content-Type":"application/json"}'></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Body (JSON)</label>
+            <textarea id="body" rows="6" class="w-full px-3 py-2 border rounded" placeholder='{"name":"Alice"}'></textarea>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="sendJson" type="checkbox" class="h-4 w-4 border rounded" checked />
+            <label for="sendJson" class="text-sm">Send body as JSON</label>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex gap-2">
+            <button id="btnSend" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Send</button>
+            <button id="btnClear" class="px-4 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300">Clear</button>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Full URL</label>
+            <input id="fullUrl" type="text" class="w-full px-3 py-2 border rounded bg-gray-50" readonly />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Response Status</label>
+            <input id="respStatus" type="text" class="w-full px-3 py-2 border rounded bg-gray-50" readonly />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Response Headers</label>
+            <pre id="respHeaders" class="p-3 bg-gray-900 text-gray-100 rounded overflow-auto text-xs h-40"></pre>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Response Body</label>
+            <pre id="respBody" class="p-3 bg-gray-900 text-gray-100 rounded overflow-auto text-xs h-64"></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="text-xs text-gray-500">
+      Tip: If your Spring app uses CORS, allow this origin or run this file from the same host/port.
+    </footer>
+  </div>
+
+<script>
+const discovered = [
+  {
+    "http_method": "*",
+    "path": "/orders/orders",
+    "source_file": "/spring-modulith-maven-demo-main/src/main/java/com/example/modulithdemo/orders/OrderController.java",
+    "java_method": "placeOrder"
+  },
+  {
+    "http_method": "POST",
+    "path": "/orders/{id}",
+    "source_file": "/spring-modulith-maven-demo-main/src/main/java/com/example/modulithdemo/orders/OrderController.java",
+    "java_method": "placeOrder"
+  }
+];
+
+function qs(id) { return document.getElementById(id); }
+
+function buildQuery(q) {
+  if (!q) return "";
+  try {
+    const obj = JSON.parse(q);
+    const params = new URLSearchParams();
+    Object.entries(obj).forEach(([k,v]) => {
+      if (v !== undefined && v !== null) params.append(k, String(v));
+    });
+    const s = params.toString();
+    return s ? `?${s}` : "";
+  } catch (e) {
+    console.warn("Invalid query JSON", e);
+    return "";
+  }
+}
+
+function buildHeaders(h) {
+  if (!h) return {};
+  try { return JSON.parse(h); } catch (e) { console.warn("Invalid headers JSON", e); return {}; }
+}
+
+function buildBody(b) {
+  if (!b) return null;
+  try { return JSON.parse(b); } catch (e) { console.warn("Invalid body JSON", e); return b; }
+}
+
+function renderEndpoints() {
+  const tbody = qs('endpointTable');
+  tbody.innerHTML = "";
+  discovered.forEach((ep, idx) => {
+    const tr = document.createElement('tr');
+    tr.className = idx % 2 ? "bg-white" : "bg-gray-50";
+    tr.innerHTML = `
+      <td class="p-2 font-mono">${ep.http_method}</td>
+      <td class="p-2 font-mono">${ep.path}</td>
+      <td class="p-2 text-gray-500">${ep.source_file || ""}</td>
+      <td class="p-2">
+        <button data-i="${idx}" class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700">Load</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const i = parseInt(e.currentTarget.getAttribute('data-i'));
+      const ep = discovered[i];
+      qs('method').value = ep.http_method === "*" ? "GET" : ep.http_method;
+      qs('path').value = ep.path || "/";
+      qs('query').value = "";
+      qs('headers').value = '{"Content-Type":"application/json"}';
+      qs('body').value = "";
+      updateFullUrl();
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    });
+  });
+}
+
+function updateFullUrl() {
+  const base = qs('baseUrl').value.replace(/\/$/, "");
+  const path = qs('path').value.startsWith("/") ? qs('path').value : "/" + qs('path').value;
+  const full = base + path + buildQuery(qs('query').value);
+  qs('fullUrl').value = full;
+}
+
+['baseUrl','path','query'].forEach(id => {
+  qs(id).addEventListener('input', updateFullUrl);
+});
+
+qs('btnCheck').addEventListener('click', async () => {
+  const base = qs('baseUrl').value.replace(/\/$/, "");
+  const url = base + "/actuator/health";
+  qs('status').textContent = "Checking...";
+  try {
+    const r = await fetch(url);
+    const t = await r.text();
+    qs('status').textContent = `GET /actuator/health → ${r.status}`;
+  } catch (e) {
+    qs('status').textContent = `Failed to reach ${url} — is the server running?`;
+  }
+});
+
+qs('btnClear').addEventListener('click', () => {
+  ['query','headers','body','respStatus','respHeaders','respBody','fullUrl'].forEach(id => qs(id).value = "");
+  qs('respHeaders').textContent = "";
+  qs('respBody').textContent = "";
+});
+
+qs('btnSend').addEventListener('click', async () => {
+  const method = qs('method').value;
+  const url = qs('fullUrl').value || (updateFullUrl(), qs('fullUrl').value);
+  const headers = buildHeaders(qs('headers').value);
+  const sendJson = qs('sendJson').checked;
+  let body = buildBody(qs('body').value);
+
+  const init = { method, headers };
+  if (['POST','PUT','PATCH','DELETE'].includes(method)) {
+    if (sendJson && body !== null && typeof body !== 'string') {
+      init.body = JSON.stringify(body);
+      init.headers = Object.assign({'Content-Type':'application/json'}, headers);
+    } else if (body != null) {
+      init.body = typeof body === 'string' ? body : JSON.stringify(body);
+    }
+  }
+
+  try {
+    const resp = await fetch(url, init);
+    qs('respStatus').value = `${resp.status} ${resp.statusText}`;
+
+    // headers
+    const headerObj = {};
+    resp.headers.forEach((v,k)=> headerObj[k] = v);
+    qs('respHeaders').textContent = JSON.stringify(headerObj, null, 2);
+
+    const ct = resp.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+      const j = await resp.json();
+      qs('respBody').textContent = JSON.stringify(j, null, 2);
+    } else {
+      const t = await resp.text();
+      qs('respBody').textContent = t;
+    }
+  } catch (e) {
+    qs('respStatus').value = "Request failed";
+    qs('respHeaders').textContent = "";
+    qs('respBody').textContent = String(e);
+  }
+});
+
+renderEndpoints();
+updateFullUrl();
+</script>
+</body>
+</html>
