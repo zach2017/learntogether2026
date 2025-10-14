@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ollama Chat Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 mb-2">
+                Ollama AI Chat
+            </h1>
+            <p class="text-cyan-300 text-lg">Powered by Local AI Models</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl p-8 border border-purple-500/30 backdrop-blur-sm">
+            
+            <!-- Model Selection -->
+            <div class="mb-6">
+                <label for="model" class="flex items-center text-sm font-semibold text-cyan-300 mb-2 uppercase tracking-wide">
+                    <span class="mr-2">🤖</span> AI Model
+                </label>
+                <input 
+                    type="text" 
+                    id="model" 
+                    value="llama2"
+                    class="w-full px-4 py-3 bg-gray-800 border-2 border-purple-500/50 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition duration-200"
+                    placeholder="Enter model name (e.g., llama2, mistral)"
+                >
+            </div>
+
+            <!-- Prompt Input -->
+            <div class="mb-6">
+                <label for="prompt" class="flex items-center text-sm font-semibold text-cyan-300 mb-2 uppercase tracking-wide">
+                    <span class="mr-2">💬</span> Your Prompt
+                </label>
+                <textarea 
+                    id="prompt" 
+                    rows="5"
+                    class="w-full px-4 py-3 bg-gray-800 border-2 border-purple-500/50 rounded-xl text-white placeholder-gray-500 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition duration-200 resize-none"
+                    placeholder="Ask me anything..."
+                ></textarea>
+            </div>
+
+            <!-- Send Button -->
+            <button 
+                id="sendBtn"
+                class="w-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-600 hover:via-purple-600 hover:to-pink-600 text-white font-bold py-4 px-6 rounded-xl transition duration-300 ease-in-out transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-cyan-500/50 flex items-center justify-center"
+            >
+                <span class="mr-2">✨</span>
+                <span class="text-lg">Generate Response</span>
+            </button>
+
+            <!-- Loading Indicator -->
+            <div id="loading" class="hidden mt-6 text-center">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-cyan-400 border-t-transparent"></div>
+                <p class="text-cyan-300 mt-3 text-lg font-semibold animate-pulse">Processing your request...</p>
+            </div>
+
+            <!-- Response Section -->
+            <div id="responseSection" class="mt-8 hidden">
+                <div class="flex items-center mb-3">
+                    <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-cyan-400">
+                        ✅ AI Response
+                    </h2>
+                </div>
+                <div class="bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-green-500/40 rounded-xl p-6 shadow-lg">
+                    <p id="response" class="text-gray-100 whitespace-pre-wrap leading-relaxed text-lg"></p>
+                </div>
+                <div class="mt-3 flex items-center justify-between text-sm">
+                    <span class="text-purple-300">
+                        <span class="font-semibold">Model:</span> 
+                        <span id="usedModel" class="text-cyan-400 font-bold"></span>
+                    </span>
+                    <span class="text-gray-400">Powered by Ollama</span>
+                </div>
+            </div>
+
+            <!-- Error Section -->
+            <div id="errorSection" class="mt-8 hidden">
+                <div class="bg-gradient-to-br from-red-900/50 to-pink-900/50 border-2 border-red-500/50 rounded-xl p-6 shadow-lg">
+                    <div class="flex items-center mb-3">
+                        <h3 class="text-red-400 font-bold text-xl">⚠️ Error Occurred</h3>
+                    </div>
+                    <p id="error" class="text-red-200"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8">
+            <p class="text-cyan-400/60 text-sm">Built with Spring Boot & Ollama</p>
+        </div>
+    </div>
+
+    <script>
+        const sendBtn = document.getElementById('sendBtn');
+        const promptInput = document.getElementById('prompt');
+        const modelInput = document.getElementById('model');
+        const loading = document.getElementById('loading');
+        const responseSection = document.getElementById('responseSection');
+        const errorSection = document.getElementById('errorSection');
+        const responseText = document.getElementById('response');
+        const usedModel = document.getElementById('usedModel');
+        const errorText = document.getElementById('error');
+
+        sendBtn.addEventListener('click', async () => {
+            const prompt = promptInput.value.trim();
+            const model = modelInput.value.trim();
+
+            if (!prompt) {
+                alert('Please enter a prompt');
+                return;
+            }
+
+            // Hide previous results
+            responseSection.classList.add('hidden');
+            errorSection.classList.add('hidden');
+            
+            // Show loading
+            loading.classList.remove('hidden');
+            sendBtn.disabled = true;
+            sendBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            try {
+                const response = await fetch('http://localhost:8080/api/ollama/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        model: model
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    responseText.textContent = data.response;
+                    usedModel.textContent = data.model;
+                    responseSection.classList.remove('hidden');
+                } else {
+                    errorText.textContent = data.error || 'Unknown error occurred';
+                    errorSection.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorText.textContent = `Connection error: ${error.message}. Make sure your Spring Boot server is running on port 8080.`;
+                errorSection.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
+                sendBtn.disabled = false;
+                sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+
+        // Allow Enter key to send (Ctrl+Enter for newline in textarea)
+        promptInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
+                e.preventDefault();
+                sendBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>
