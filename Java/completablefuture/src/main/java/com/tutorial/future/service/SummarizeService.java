@@ -1,13 +1,19 @@
 package com.tutorial.future.service;
 
 import org.springframework.stereotype.Service;
+
+import com.tutorial.future.service.OllamaClientService;
+import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.CompletableFuture;
 
 @Service
+@Slf4j
 public class SummarizeService {
 
-    public SummarizeService() {
-       
+    private final OllamaClientService ollamaClient;
+
+    public SummarizeService(OllamaClientService ollamaClient) {
+        this.ollamaClient = ollamaClient;
     }
 
     /**
@@ -17,9 +23,12 @@ public class SummarizeService {
         return CompletableFuture.supplyAsync(() -> {
             // Simulate fetching summary from an external service
             try {
-                Thread.sleep(2000); // Simulating API call delay
+
+                String prompt = "List 5 key research questions about ";
+                String response = ollamaClient.sendPrompt(prompt);
+                System.out.println("Ollama response: " + response);
                 return "Summary: " + text.substring(0, Math.min(50, text.length())) + "...";
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException("Summarization interrupted", e);
             }
