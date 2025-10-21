@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # Primary Nginx server
+  primary:
+    image: nginx:latest
+    container_name: primary_server
+    ports:
+      - "8001:80"
+    volumes:
+      - ./primary_html:/usr/share/nginx/html
+    networks:
+      - failover_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+      start_period: 2s
+
+  # Backup Nginx server
+  backup:
+    image: nginx:latest
+    container_name: backup_server
+    ports:
+      - "8002:80"
+    volumes:
+      - ./backup_html:/usr/share/nginx/html
+    networks:
+      - failover_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+      start_period: 2s
+
+  # Load balancer with failover logic
+  lb:
+    image: nginx:latest
+    container_name: load_balancer
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx_lb.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - failover_network
+    depends_on:
+      - primary
+      - backup
+
+  # Health check monitor service
+  health_monitor:
+    image: python:3.11-slim
+    container_name: health_monitor
+    volumes:
+      - ./health_monitor.py:/app/health_monitor.py
+    working_dir: /app
+    command: python health_monitor.py
+    networks:
+      - failover_network
+    depends_on:
+      - primary
+      - backup
+
+networks:
+  failover_network:
+    driver: bridge

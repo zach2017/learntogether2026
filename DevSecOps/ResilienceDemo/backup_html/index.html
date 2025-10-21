@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Backup Server</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border: 4px solid #ffc107;
+            border-radius: 12px;
+            padding: 50px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .dot {
+            width: 30px;
+            height: 30px;
+            background: #ffc107;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        h1 {
+            color: #ff6b35;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .warning {
+            background: #ffe5e5;
+            border-left: 4px solid #ff6b35;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            color: #c41e3a;
+        }
+        .info-box {
+            background: #fff9e6;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .info-box strong {
+            color: #ff6b35;
+        }
+        button {
+            background: #ffc107;
+            color: #333;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #ffb300;
+        }
+        #time {
+            font-weight: bold;
+            color: #ff6b35;
+            font-family: monospace;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status-indicator">
+            <div class="dot"></div>
+            <h1>BACKUP</h1>
+        </div>
+        <div class="subtitle">🟡 Failover Active</div>
+        
+        <div class="warning">
+            <strong>⚠️ Warning:</strong> Limited functionality - core services only
+        </div>
+        
+        <div class="info-box">
+            <strong>Status:</strong> Standby / Failover Mode
+        </div>
+        <div class="info-box">
+            <strong>Server:</strong> Backup (Google Cloud)
+        </div>
+        <div class="info-box">
+            <strong>Current Time:</strong> <span id="time">--:--:--</span>
+        </div>
+        <div class="info-box">
+            <strong>Services:</strong> 18 core services (18/3000)
+        </div>
+        <div class="info-box">
+            <strong>Overhead:</strong> ~1% of primary system cost
+        </div>
+        
+        <button onclick="testConnection()">Test Connection</button>
+    </div>
+
+    <script>
+        function updateTime() {
+            document.getElementById('time').innerText = new Date().toLocaleTimeString();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+        
+        function testConnection() {
+            alert('⚠️ Backup server responding in failover mode - limited services available');
+        }
+    </script>
+</body>
+</html>
