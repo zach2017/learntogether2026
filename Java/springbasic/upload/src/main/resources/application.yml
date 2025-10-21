@@ -1,0 +1,14 @@
+azure:
+  storage:
+    connection-string: "DefaultEndpointsProtocol=https;AccountName=YOUR_ACCOUNT_NAME;AccountKey=YOUR_ACCOUNT_KEY;EndpointSuffix=core.windows.net"
+    container-name: "uploads"
+
+quarkus:
+  http:
+    port: 8080
+  http:
+    cors:
+      ~: true
+      origins: "*"
+      methods: "GET,POST,PUT,DELETE,OPTIONS"
+      headers: "*"

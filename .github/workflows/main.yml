@@ -12,7 +12,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}   # ghcr.io/owner/repo
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
 
 permissions:
   contents: read
@@ -29,16 +29,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Use Node ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-
-      - name: Install deps
-        run: ls -lR
-
       - name: Lint
         run: |
           ls -lR
@@ -50,27 +40,8 @@ jobs:
     needs: [lint]
     steps:
       - uses: actions/checkout@v4
-
-      - name: Use Node ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-
-      - name: Install deps
-        run: ls -lR
-
       - name: Build
         run: ls -lR
-
-      - name: Upload build artifacts (optional)
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-dist
-          path: |
-            dist
-            build
-          if-no-files-found: ignore
 
   test:
     name: Test
@@ -79,25 +50,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-
-      - name: Install deps
-        run: ls -lR
-
       - name: Run tests
         run: |
           ls -lR
         env:
           JEST_JUNIT_OUTPUT: junit.xml
-
-      - name: Upload test report (optional)
-        uses: actions/upload-artifact@v4
-        with:
-          name: junit-report
-          path: junit.xml
-          if-no-files-found: ignore
 

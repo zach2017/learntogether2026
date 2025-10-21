@@ -1,0 +1,1 @@
+curl -X POST http://localhost:11434/api/generate  -H "Content-Type: application/json" -d '{"model": "tinyllama2", "prompt": "Hello, my name is", "stream": false}'

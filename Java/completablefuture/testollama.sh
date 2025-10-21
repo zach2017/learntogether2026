@@ -1,0 +1,1 @@
+curl http://localhost:11434/api/generate -d "{ \"model\": \"qwen3:1.7b\", \"prompt\": \"Why is the sky blue?\", \"stream\": false }"
