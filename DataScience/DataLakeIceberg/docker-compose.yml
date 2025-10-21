@@ -1,0 +1,191 @@
+version: '3.8'
+
+services:
+  # LocalStack for S3 and other AWS services
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    environment:
+      SERVICES: s3,dynamodb
+      DEBUG: 1
+      DATA_DIR: /tmp/localstack/data
+      DOCKER_HOST: unix:///var/run/docker.sock
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    volumes:
+      - "${TMPDIR:-.}/localstack:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - datalake
+
+  # PostgreSQL for source data
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: source_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - datalake
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO as alternative S3 storage
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - datalake
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Hive Metastore for Iceberg metadata
+  metastore-db:
+    image: postgres:15-alpine
+    container_name: metastore-db
+    environment:
+      POSTGRES_USER: hive
+      POSTGRES_PASSWORD: hive123
+      POSTGRES_DB: metastore
+    ports:
+      - "5433:5432"
+    volumes:
+      - metastore_db:/var/lib/postgresql/data
+    networks:
+      - datalake
+
+  hive-metastore:
+    image: apache/hive:latest
+    container_name: hive-metastore
+    environment:
+      DB_DRIVER: org.postgresql.Driver
+      DB_HOST: metastore-db
+      DB_USER: hive
+      DB_PASSWD: hive123
+      METASTORE_WAREHOUSE_DIR: s3a://datalake/warehouse
+      AWS_S3_ENDPOINT: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    ports:
+      - "9083:9083"
+    depends_on:
+      metastore-db:
+        condition: service_healthy
+    networks:
+      - datalake
+
+  # Apache Iceberg Spark/Trino compatible server
+  iceberg-java-app:
+    build:
+      context: ./services/iceberg-java
+      dockerfile: Dockerfile
+    container_name: iceberg-java-app
+    environment:
+      WAREHOUSE_PATH: /warehouse
+      S3_ENDPOINT: http://localstack:4566
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: source_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./warehouse:/warehouse
+      - ./data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    networks:
+      - datalake
+
+  # Python API service
+  python-api:
+    build:
+      context: ./services/python-api
+      dockerfile: Dockerfile
+    container_name: python-api
+    environment:
+      WAREHOUSE_PATH: /warehouse
+      S3_ENDPOINT: http://localstack:4566
+      POSTGRES_HOST: postgres
+      METASTORE_HOST: hive-metastore
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./warehouse:/warehouse
+      - ./data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      hive-metastore:
+        condition: service_started
+    networks:
+      - datalake
+
+  # Trino for querying
+  trino:
+    image: trinodb/trino:latest
+    container_name: trino
+    ports:
+      - "8081:8080"
+    environment:
+      CATALOG_MANAGEMENT: dynamic
+    volumes:
+      - ./trino/etc:/etc/trino
+      - ./trino/catalogs:/etc/trino/catalog
+    depends_on:
+      - hive-metastore
+      - localstack
+    networks:
+      - datalake
+
+  # Jupyter for testing
+  jupyter:
+    image: jupyter/datascience-notebook:latest
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      JUPYTER_ENABLE_LAB: 'yes'
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./warehouse:/home/jovyan/warehouse
+    networks:
+      - datalake
+
+volumes:
+  postgres_data:
+  metastore_db:
+  minio_data:
+
+networks:
+  datalake:
+    driver: bridge
