@@ -3,6 +3,7 @@ package com.example.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Builder;
 
 /**
  * Data Transfer Object for OllamaSummary
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class OllamaSummaryDTO {
     
     private String docId;
