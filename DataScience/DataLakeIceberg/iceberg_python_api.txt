@@ -1,0 +1,399 @@
+#!/usr/bin/env python3
+"""
+PyIceberg API Service for Data Lake Operations
+Handles data loading, transformation, and metadata management
+"""
+
+from flask import Flask, request, jsonify
+from datetime import datetime
+import logging
+import json
+from typing import Dict, List, Any, Optional
+import pandas as pd
+import psycopg2
+from pyiceberg.catalog import load_catalog
+from pyiceberg.utils.properties import Properties
+import boto3
+from bs4 import BeautifulSoup
+import requests
+import io
+import os
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+app = Flask(__name__)
+
+class IcebergDataLakeManager:
+    """Manages Iceberg operations for data lake"""
+    
+    def __init__(self, warehouse_path: str, s3_endpoint: str = None):
+        self.warehouse_path = warehouse_path
+        self.s3_endpoint = s3_endpoint or os.getenv('S3_ENDPOINT', 'http://localstack:4566')
+        self.catalog = self._init_catalog()
+        self.s3_client = self._init_s3_client()
+        logger.info(f"Initialized IcebergDataLakeManager with warehouse: {warehouse_path}")
+    
+    def _init_catalog(self):
+        """Initialize Iceberg catalog"""
+        try:
+            properties = {
+                'warehouse': self.warehouse_path,
+                'uri': f'thrift://hive-metastore:9083'
+            }
+            catalog = load_catalog("default", **properties)
+            logger.info("Iceberg catalog initialized")
+            return catalog
+        except Exception as e:
+            logger.error(f"Failed to initialize catalog: {e}")
+            raise
+    
+    def _init_s3_client(self):
+        """Initialize S3 client for LocalStack"""
+        try:
+            s3 = boto3.client(
+                's3',
+                endpoint_url=self.s3_endpoint,
+                aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID', 'test'),
+                aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY', 'test'),
+                region_name='us-east-1'
+            )
+            logger.info("S3 client initialized")
+            return s3
+        except Exception as e:
+            logger.error(f"Failed to initialize S3 client: {e}")
+            raise
+    
+    def load_from_postgres(self, host: str, database: str, user: str, password: str,
+                          query: str, table_name: str, namespace: str) -> Dict[str, Any]:
+        """Load data from PostgreSQL into Iceberg"""
+        try:
+            conn = psycopg2.connect(
+                host=host,
+                database=database,
+                user=user,
+                password=password
+            )
+            df = pd.read_sql_query(query, conn)
+            conn.close()
+            
+            # Write to Iceberg
+            full_table_name = f"{namespace}.{table_name}"
+            self._write_to_iceberg(df, full_table_name)
+            
+            return {
+                'status': 'success',
+                'table': full_table_name,
+                'rows_loaded': len(df),
+                'columns': list(df.columns)
+            }
+        except Exception as e:
+            logger.error(f"Failed to load from PostgreSQL: {e}")
+            return {'status': 'error', 'message': str(e)}
+    
+    def load_from_s3(self, bucket: str, key: str, format: str, 
+                    table_name: str, namespace: str) -> Dict[str, Any]:
+        """Load data from S3/LocalStack into Iceberg"""
+        try:
+            # Get object from S3
+            obj = self.s3_client.get_object(Bucket=bucket, Key=key)
+            
+            # Read based on format
+            if format.lower() == 'csv':
+                df = pd.read_csv(io.BytesIO(obj['Body'].read()))
+            elif format.lower() == 'parquet':
+                df = pd.read_parquet(io.BytesIO(obj['Body'].read()))
+            elif format.lower() == 'json':
+                df = pd.read_json(io.BytesIO(obj['Body'].read()))
+            else:
+                raise ValueError(f"Unsupported format: {format}")
+            
+            # Write to Iceberg
+            full_table_name = f"{namespace}.{table_name}"
+            self._write_to_iceberg(df, full_table_name)
+            
+            return {
+                'status': 'success',
+                'table': full_table_name,
+                'rows_loaded': len(df),
+                'columns': list(df.columns),
+                's3_source': f"s3://{bucket}/{key}"
+            }
+        except Exception as e:
+            logger.error(f"Failed to load from S3: {e}")
+            return {'status': 'error', 'message': str(e)}
+    
+    def load_from_file(self, file_path: str, format: str,
+                      table_name: str, namespace: str) -> Dict[str, Any]:
+        """Load data from local file into Iceberg"""
+        try:
+            if format.lower() == 'csv':
+                df = pd.read_csv(file_path)
+            elif format.lower() == 'parquet':
+                df = pd.read_parquet(file_path)
+            elif format.lower() == 'json':
+                df = pd.read_json(file_path)
+            else:
+                raise ValueError(f"Unsupported format: {format}")
+            
+            full_table_name = f"{namespace}.{table_name}"
+            self._write_to_iceberg(df, full_table_name)
+            
+            return {
+                'status': 'success',
+                'table': full_table_name,
+                'rows_loaded': len(df),
+                'columns': list(df.columns),
+                'file_path': file_path
+            }
+        except Exception as e:
+            logger.error(f"Failed to load from file: {e}")
+            return {'status': 'error', 'message': str(e)}
+    
+    def scrape_and_load(self, url: str, selector: str, table_name: str,
+                       namespace: str) -> Dict[str, Any]:
+        """Scrape web data and load into Iceberg"""
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            tables = soup.select(selector)
+            
+            data = []
+            for table in tables:
+                rows = table.find_all('tr')
+                headers = [th.text.strip() for th in rows[0].find_all(['th', 'td'])]
+                
+                for row in rows[1:]:
+                    cols = [td.text.strip() for td in row.find_all('td')]
+                    if cols:
+                        data.append(dict(zip(headers, cols)))
+            
+            df = pd.DataFrame(data)
+            full_table_name = f"{namespace}.{table_name}"
+            self._write_to_iceberg(df, full_table_name)
+            
+            return {
+                'status': 'success',
+                'table': full_table_name,
+                'rows_scraped': len(df),
+                'columns': list(df.columns),
+                'source_url': url
+            }
+        except Exception as e:
+            logger.error(f"Failed to scrape and load: {e}")
+            return {'status': 'error', 'message': str(e)}
+    
+    def _write_to_iceberg(self, df: pd.DataFrame, table_name: str):
+        """Write DataFrame to Iceberg table"""
+        try:
+            namespace, table = table_name.split('.')
+            
+            # Create namespace if doesn't exist
+            try:
+                self.catalog.create_namespace(namespace)
+            except:
+                pass
+            
+            # Convert to Arrow and write
+            import pyarrow as pa
+            table = pa.Table.from_pandas(df)
+            
+            # Write using catalog
+            self.catalog.create_table(
+                table_name,
+                schema=table.schema,
+                overwrite=True
+            )
+            logger.info(f"Successfully wrote {len(df)} rows to {table_name}")
+        except Exception as e:
+            logger.error(f"Failed to write to Iceberg: {e}")
+            raise
+    
+    def get_table_metadata(self, namespace: str, table_name: str) -> Dict[str, Any]:
+        """Get metadata for Iceberg table"""
+        try:
+            full_table_name = f"{namespace}.{table_name}"
+            table = self.catalog.load_table(full_table_name)
+            
+            metadata = {
+                'table_name': table_name,
+                'namespace': namespace,
+                'schema': str(table.schema()),
+                'partitions': str(table.partitioning),
+                'location': table.location(),
+                'snapshots': len(table.history()),
+                'current_snapshot_id': table.current_snapshot().snapshot_id if table.current_snapshot() else None
+            }
+            return metadata
+        except Exception as e:
+            logger.error(f"Failed to get table metadata: {e}")
+            return {'status': 'error', 'message': str(e)}
+    
+    def list_tables(self, namespace: str) -> List[str]:
+        """List all tables in a namespace"""
+        try:
+            tables = self.catalog.list_tables(namespace)
+            return [t.name() for t in tables]
+        except Exception as e:
+            logger.error(f"Failed to list tables: {e}")
+            return []
+    
+    def migrate_table(self, source_namespace: str, source_table: str,
+                     dest_namespace: str, dest_table: str) -> Dict[str, Any]:
+        """Migrate table between namespaces/warehouses"""
+        try:
+            source_full = f"{source_namespace}.{source_table}"
+            dest_full = f"{dest_namespace}.{dest_table}"
+            
+            # Read from source
+            source_table_obj = self.catalog.load_table(source_full)
+            df = source_table_obj.to_pandas()
+            
+            # Write to destination
+            self._write_to_iceberg(df, dest_full)
+            
+            return {
+                'status': 'success',
+                'source': source_full,
+                'destination': dest_full,
+                'rows_migrated': len(df)
+            }
+        except Exception as e:
+            logger.error(f"Failed to migrate table: {e}")
+            return {'status': 'error', 'message': str(e)}
+    
+    def upload_to_s3(self, file_path: str, bucket: str, key: str) -> Dict[str, Any]:
+        """Upload file to S3"""
+        try:
+            self.s3_client.upload_file(file_path, bucket, key)
+            return {
+                'status': 'success',
+                'file': file_path,
+                's3_location': f"s3://{bucket}/{key}"
+            }
+        except Exception as e:
+            logger.error(f"Failed to upload to S3: {e}")
+            return {'status': 'error', 'message': str(e)}
+
+
+# Initialize manager
+manager = IcebergDataLakeManager(
+    os.getenv('WAREHOUSE_PATH', '/warehouse'),
+    os.getenv('S3_ENDPOINT', 'http://localstack:4566')
+)
+
+
+# API Routes
+@app.route('/api/v1/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
+
+
+@app.route('/api/v1/load/postgres', methods=['POST'])
+def load_postgres():
+    """Load data from PostgreSQL"""
+    data = request.get_json()
+    result = manager.load_from_postgres(
+        host=data.get('host'),
+        database=data.get('database'),
+        user=data.get('user'),
+        password=data.get('password'),
+        query=data.get('query'),
+        table_name=data.get('table_name'),
+        namespace=data.get('namespace', 'default')
+    )
+    return jsonify(result)
+
+
+@app.route('/api/v1/load/s3', methods=['POST'])
+def load_s3():
+    """Load data from S3"""
+    data = request.get_json()
+    result = manager.load_from_s3(
+        bucket=data.get('bucket'),
+        key=data.get('key'),
+        format=data.get('format', 'csv'),
+        table_name=data.get('table_name'),
+        namespace=data.get('namespace', 'default')
+    )
+    return jsonify(result)
+
+
+@app.route('/api/v1/load/file', methods=['POST'])
+def load_file():
+    """Load data from file"""
+    data = request.get_json()
+    result = manager.load_from_file(
+        file_path=data.get('file_path'),
+        format=data.get('format'),
+        table_name=data.get('table_name'),
+        namespace=data.get('namespace', 'default')
+    )
+    return jsonify(result)
+
+
+@app.route('/api/v1/scrape', methods=['POST'])
+def scrape_and_load():
+    """Scrape web data and load to Iceberg"""
+    data = request.get_json()
+    result = manager.scrape_and_load(
+        url=data.get('url'),
+        selector=data.get('selector'),
+        table_name=data.get('table_name'),
+        namespace=data.get('namespace', 'default')
+    )
+    return jsonify(result)
+
+
+@app.route('/api/v1/tables/<namespace>/<table>/metadata', methods=['GET'])
+def get_metadata(namespace, table):
+    """Get table metadata"""
+    result = manager.get_table_metadata(namespace, table)
+    return jsonify(result)
+
+
+@app.route('/api/v1/tables/<namespace>', methods=['GET'])
+def list_tables(namespace):
+    """List tables in namespace"""
+    tables = manager.list_tables(namespace)
+    return jsonify({
+        'namespace': namespace,
+        'tables': tables,
+        'count': len(tables)
+    })
+
+
+@app.route('/api/v1/migrate', methods=['POST'])
+def migrate_table():
+    """Migrate table between warehouses"""
+    data = request.get_json()
+    result = manager.migrate_table(
+        source_namespace=data.get('source_namespace'),
+        source_table=data.get('source_table'),
+        dest_namespace=data.get('dest_namespace'),
+        dest_table=data.get('dest_table')
+    )
+    return jsonify(result)
+
+
+@app.route('/api/v1/upload/s3', methods=['POST'])
+def upload_s3():
+    """Upload file to S3"""
+    data = request.get_json()
+    result = manager.upload_to_s3(
+        file_path=data.get('file_path'),
+        bucket=data.get('bucket'),
+        key=data.get('key')
+    )
+    return jsonify(result)
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
