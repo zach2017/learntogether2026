@@ -1,6 +1,6 @@
 # Failover System Setup & Issues Guide Summary
 
-The article discusses operational resilience and disaster recovery strategies, highlighting lessons from the 2024 CrowdStrike IT outages. Key points include:
+[The article discusses operational resilience and disaster recovery strategies](https://www.thestack.technology/operational-resilience-and-stress-testing-for-wartime), highlighting lessons from the 2024 CrowdStrike IT outages. Key points include:  https://www.thestack.technology/operational-resilience-and-stress-testing-for-wartime
 
 **Main Insights:**
 - **Monzo's Stand-In System**: A completely separate backup system running on Google Cloud (while primary runs on AWS) that costs only 1% of the main infrastructure
