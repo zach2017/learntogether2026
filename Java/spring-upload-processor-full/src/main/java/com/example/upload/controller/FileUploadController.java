@@ -32,11 +32,7 @@ public class FileUploadController {
         this.external = external;
     }
 
-    @PostMapping(
-        value = "/upload",
-        consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-        produces = MediaType.APPLICATION_JSON_VALUE
-    )
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> upload(@RequestPart("files") @NotEmpty MultipartFile[] files) throws Exception {
         List<ProcessResult> results = new ArrayList<>();
 
@@ -61,54 +57,122 @@ public class FileUploadController {
         return response;
     }
 
+    private String addCompletedSuffix(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return "file.completed";
+        }
+
+        int lastDotIndex = fileName.lastIndexOf('.');
+
+        if (lastDotIndex > 0) {
+            // File has an extension
+            String nameWithoutExt = fileName.substring(0, lastDotIndex);
+            String extension = fileName.substring(lastDotIndex);
+            return nameWithoutExt + ".completed" + extension;
+        } else {
+            // No extension
+            return fileName + ".completed";
+        }
+    }
+
     @PostMapping("/summerize")
     public ResponseEntity<Map<String, Object>> summerizeFile(@RequestParam("file") MultipartFile file) {
         log.info("Received file upload request: {}", file.getOriginalFilename());
-        
+
         if (file.isEmpty()) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "File is empty"));
         }
-        
-        long fileSize = file.getSize();
-        String fileName = file.getOriginalFilename();
-        String contentType = file.getContentType();
-        
-        log.info("File size: {} bytes", fileSize);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("fileName", fileName);
-        response.put("size", fileSize);
-        response.put("sizeInKB", String.format("%.2f KB", fileSize / 1024.0));
-        response.put("sizeInMB", String.format("%.2f MB", fileSize / (1024.0 * 1024.0)));
-        response.put("contentType", contentType);
-        
-        return ResponseEntity.ok(response);
+
+        try {
+            long fileSize = file.getSize();
+            String originalFileName = file.getOriginalFilename();
+            String contentType = file.getContentType();
+
+            // Create new filename with .completed before extension
+            String newFileName = addCompletedSuffix(originalFileName);
+
+            // Define upload directory
+            String uploadDir = "uploads/";
+            Path uploadPath = Paths.get(uploadDir);
+
+            // Create directory if it doesn't exist
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            // Save file with new name
+            Path filePath = uploadPath.resolve(newFileName);
+            file.transferTo(filePath.toFile());
+
+            log.info("File saved as: {} with size: {} bytes", newFileName, fileSize);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("originalFileName", originalFileName);
+            response.put("savedFileName", newFileName);
+            response.put("filePath", filePath.toString());
+            response.put("size", fileSize);
+            response.put("sizeInKB", String.format("%.2f KB", fileSize / 1024.0));
+            response.put("sizeInMB", String.format("%.2f MB", fileSize / (1024.0 * 1024.0)));
+            response.put("contentType", contentType);
+
+            return ResponseEntity.ok(response);
+
+        } catch (IOException e) {
+            log.error("Failed to save file", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Failed to save file: " + e.getMessage()));
+        }
     }
 
     @PostMapping("/keywords")
     public ResponseEntity<Map<String, Object>> keywordsFile(@RequestParam("file") MultipartFile file) {
         log.info("Received file upload request: {}", file.getOriginalFilename());
-        
+
         if (file.isEmpty()) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "File is empty"));
         }
-        
-        long fileSize = file.getSize();
-        String fileName = file.getOriginalFilename();
-        String contentType = file.getContentType();
-        
-        log.info("File size: {} bytes", fileSize);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("fileName", fileName);
-        response.put("size", fileSize);
-        response.put("sizeInKB", String.format("%.2f KB", fileSize / 1024.0));
-        response.put("sizeInMB", String.format("%.2f MB", fileSize / (1024.0 * 1024.0)));
-        response.put("contentType", contentType);
-        
-        return ResponseEntity.ok(response);
+
+        try {
+            long fileSize = file.getSize();
+            String originalFileName = file.getOriginalFilename();
+            String contentType = file.getContentType();
+
+            // Create new filename with .completed before extension
+            String newFileName = addCompletedSuffix(originalFileName);
+
+            // Define upload directory
+            String uploadDir = "uploads/";
+            Path uploadPath = Paths.get(uploadDir);
+
+            // Create directory if it doesn't exist
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            // Save file with new name
+            Path filePath = uploadPath.resolve(newFileName);
+            file.transferTo(filePath.toFile());
+
+            log.info("File saved as: {} with size: {} bytes", newFileName, fileSize);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("originalFileName", originalFileName);
+            response.put("savedFileName", newFileName);
+            response.put("filePath", filePath.toString());
+            response.put("size", fileSize);
+            response.put("sizeInKB", String.format("%.2f KB", fileSize / 1024.0));
+            response.put("sizeInMB", String.format("%.2f MB", fileSize / (1024.0 * 1024.0)));
+            response.put("contentType", contentType);
+
+            return ResponseEntity.ok(response);
+
+        } catch (IOException e) {
+            log.error("Failed to save file", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "Failed to save file: " + e.getMessage()));
+        }
     }
 
     @GetMapping(value = "/health", produces = MediaType.APPLICATION_JSON_VALUE)

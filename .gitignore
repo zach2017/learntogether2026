@@ -147,3 +147,5 @@ Java/modulithdemo/target/
 Docker/microservicedemo/spring-keycloak-demo/client-service/target/
 Java/springbasic/basic/gradle
 Java/springbasic/upload/src/main/docker
+Java/spring-upload-processor-full/target/
+Java/spring-upload-processor-full/uploads/*
