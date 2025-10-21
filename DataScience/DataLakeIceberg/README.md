@@ -230,7 +230,6 @@ Here’s a **bullet-point tutorial guide** explaining — in plain language — 
 
 ---
 
-Would you like me to add **diagrams** (Mermaid or SVG) illustrating how time-travel and event streaming flow through this Iceberg architecture?
 
 # Apache Iceberg Data Lake - Complete Documentation
 
