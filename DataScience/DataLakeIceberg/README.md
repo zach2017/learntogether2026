@@ -1,5 +1,237 @@
 # Apache Iceberg Data Lake - Complete Setup Guide
 
+Here’s a **bullet-point tutorial guide** explaining — in plain language — what each **Apache Iceberg Data Lake component** does, **how it works**, and **how it supports time-travel and streaming event data.**
+
+---
+
+## 🧩 1. **Apache Iceberg — The Foundation**
+
+* **What it is:**
+  An *open-table format* for data lakes (like Parquet + metadata + schema evolution).
+  It organizes raw files into logical SQL tables with schema, partitioning, and versioning.
+
+* **How it works:**
+
+  * Stores actual data in **Parquet/ORC/Avro** files.
+  * Maintains **manifest files** (lists of file metadata).
+  * Maintains **snapshots** (a pointer to a consistent view of data).
+  * All metadata and data are stored on **S3, HDFS, or local FS**.
+
+* **How it supports time-travel:**
+  Each write creates a new snapshot.
+  You can `SELECT * FROM table FOR VERSION AS OF <snapshot-id or timestamp>` to query the state of the table at that time.
+
+* **How it supports streaming events:**
+
+  * New data files are appended as small commits.
+  * Stream processors (Flink, Spark Structured Streaming, Kafka Connect) can write incremental batches into Iceberg tables.
+  * Readers always see a consistent snapshot (ACID isolation).
+
+---
+
+## ⚙️ 2. **Hive Metastore (Catalog & Metadata Service)**
+
+* **Purpose:** Central registry that keeps track of all Iceberg tables, their schema, partitioning, and snapshot history.
+
+* **How it works:**
+
+  * Every Iceberg table has metadata JSON and manifest lists.
+  * Hive Metastore stores the *location* of those metadata files and table schema.
+  * When you query through Trino/Spark, they read metadata from Hive to find data files.
+
+* **Time-travel role:**
+  Stores references to multiple snapshots → enables “rewinding” to a prior version.
+
+* **Streaming role:**
+  Tracks atomic commits; concurrent writers can safely append without corrupting data.
+
+---
+
+## ☁️ 3. **Storage Layer – S3 / MinIO / LocalStack**
+
+* **What it does:**
+  Stores the physical data and metadata files (Parquet + JSON manifests).
+
+* **How it works:**
+
+  * When Iceberg writes a table, it writes small files into an S3-compatible bucket.
+  * Metadata and manifest files are also stored there.
+  * Iceberg keeps paths to each file version.
+
+* **Time-travel role:**
+  Because files are immutable and each snapshot knows its file list, you can reconstruct *any past table state.*
+
+* **Streaming role:**
+
+  * New micro-batches create new Parquet files → appended instantly.
+  * Compaction jobs merge small files periodically.
+
+---
+
+## 🔌 4. **Integration APIs (Java Spring Boot + Python Flask)**
+
+### Java Spring Boot API (Port 8080)
+
+* **Purpose:** Enterprise ingestion, migration, and governance layer.
+* **How it works:**
+
+  * Provides REST endpoints to load from databases or files.
+  * Talks to Iceberg Catalog via Java SDK to register tables.
+  * Handles validation, checksums, and migrations.
+
+### Python Flask API (Port 5000)
+
+* **Purpose:** Lightweight ingestion + web scraping + metadata management.
+
+* **How it works:**
+
+  * Loads data from S3, PostgreSQL, or web APIs.
+  * Cleans/transforms into DataFrames.
+  * Writes to Iceberg tables via PyIceberg.
+
+* **Time-travel support:**
+  Each load triggers `commit()` → creates a new snapshot automatically.
+
+* **Streaming support:**
+  Can be scheduled (cron/Airflow) to append incremental data continuously.
+
+---
+
+## 🧠 5. **Trino SQL Query Engine**
+
+* **Purpose:** Federated query engine that can read from Iceberg, PostgreSQL, S3, etc.
+
+* **How it works:**
+
+  * Connects to Iceberg Catalog through Hive Metastore connector.
+  * Pushes down filters to Iceberg manifests for fast query pruning.
+  * Supports joins across multiple systems.
+
+* **Time-travel support:**
+  Native syntax:
+
+  ```sql
+  SELECT * FROM iceberg.ecommerce.orders FOR VERSION AS OF <snapshot_id>;
+  ```
+
+* **Streaming role:**
+
+  * Supports querying fresh snapshots as soon as new commits appear.
+  * Ideal for near-real-time dashboards and analytics.
+
+---
+
+## 🌐 6. **Web Scraping Connector (Flask side)**
+
+* **Purpose:** Bring in unstructured / semi-structured web data.
+
+* **How it works:**
+
+  * Fetches HTML or JSON.
+  * Parses via BeautifulSoup or Selenium.
+  * Normalizes fields → DataFrame → writes into Iceberg table.
+  * Adds lineage columns (`source_url`, `scraped_timestamp`).
+
+* **Time-travel benefit:**
+  Each scrape adds a new version → you can replay what the site looked like days ago.
+
+* **Streaming benefit:**
+  Can run hourly/daily to continuously refresh external market data.
+
+---
+
+## 🔁 7. **Data Migration & Validation Service**
+
+* **Purpose:** Move tables safely between namespaces (staging → production).
+
+* **How it works:**
+
+  * Reads source snapshot.
+  * Calculates checksum and row count.
+  * Writes to destination table and verifies.
+  * Commits snapshot with audit trail.
+
+* **Time-travel role:**
+  Migration itself produces a new version; old snapshot remains queryable.
+
+* **Streaming role:**
+  Enables atomic promotions of new data streams without downtime.
+
+---
+
+## 🗃️ 8. **Metadata Tracking & Audit History**
+
+* **Purpose:** Keep a detailed lineage and schema evolution record.
+
+* **How it works:**
+
+  * Iceberg stores `metadata.json`, `snapshots`, and `manifest lists`.
+  * Each snapshot includes:
+
+    * Timestamp
+    * Parent snapshot ID
+    * Added/deleted files
+    * Summary stats
+  * APIs expose this metadata for governance.
+
+* **Time-travel role:**
+  You can list all snapshots and query any previous one.
+
+* **Streaming role:**
+  Event logs → `metadata_log_entries` table acts like an *event stream* of commits.
+
+---
+
+## 🧮 9. **Streaming and Time-Travel in Action**
+
+* **Streaming ingestion (event streams):**
+
+  * Producers (Kafka, PostgreSQL CDC, web scraper) append small files (micro-batches).
+  * Iceberg commits each micro-batch as a new snapshot → immutable history.
+  * Consumers (Trino, Spark) can always query the *latest committed snapshot* safely.
+
+* **Time-Travel example:**
+
+  ```sql
+  -- Show all previous versions
+  SELECT * FROM ecommerce.orders.history;
+
+  -- Roll back or inspect old data
+  SELECT * FROM ecommerce.orders FOR TIMESTAMP AS OF TIMESTAMP '2025-09-01 12:00:00';
+  ```
+
+  This ensures:
+
+  * Auditing (old values preserved)
+  * Reproducibility (run analytics exactly as they were)
+  * Debugging (compare differences between versions)
+
+---
+
+## 🧱 10. **Data Lake as an Event Stream**
+
+* Each Iceberg snapshot = **an event** (“new data committed”).
+* The catalog can emit notifications (via Flink or Kafka Connectors).
+* Downstream pipelines consume these events to trigger analytics or ML jobs.
+* Unlike old data lakes (overwrite-heavy), Iceberg tracks *incremental changes* just like an event stream.
+
+---
+
+### ✅ **Summary**
+
+| Layer            | Tool                | Primary Role                  | Time-Travel Support    | Streaming/Event Role    |
+| ---------------- | ------------------- | ----------------------------- | ---------------------- | ----------------------- |
+| Data Sources     | PostgreSQL, S3, Web | Raw data feed                 | N/A                    | Feeds continuous data   |
+| Integration APIs | Java & Python       | Ingest + Transform            | Creates snapshots      | Append micro-batches    |
+| Catalog          | Hive Metastore      | Tracks schema + versions      | Stores snapshots       | Enables atomic commits  |
+| Storage          | S3/MinIO            | Physical data files           | Immutable versions     | Append-only event files |
+| Query Engine     | Trino               | SQL federation                | Query specific version | Query latest snapshot   |
+| Iceberg Core     | Table Format        | Manages snapshots & manifests | Full time-travel       | Commit-as-event model   |
+
+---
+
+Would you like me to add **diagrams** (Mermaid or SVG) illustrating how time-travel and event streaming flow through this Iceberg architecture?
+
 # Apache Iceberg Data Lake - Complete Documentation
 
 ## Executive Summary
