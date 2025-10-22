@@ -14,7 +14,12 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+import jakarta.servlet.http.Cookie;
+
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -26,7 +31,7 @@ import java.util.stream.Collectors;
 public class SecurityConfig {
 
   @Bean
-  SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+  SecurityFilterChain securityFilterChain(HttpSecurity http,  LogoutSuccessHandler oidcLogoutSuccessHandler) throws Exception {
     http
       .authorizeHttpRequests(auth -> auth
         .requestMatchers("/error", "/login**").permitAll()
@@ -41,12 +46,28 @@ public class SecurityConfig {
       )
       .logout(logout -> logout
     .logoutUrl("/logout")                               // app’s logout endpoint
-    .logoutSuccessUrl("/")                              // redirect after logout
-    .invalidateHttpSession(true)
-    .clearAuthentication(true)
+    .addLogoutHandler((request, response, authentication) -> {
+          var session = request.getSession(false);
+          if (session != null) session.invalidate();
+          for (String name : List.of("JSESSIONID")) {
+            Cookie cookie = new Cookie(name, "");
+            cookie.setPath("/");
+            cookie.setMaxAge(0);
+            response.addCookie(cookie);
+          }
+        })
+        // Keycloak (IdP) logout using end_session_endpoint
+        .logoutSuccessHandler(oidcLogoutSuccessHandler)
     .deleteCookies("JSESSIONID").permitAll());
 
     return http.build();
+  }
+
+   @Bean
+  LogoutSuccessHandler oidcLogoutSuccessHandler(ClientRegistrationRepository repo) {
+    OidcClientInitiatedLogoutSuccessHandler handler = new OidcClientInitiatedLogoutSuccessHandler(repo);
+    handler.setPostLogoutRedirectUri("{baseUrl}/"); // must be whitelisted in Keycloak client
+    return handler;
   }
 
   private OAuth2UserService<OidcUserRequest, OidcUser> keycloakRolesOidcUserService() {
