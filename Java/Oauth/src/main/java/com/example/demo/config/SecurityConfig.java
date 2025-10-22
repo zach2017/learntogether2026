@@ -37,7 +37,12 @@ public class SecurityConfig {
           .oidcUserService(this.keycloakRolesOidcUserService())  // <-- now returns interface type
         )
       )
-      .logout(logout -> logout.logoutSuccessUrl("/").permitAll());
+      .logout(logout -> logout
+    .logoutUrl("/logout")                               // app’s logout endpoint
+    .logoutSuccessUrl("/")                              // redirect after logout
+    .invalidateHttpSession(true)
+    .clearAuthentication(true)
+    .deleteCookies("JSESSIONID").permitAll());
 
     return http.build();
   }
