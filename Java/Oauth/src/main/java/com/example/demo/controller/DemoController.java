@@ -29,8 +29,14 @@ public class DemoController {
         Set<String> roles = principal.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toSet());
-
-        return roles.toArray()[2].toString() + " - " +  roles.toArray()[3].toString() + " - " + roles.size();
+        StringBuilder sb = new StringBuilder();
+        for (String role : roles) {
+                  if (sb.length() > 0) {
+                     sb.append(", "); // Add separator *before* the next element
+               }
+                sb.append(role);
+        }
+        return sb.toString();
       } catch (Exception e) {
         log.info(e.toString());
         return e.toString();
