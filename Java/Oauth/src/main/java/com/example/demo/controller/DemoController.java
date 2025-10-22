@@ -1,14 +1,41 @@
 package com.example.demo.controller;
-
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
+@Slf4j
 @RequestMapping("/api")
 public class DemoController {
 
-  @GetMapping("/me")
-  public String me() { return "hello, authenticated user"; }
+ @GetMapping("/user/me")
+    public String getUserDetails(@AuthenticationPrincipal OidcUser principal) {
+        if (principal == null) {
+            return "none";
+        }
+
+      try {  // Get the authorities (roles) you mapped in SecurityConfig
+        // This will return a set of strings like ["ROLE_USER", "ROLE_ADMIN"]
+        Set<String> roles = principal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toSet());
+
+        return roles.toArray()[2].toString() + " - " +  roles.toArray()[3].toString() + " - " + roles.size();
+      } catch (Exception e) {
+        log.info(e.toString());
+        return e.toString();
+      }
+    }
 
   @PreAuthorize("hasRole('ADMIN')")
   @GetMapping("/admin/secret")

@@ -15,11 +15,13 @@ import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.web.SecurityFilterChain;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Configuration
+@Slf4j
 @EnableMethodSecurity
 public class SecurityConfig {
 
@@ -47,7 +49,6 @@ public class SecurityConfig {
     return http.build();
   }
 
-  /** Return the interface type, not OidcUserService concrete class. */
   private OAuth2UserService<OidcUserRequest, OidcUser> keycloakRolesOidcUserService() {
     OidcUserService delegate = new OidcUserService();
 
@@ -74,6 +75,7 @@ public class SecurityConfig {
         if (clientEntry instanceof Map<?, ?> cm) {
           Object clientRoles = cm.get("roles");
           if (clientRoles instanceof Collection<?> c) {
+           log.error(c.toString());
             c.forEach(r -> roles.add(String.valueOf(r)));
           }
         }
