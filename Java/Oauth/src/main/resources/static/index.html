@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Secure Home</title>
+  <!-- Tailwind via CDN (good for demo; use build pipeline for prod) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-50 font-sans">
+  <header class="bg-white border-b sticky top-0">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+      <h1 class="text-xl font-bold">Spring + Keycloak (Protected)</h1>
+      <nav class="flex items-center gap-4">
+        <a href="/" class="text-sm text-gray-600 hover:text-gray-900">Home</a>
+        
+        <!-- User Info placeholder -->
+        <div id="user-info" class="text-sm text-gray-500">
+            Loading user...
+        </div>
+        
+        <form method="post" action="/logout">
+          <!-- This is a CSRF token input that Spring Security will automatically handle -->
+          <!-- You may need to configure CSRF protection appropriately -->
+          <button class="text-sm px-3 py-1 rounded-md border hover:bg-gray-100">Logout</button>
+        </form>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-6 py-12">
+    <div class="bg-white p-8 rounded-2xl shadow">
+      <h2 class="text-2xl font-semibold mb-2">You’re signed in 🎉</h2>
+      <p class="text-gray-600 mb-6">
+        This page lives in <code class="bg-gray-100 px-1 py-0.5 rounded">src/main/resources/static/index.html</code> and is only accessible after logging in with Keycloak.
+      </p>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="p-6 rounded-xl border">
+          <h3 class="font-semibold mb-2">Spring Security</h3>
+          <p class="text-sm text-gray-600">All requests are authenticated via OAuth2 login.</p>
+        </div>
+        <div class="p-6 rounded-xl border">
+          <h3 class="font-semibold mb-2">Keycloak</h3>
+          <p class="text-sm text-gray-600">Backed by a demo realm, client, and user.</p>
+        </div>
+        <div class="p-6 rounded-xl border">
+          <h3 class="font-semibold mb-2">Tailwind CSS</h3>
+          <p class="text-sm text-gray-600">Quick styling using the CDN for the demo.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="max-w-5xl mx-auto px-6 py-8 text-xs text-gray-500">
+    <!-- Updated year -->
+    © 2025 Demo
+  </footer>
+
+  <script>
+    // This script runs after the document has been fully loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      const userInfoDiv = document.getElementById('user-info');
+
+      // Fetch user information from a backend endpoint
+      // NOTE: You will need to create this endpoint in your Spring Boot application.
+      fetch('/api/user')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Could not fetch user info');
+          }
+          return response.json();
+        })
+        .then(user => {
+          // Extract roles/authorities. Spring Security prefixes roles with 'ROLE_'
+          const roles = user.authorities
+            .map(auth => auth.authority.replace('ROLE_', ''))
+            .join(', ');
+          
+          // Display the user's name and roles
+          userInfoDiv.innerHTML = `
+            <span class="font-medium">${user.name || 'User'}</span>
+            <span class="text-gray-400">(${roles || 'No roles'})</span>
+          `;
+        })
+        .catch(error => {
+          console.error('Error fetching user:', error);
+          userInfoDiv.textContent = 'Could not load user.';
+        });
+    });
+  </script>
+
+</body>
+</html>
