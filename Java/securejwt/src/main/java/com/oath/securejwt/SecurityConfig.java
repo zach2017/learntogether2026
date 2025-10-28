@@ -21,9 +21,13 @@ public class SecurityConfig {
   @Bean
   SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
+    .cors(Customizer.withDefaults()) 
+            
+            // 2. Disable CSRF (common for stateless JWT APIs)
+            .csrf(csrf -> csrf.disable())
       .authorizeHttpRequests(auth -> auth
         // Allow the React static files to load publicly; React will force login client-side
-        .requestMatchers("/", "/index.html", "/assets/**", "/favicon.ico").permitAll()
+        .requestMatchers("/**", "/index.html", "/assets/**", "/favicon.ico").permitAll()
         // Protect API with JWT
         .requestMatchers("/api/**").authenticated()
         .anyRequest().permitAll()

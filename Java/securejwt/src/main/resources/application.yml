@@ -4,3 +4,14 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8081/realms/demorealm
+
+logging:
+  level:
+    # This is the main package for all security logging
+    org.springframework.security: TRACE
+    
+    # This package is specific to the OAuth2/JWT processing
+    org.springframework.security.oauth2: TRACE
+    
+    # Optional: This is very helpful to see web request details
+    org.springframework.web: TRACE
