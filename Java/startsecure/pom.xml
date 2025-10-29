@@ -12,9 +12,9 @@
     </parent>
 
     <groupId>com.example</groupId>
-    <artifactId>spring-keycloak-static</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name>spring-keycloak-static</name>
+    <artifactId>security</artifactId>
+    <version>v1</version>
+    <name>oauthlib</name>
     <description>Spring Security + Keycloak protecting static index.html</description>
 
     <properties>
@@ -63,20 +63,8 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Dependencies for testing the application -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>security</artifactId>
-            <scope>system</scope>
-            <version>v1</version>
-            <systemPath>${project.basedir}/lib/security-v1.jar</systemPath>
-        </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -91,10 +79,7 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
+         
         </plugins>
     </build>
 </project>
