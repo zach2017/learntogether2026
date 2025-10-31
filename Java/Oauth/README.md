@@ -1,6 +1,55 @@
 
 # Dual Context
 
+
+You don't actually need two separate Spring contexts just to route between `/api` and `/web-ui` paths. There are simpler approaches:
+
+## Simple Single-Context Approach
+
+The easiest way is one context with clear controller separation:
+
+```java
+@RestController
+@RequestMapping("/api")
+public class ApiController {
+    // Returns JSON
+}
+
+@Controller
+@RequestMapping("/web-ui")
+public class WebController {
+    // Returns views
+}
+
+@Configuration
+public class StaticResourceConfig implements WebMvcConfigurer {
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/web-ui/**")
+                .addResourceLocations("classpath:/static/");
+    }
+}
+```
+
+## Why This Is Better Than Dual Contexts
+
+- **Simpler configuration** - one application context to manage
+- **Shared beans** - services, security, etc. work across both
+- **Less overhead** - no context switching or duplicate bean creation
+- **Easier testing** - one context to load in tests
+
+## When You Might Want Dual Contexts
+
+Only consider separate contexts if you need:
+- Completely different security configurations
+- Different transaction management
+- Separate database connections
+- True isolation between API and UI layers
+
+Even then, you can usually achieve this with **configuration profiles** or **conditional bean registration** in a single context.
+
+**Bottom line**: Start with one context and path-based routing. It's simpler, and Spring MVC handles this perfectly well. Only add complexity if you have a specific architectural need.
+
 # Conversion: Single Context → Dual Context Architecture
 
 ## Step 0: Original Application (Single Context)
