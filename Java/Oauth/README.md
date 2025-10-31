@@ -1,3 +1,307 @@
+
+# Dual Context
+
+
+# Dual Spring Context Setup Guide
+
+## Overview
+
+This guide explains how to set up multiple Spring ApplicationContexts in a single application, with one context serving static content and another handling API requests.
+
+## Architecture
+
+```
+Application
+├── Root Context (Parent)
+│   ├── DataSource
+│   ├── UserService
+│   ├── ProductService
+│   └── TransactionManager
+│
+├── Static Context (Child)
+│   ├── DispatcherServlet registered at /static/*
+│   ├── Static Resource Handlers
+│   └── StaticContentController
+│
+└── API Context (Child)
+    ├── DispatcherServlet registered at /api/*
+    ├── REST Controllers
+    └── API Services
+```
+
+## Key Components
+
+### 1. Main Application Class
+
+The main application class sets up two DispatcherServlets, each with its own ApplicationContext:
+
+```java
+@SpringBootApplication
+public class DualContextApplication {
+    
+    @Bean
+    public ServletRegistrationBean<DispatcherServlet> staticDispatcherServlet(
+            ApplicationContext parentContext) {
+        // Create child context for static content
+        ClassPathXmlApplicationContext staticContext = 
+            new ClassPathXmlApplicationContext(
+                new String[]{"classpath:static-context.xml"}, 
+                parentContext
+            );
+        
+        DispatcherServlet dispatcher = new DispatcherServlet(staticContext);
+        ServletRegistrationBean<DispatcherServlet> registration = 
+            new ServletRegistrationBean<>(dispatcher, "/static/*");
+        registration.setName("staticDispatcher");
+        registration.setLoadOnStartup(1);
+        
+        return registration;
+    }
+    
+    @Bean
+    public ServletRegistrationBean<DispatcherServlet> apiDispatcherServlet(
+            ApplicationContext parentContext) {
+        // Create child context for API
+        ClassPathXmlApplicationContext apiContext = 
+            new ClassPathXmlApplicationContext(
+                new String[]{"classpath:api-context.xml"}, 
+                parentContext
+            );
+        
+        DispatcherServlet dispatcher = new DispatcherServlet(apiContext);
+        ServletRegistrationBean<DispatcherServlet> registration = 
+            new ServletRegistrationBean<>(dispatcher, "/api/*");
+        registration.setName("apiDispatcher");
+        registration.setLoadOnStartup(2);
+        
+        return registration;
+    }
+}
+```
+
+### 2. Root Context (root-context.xml)
+
+The root context contains shared beans available to all child contexts:
+
+- DataSource configuration
+- Service layer beans (UserService, ProductService)
+- Transaction managers
+- Database configuration
+
+**Key Point:** Child contexts can access beans from the parent context but not vice versa.
+
+### 3. Static Context (static-context.xml)
+
+Handles static resources and file serving:
+
+```xml
+<mvc:resources mapping="/static/**" location="classpath:/static/"/>
+<mvc:resources mapping="/images/**" location="classpath:/images/"/>
+<mvc:resources mapping="/css/**" location="classpath:/css/"/>
+<mvc:resources mapping="/js/**" location="classpath:/js/"/>
+```
+
+Benefits:
+- Isolated from API context
+- Optimized for static resource serving
+- No unnecessary business logic overhead
+
+### 4. API Context (api-context.xml)
+
+Handles REST API endpoints:
+
+- REST controllers
+- Component scanning for API packages
+- References to shared services from parent context
+- Jackson for JSON serialization
+
+Benefits:
+- Separated from static content handling
+- Can be scaled independently
+- Focused on API functionality
+
+## URL Routing
+
+| Request Path | Handler | Context |
+|--------------|---------|---------|
+| `/static/index.html` | StaticContentController | Static Context |
+| `/static/css/style.css` | Resource Handler | Static Context |
+| `/static/js/app.js` | Resource Handler | Static Context |
+| `/api/users` | ApiController | API Context |
+| `/api/products/{id}` | ApiController | API Context |
+| `/api/health` | ApiController | API Context |
+
+## Request Flow
+
+### Static Content Request
+```
+GET /static/index.html
+    ↓
+Static DispatcherServlet (mapped to /static/*)
+    ↓
+Static Context ApplicationContext
+    ↓
+StaticContentController or Resource Handler
+    ↓
+Return static file
+```
+
+### API Request
+```
+GET /api/users
+    ↓
+API DispatcherServlet (mapped to /api/*)
+    ↓
+API Context ApplicationContext
+    ↓
+API DispatcherServlet routes to ApiController
+    ↓
+ApiController calls UserService (from parent context)
+    ↓
+Return JSON response
+```
+
+## Configuration
+
+### application.properties
+
+```properties
+# Application name
+spring.application.name=dual-context-app
+
+# Server port
+server.port=8080
+
+# Logging levels
+logging.level.root=INFO
+logging.level.com.example=DEBUG
+
+# Enable component scanning
+spring.mvc.view.prefix=/WEB-INF/views/
+spring.mvc.view.suffix=.jsp
+```
+
+### application.yml (Alternative)
+
+```yaml
+spring:
+  application:
+    name: dual-context-app
+  mvc:
+    view:
+      prefix: /WEB-INF/views/
+      suffix: .jsp
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG
+```
+
+## Bean Access
+
+### Child Context accessing Parent Context Beans
+
+In the API context, you can autowire beans from the parent context:
+
+```java
+@RestController
+public class ApiController {
+    
+    @Autowired
+    private UserService userService;  // From parent context
+    
+    @GetMapping("/users")
+    public ResponseEntity<?> getUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
+    }
+}
+```
+
+### Parent Context Beans NOT accessible to Child Context
+
+Beans defined in child contexts are **not** visible to the parent context or sibling contexts:
+
+```java
+// This will NOT work - apiBean is not visible outside API context
+@Autowired
+private SomeApiBeanFromApiContext apiBean;  // ❌ NoSuchBeanDefinitionException
+```
+
+## Advantages of Dual Context Architecture
+
+1. **Separation of Concerns:** Static and API handling are logically separated
+2. **Independent Scaling:** Each context can be optimized separately
+3. **Resource Isolation:** Different thread pools and configurations per context
+4. **Security:** Can apply different security rules to static vs. API
+5. **Performance:** Static resources handled efficiently without API overhead
+6. **Maintainability:** Clear structure and easier to understand
+7. **Testing:** Can test contexts independently
+
+## Disadvantages & Considerations
+
+1. **Complexity:** More setup and configuration required
+2. **Memory Overhead:** Multiple contexts consume more memory
+3. **Context Switching:** Request routing overhead between contexts
+4. **Debugging:** More complex debugging with multiple contexts
+5. **Bean Visibility:** Need to understand parent-child bean relationships
+
+## Alternative Approaches
+
+### Option 1: Single Context with Request Mapping
+```java
+@RestController
+@RequestMapping("/api")
+public class ApiController { }
+```
+
+### Option 2: Servlet Filters
+```java
+@Component
+public class StaticResourceFilter extends OncePerRequestFilter { }
+```
+
+### Option 3: Separate Applications
+- Run two independent Spring applications
+- Use a reverse proxy (Nginx, Apache) for routing
+
+## Best Practices
+
+1. **Use parent context for shared beans** - database, services, configuration
+2. **Keep child contexts focused** - one for static, one for API
+3. **Don't duplicate beans** - reference parent context beans instead
+4. **Use meaningful servlet names** - staticDispatcher, apiDispatcher
+5. **Set correct load order** - StaticDispatcher first (loadOnStartup=1)
+6. **Document bean visibility** - which beans are accessible where
+7. **Monitor memory usage** - multiple contexts consume more resources
+8. **Use Spring profiles** - different configs for dev, test, prod
+
+## Troubleshooting
+
+### Bean Not Found Exception
+- **Cause:** Trying to access a bean from wrong context
+- **Solution:** Define bean in parent context if needed by both children
+
+### DispatcherServlet Not Routing Correctly
+- **Cause:** Wrong URL patterns in registration
+- **Solution:** Verify path patterns match your request URLs
+
+### Context Initialization Failure
+- **Cause:** Missing dependency in XML configuration
+- **Solution:** Check XML files for correct bean definitions and imports
+
+### Performance Issues
+- **Cause:** Too many contexts or inefficient resource allocation
+- **Solution:** Profile and optimize, consider consolidating contexts
+
+## Conclusion
+
+Dual context architecture is powerful for separating static content serving from API handling. It provides better organization, performance optimization, and scalability compared to handling both in a single context. However, it adds complexity, so evaluate if your application truly needs this separation.
+
+
 # OAUTH Java
 # OAuth2 Explained Simply
 ## How Authentication, Roles, and Access Control Work
