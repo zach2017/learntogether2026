@@ -50,6 +50,8 @@ Even then, you can usually achieve this with **configuration profiles** or **con
 
 **Bottom line**: Start with one context and path-based routing. It's simpler, and Spring MVC handles this perfectly well. Only add complexity if you have a specific architectural need.
 
+# ---- NOTE Below is Dual contexts examples.
+
 # Conversion: Single Context → Dual Context Architecture
 
 ## Step 0: Original Application (Single Context)
