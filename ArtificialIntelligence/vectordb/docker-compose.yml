@@ -1,7 +1,7 @@
 # docker-compose.yml
 services:
   pg:
-    image: postgres:16
+    image: postgres
     environment:
       POSTGRES_PASSWORD: postgres
     ports: ["5432:5432"]
