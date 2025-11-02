@@ -1,0 +1,21 @@
+{
+  "source": "USPTO",
+  "doc_type": "patent",
+  "doc_id": "US-20240123456-A1",
+  "title": "Bidirectional DC-DC Converter...",
+  "assignees": ["ACME Energy Systems"],
+  "inventors": ["Jane Doe", "John Smith"],
+  "cpc": ["H02J7/00", "H02M3/158"],
+  "priority_date": "2023-04-11",
+  "pub_date": "2024-05-15",
+  "citations_backward": ["US-20190123456-A1", "WO-2018123456-A1"],
+  "citations_forward": [],
+  "abstract": "A topology for ...",
+  "claims_text": "1. A converter comprising ...",
+  "full_text_uri": "s3://bucket/uspto/US20240123456.txt",
+  "cleaned_text": "A topology for bidirectional ... (body text)",
+  "embedding_model": "nomic-embed-text",
+  "chunker": "semantic:400-800tok",
+  "checksum": "sha256:...",
+  "version": 1
+}
