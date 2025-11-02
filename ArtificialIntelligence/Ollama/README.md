@@ -1,6 +1,3 @@
-Here’s a practical, end-to-end tutorial for building a research-intelligence solution that pulls patent/technical data from many sources and lets researchers analyze it with **Ollama**, **RAG (Retrieval-Augmented Generation)**, and **MCP (Model Context Protocol)**. It’s written so you can copy-paste your way to a working prototype, then harden it for real projects.
-
----
 
 # 1) What you’ll build
 
