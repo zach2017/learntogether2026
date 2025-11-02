@@ -30,6 +30,7 @@ public class DemoController {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toSet());
         StringBuilder sb = new StringBuilder();
+        
         for (String role : roles) {
                   if (sb.length() > 0) {
                      sb.append(", "); // Add separator *before* the next element

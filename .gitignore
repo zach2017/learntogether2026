@@ -149,3 +149,4 @@ Java/springbasic/basic/gradle
 Java/springbasic/upload/src/main/docker
 Java/spring-upload-processor-full/target/
 Java/spring-upload-processor-full/uploads/*
+Java/securejwt/src/main/resources/static/

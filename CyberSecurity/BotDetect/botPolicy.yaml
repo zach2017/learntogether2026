@@ -1,0 +1,28 @@
+Rules:
+  - name: "robots-txt"
+    path_regex: "^/robots.txt$"
+    action: "ALLOW"
+  - name: "internal-traffic"
+    remote_addresses: ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+    action: "ALLOW"
+  - name: "feeds"
+    user_agent_regex: "feedbin|feedly|inoreader|miniflux|newsblur|rss|thunderbird"
+    path_regex: "([./]rss|[./]atom|/feed/?)$"
+    action: "ALLOW"
+  - name: "generic-browser"
+    user_agent_regex: "Chrome|Mozilla|Opera"
+    action: "ALLOW"
+  - name: "ai-bots"
+    user_agent_regex: "(?i)(AI2Bot|Ai2Bot-Dolma|Amazonbot|anthropic-ai|Applebot|Applebot-Extended|Brightbot 1.0|Bytespider|CCBot|ChatGPT-User|Claude-Web|ClaudeBot|cohere-ai|cohere-training-data-crawler|Crawlspace|Diffbot|DuckAssistBot|FacebookBot|FriendlyCrawler|Google-Extended|GoogleOther|GoogleOther-Image|GoogleOther-Video|GPTBot|iaskspider/2.0|ICC-Crawler|ImagesiftBot|img2dataset|imgproxy|ISSCyberRiskCrawler|Kangaroo Bot|Meta-ExternalAgent|Meta-ExternalFetcher|OAI-SearchBot|omgili|omgilibot|PanguBot|Perplexity-User|PerplexityBot|PetalBot|Scrapy|SemrushBot-OCOB|SemrushBot-SWA|Sidetrade indexer bot|Timpibot|VelenPublicWebCrawler|Webzio-Extended|YouBot)"
+    action: "CHALLENGE"
+    challenge:
+      difficulty: 16
+      report_as: 4
+      algorithm: "slow"
+  - name: "default"
+    user_agent_regex: ".*"
+    action: "CHALLENGE"
+    challenge:
+      difficulty: 4
+      report_as: 4
+      algorithm: "slow"
