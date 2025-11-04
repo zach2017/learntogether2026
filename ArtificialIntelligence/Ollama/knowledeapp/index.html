@@ -116,10 +116,134 @@
         </div>
     </div>
 
+    <!-- Search Dialog Modal -->
+    <div id="search-overlay" class="fixed inset-0 bg-black opacity-0 hidden z-40 transition-opacity duration-300"></div>
+    <div id="search-dialog" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl z-50 hidden w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-800">🔍 Search Documents</h2>
+                <button onclick="closeSearchDialog()" class="text-gray-500 hover:text-gray-700 p-1 rounded-md hover:bg-gray-100 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6 space-y-6">
+            <!-- AI Search Section -->
+            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-lg border border-purple-200">
+                <div class="flex items-center mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <label class="text-lg font-semibold text-gray-800">AI-Powered Search</label>
+                </div>
+                <textarea id="ai-search-input" rows="3" class="w-full px-4 py-3 border border-purple-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none" placeholder="Ask anything about your documents... e.g., 'Find all financial reports from last quarter' or 'Show me meeting notes with action items'"></textarea>
+                <p class="text-xs text-gray-600 mt-2">💡 Use natural language to search through document content, metadata, and context</p>
+            </div>
+
+            <!-- Divider -->
+            <div class="flex items-center">
+                <div class="flex-1 border-t border-gray-300"></div>
+                <span class="px-4 text-sm text-gray-500 font-medium">OR USE FILTERS</span>
+                <div class="flex-1 border-t border-gray-300"></div>
+            </div>
+
+            <!-- Traditional Search Filters -->
+            <div class="space-y-4">
+                <!-- Keyword Search -->
+                <div>
+                    <label for="keyword-input" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Keyword
+                    </label>
+                    <input type="text" id="keyword-input" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter keywords to search...">
+                </div>
+
+                <!-- File Name Search -->
+                <div>
+                    <label for="filename-input" class="block text-sm font-semibold text-gray-700 mb-2">
+                        File Name
+                    </label>
+                    <input type="text" id="filename-input" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter file name...">
+                </div>
+
+                <!-- File Type -->
+                <div>
+                    <label for="filetype-select" class="block text-sm font-semibold text-gray-700 mb-2">
+                        File Type
+                    </label>
+                    <select id="filetype-select" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white">
+                        <option value="">All Types</option>
+                        <option value="pdf">PDF (.pdf)</option>
+                        <option value="docx">Word Document (.docx)</option>
+                        <option value="xlsx">Excel Spreadsheet (.xlsx)</option>
+                        <option value="pptx">PowerPoint (.pptx)</option>
+                        <option value="png">Image - PNG (.png)</option>
+                        <option value="jpg">Image - JPG (.jpg)</option>
+                        <option value="txt">Text File (.txt)</option>
+                    </select>
+                </div>
+
+                <!-- Date Range -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Date Range
+                    </label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="date-from" class="block text-xs text-gray-600 mb-1">From</label>
+                            <input type="date" id="date-from" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label for="date-to" class="block text-xs text-gray-600 mb-1">To</label>
+                            <input type="date" id="date-to" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Results Preview -->
+            <div id="search-results-container" class="hidden">
+                <div class="border-t border-gray-300 pt-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <p class="text-sm text-blue-800">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Click "Search Documents" to filter the document table below
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-6 border-t border-gray-200 flex justify-between items-center bg-gray-50 sticky bottom-0">
+            <button onclick="clearSearchForm()" class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition duration-150">
+                Clear All
+            </button>
+            <div class="flex space-x-3">
+                <button onclick="closeSearchDialog()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition duration-150">
+                    Cancel
+                </button>
+                <button id="search-btn" class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150" onclick="handleSearch()">
+                    Search Documents
+                </button>
+            </div>
+        </div>
+    </div>
+
     <header class="bg-indigo-600 shadow-md p-4 flex justify-between items-center z-20 relative">
         <h1 class="text-xl font-bold text-white">Document Manager</h1>
         
         <div class="flex items-center space-x-3">
+            <button onclick="openSearchDialog()" class="flex items-center px-4 py-2 bg-white text-indigo-600 rounded-md hover:bg-indigo-50 transition duration-150 font-semibold shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Search
+            </button>
+            
             <button onclick="openUploadDialog()" class="flex items-center px-4 py-2 bg-white text-indigo-600 rounded-md hover:bg-indigo-50 transition duration-150 font-semibold shadow-md">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -137,6 +261,26 @@
 
     <div class="p-8">
         <div class="max-w-full mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
+            <!-- Filter Controls Banner -->
+            <div id="filter-banner" class="hidden bg-indigo-50 border-b border-indigo-200 p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        <div>
+                            <p class="text-sm font-semibold text-indigo-900">Active Filters</p>
+                            <div id="active-filters-list" class="flex flex-wrap gap-2 mt-1">
+                                <!-- Filter tags will appear here -->
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="clearFilters()" class="px-4 py-2 bg-white text-indigo-600 border border-indigo-300 rounded-md hover:bg-indigo-100 transition duration-150 font-medium text-sm">
+                        Clear All Filters
+                    </button>
+                </div>
+            </div>
+            
             <div class="flex" style="height: calc(100vh - 200px);">
                 
                 <!-- Document List Section -->
@@ -502,6 +646,15 @@
         let isResizing = false;
         let startX = 0;
         let startWidth = 0;
+        let activeFilters = {
+            aiSearch: '',
+            keyword: '',
+            filename: '',
+            filetype: '',
+            dateFrom: '',
+            dateTo: ''
+        };
+        let filteredDocuments = [...documents]; // Copy of documents for filtering
 
         // --- Sidebar Menu Functions ---
         function toggleSidebar() {
@@ -647,7 +800,10 @@
             const tableBody = document.getElementById('document-table-body');
             tableBody.innerHTML = ''; 
 
-            documents.forEach((doc, index) => {
+            filteredDocuments.forEach((doc, index) => {
+                // Find the original index in the documents array
+                const originalIndex = documents.indexOf(doc);
+                
                 const row = document.createElement('tr');
                 row.className = 'hover:bg-gray-50';
 
@@ -669,7 +825,7 @@
                     </td>
 
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <span class="file-name-link" onclick="openFileViewer(${index})">${doc.name}</span>
+                        <span class="file-name-link" onclick="openFileViewer(${originalIndex})">${doc.name}</span>
                     </td>
                     
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -679,6 +835,21 @@
 
                 tableBody.appendChild(row);
             });
+
+            // Show "no results" message if filtered list is empty
+            if (filteredDocuments.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="3" class="px-6 py-12 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-3 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="text-lg font-medium text-gray-500">No documents match your filters</p>
+                        <p class="text-sm text-gray-400">Try adjusting your search criteria</p>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            }
         }
 
         // Function to toggle the document action dropdown menu visibility
@@ -839,8 +1010,8 @@
                 });
             });
             
-            // Refresh the table
-            populateDocumentTable();
+            // Refresh the filtered documents and table
+            applyFilters();
             
             // Show success message
             alert(`Successfully uploaded ${selectedFiles.length} file(s)!`);
@@ -892,6 +1063,195 @@
             document.getElementById('file-input').files = files;
             handleFileSelect({ target: { files: files } });
         }
+
+        // --- Search Dialog Functions ---
+        function openSearchDialog() {
+            const searchDialog = document.getElementById('search-dialog');
+            const searchOverlay = document.getElementById('search-overlay');
+            
+            searchDialog.classList.remove('hidden');
+            searchOverlay.classList.remove('hidden');
+            searchOverlay.classList.remove('opacity-0');
+            searchOverlay.classList.add('opacity-50');
+        }
+
+        function closeSearchDialog() {
+            const searchDialog = document.getElementById('search-dialog');
+            const searchOverlay = document.getElementById('search-overlay');
+            
+            searchDialog.classList.add('hidden');
+            searchOverlay.classList.add('hidden');
+            searchOverlay.classList.add('opacity-0');
+            searchOverlay.classList.remove('opacity-50');
+        }
+
+        function clearSearchForm() {
+            document.getElementById('ai-search-input').value = '';
+            document.getElementById('keyword-input').value = '';
+            document.getElementById('filename-input').value = '';
+            document.getElementById('filetype-select').value = '';
+            document.getElementById('date-from').value = '';
+            document.getElementById('date-to').value = '';
+            document.getElementById('search-results-container').classList.add('hidden');
+        }
+
+        function handleSearch() {
+            const aiSearch = document.getElementById('ai-search-input').value.trim();
+            const keyword = document.getElementById('keyword-input').value.trim().toLowerCase();
+            const filename = document.getElementById('filename-input').value.trim().toLowerCase();
+            const filetype = document.getElementById('filetype-select').value;
+            const dateFrom = document.getElementById('date-from').value;
+            const dateTo = document.getElementById('date-to').value;
+
+            // Store active filters
+            activeFilters = {
+                aiSearch: aiSearch,
+                keyword: keyword,
+                filename: filename,
+                filetype: filetype,
+                dateFrom: dateFrom,
+                dateTo: dateTo
+            };
+
+            // Apply filters
+            applyFilters();
+
+            // Close the search dialog
+            closeSearchDialog();
+
+            // Show success message
+            const filterCount = Object.values(activeFilters).filter(v => v !== '').length;
+            if (filterCount > 0) {
+                setTimeout(() => {
+                    alert(`Filters applied! Showing ${filteredDocuments.length} of ${documents.length} documents.`);
+                }, 300);
+            }
+        }
+
+        function applyFilters() {
+            // Filter documents based on active filters
+            filteredDocuments = documents.filter(doc => {
+                let matches = true;
+
+                // AI Search (searches in name and content)
+                if (activeFilters.aiSearch) {
+                    const search = activeFilters.aiSearch.toLowerCase();
+                    const docName = doc.name.toLowerCase();
+                    const docContent = doc.content.toLowerCase();
+                    matches = matches && (docName.includes(search) || docContent.includes(search));
+                }
+
+                // Keyword search (searches in name and content)
+                if (activeFilters.keyword) {
+                    const docName = doc.name.toLowerCase();
+                    const docContent = doc.content.toLowerCase();
+                    matches = matches && (docName.includes(activeFilters.keyword) || docContent.includes(activeFilters.keyword));
+                }
+
+                // Filename search
+                if (activeFilters.filename) {
+                    matches = matches && doc.name.toLowerCase().includes(activeFilters.filename);
+                }
+
+                // File type search
+                if (activeFilters.filetype) {
+                    const docExtension = doc.name.split('.').pop().toLowerCase();
+                    matches = matches && docExtension === activeFilters.filetype;
+                }
+
+                // Note: Date filtering would require actual date metadata
+                // For now, we'll skip date filtering in the mock data
+
+                return matches;
+            });
+
+            // Update the table
+            populateDocumentTable();
+
+            // Update filter banner
+            updateFilterBanner();
+        }
+
+        function updateFilterBanner() {
+            const filterBanner = document.getElementById('filter-banner');
+            const activeFiltersList = document.getElementById('active-filters-list');
+            
+            // Check if any filters are active
+            const hasActiveFilters = Object.values(activeFilters).some(v => v !== '');
+            
+            if (!hasActiveFilters) {
+                filterBanner.classList.add('hidden');
+                return;
+            }
+
+            // Show filter banner
+            filterBanner.classList.remove('hidden');
+            
+            // Build filter tags
+            activeFiltersList.innerHTML = '';
+            
+            if (activeFilters.aiSearch) {
+                addFilterTag('AI Search', activeFilters.aiSearch, 'aiSearch');
+            }
+            
+            if (activeFilters.keyword) {
+                addFilterTag('Keyword', activeFilters.keyword, 'keyword');
+            }
+            
+            if (activeFilters.filename) {
+                addFilterTag('Filename', activeFilters.filename, 'filename');
+            }
+            
+            if (activeFilters.filetype) {
+                addFilterTag('File Type', activeFilters.filetype.toUpperCase(), 'filetype');
+            }
+            
+            if (activeFilters.dateFrom) {
+                addFilterTag('From', activeFilters.dateFrom, 'dateFrom');
+            }
+            
+            if (activeFilters.dateTo) {
+                addFilterTag('To', activeFilters.dateTo, 'dateTo');
+            }
+        }
+
+        function addFilterTag(label, value, filterKey) {
+            const activeFiltersList = document.getElementById('active-filters-list');
+            const tag = document.createElement('span');
+            tag.className = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 border border-indigo-300';
+            tag.innerHTML = `
+                <span class="font-semibold mr-1">${label}:</span>
+                <span class="mr-2">${value}</span>
+                <button onclick="removeFilter('${filterKey}')" class="hover:bg-indigo-200 rounded-full p-0.5 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            `;
+            activeFiltersList.appendChild(tag);
+        }
+
+        function removeFilter(filterKey) {
+            activeFilters[filterKey] = '';
+            applyFilters();
+        }
+
+        function clearFilters() {
+            activeFilters = {
+                aiSearch: '',
+                keyword: '',
+                filename: '',
+                filetype: '',
+                dateFrom: '',
+                dateTo: ''
+            };
+            filteredDocuments = [...documents];
+            populateDocumentTable();
+            updateFilterBanner();
+        }
+
+        // Close search overlay when clicking on it
+        document.getElementById('search-overlay')?.addEventListener('click', closeSearchDialog);
     </script>
 </body>
 </html>
