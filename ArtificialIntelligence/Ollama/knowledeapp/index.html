@@ -6,19 +6,40 @@
     <title>Document List & Account Menu</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Optional: Custom style for smooth transition on the sidebar */
+        /* Smooth transition for sidebar */
         #sidebar {
             transition: transform 0.3s ease-in-out;
         }
-        /* Style to push the menu off-screen by default */
         .translate-x-full {
             transform: translateX(100%);
+        }
+        /* Clickable file name style */
+        .file-name-link {
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .file-name-link:hover {
+            color: #4f46e5;
+            text-decoration: underline;
+        }
+        /* Viewer resize handle */
+        .resize-handle {
+            cursor: ew-resize;
+            transition: background-color 0.2s;
+        }
+        .resize-handle:hover {
+            background-color: #4f46e5;
+        }
+        /* Active row highlight */
+        .active-row {
+            background-color: #e0e7ff !important;
         }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-    <div id="sidebar" class="fixed top-0 right-0 w-64 h-full bg-white shadow-2xl z-40 transform translate-x-full">
+    <!-- Account Menu Sidebar -->
+    <div id="sidebar" class="fixed top-0 right-0 w-64 h-full bg-white shadow-2xl z-50 transform translate-x-full">
         <div class="p-4 border-b border-gray-200">
             <h2 class="text-xl font-semibold text-gray-800">👤 My Account</h2>
         </div>
@@ -39,6 +60,7 @@
         </nav>
     </div>
 
+    <!-- Overlay for account menu -->
     <div id="overlay" class="fixed inset-0 bg-black opacity-0 hidden z-30 transition-opacity duration-300" onclick="toggleSidebar()"></div>
 
     <header class="bg-indigo-600 shadow-md p-4 flex justify-between items-center z-20 relative">
@@ -52,49 +74,379 @@
     </header>
 
     <div class="p-8">
-        <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-lg p-6">
-            <h2 class="text-3xl font-bold mb-6 text-gray-800">📁 Document List</h2>
+        <div class="max-w-full mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
+            <div class="flex" style="height: calc(100vh - 200px);">
+                
+                <!-- Document List Section -->
+                <div id="document-section" class="flex-1 flex flex-col border-r border-gray-200 transition-all duration-300">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-3xl font-bold text-gray-800">📁 Document List</h2>
+                    </div>
+                    
+                    <div class="flex-1 overflow-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th id="actions-header" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                                        Actions
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        File Name
+                                    </th>
+                                    <th id="size-header" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                        Size
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody id="document-table-body" class="bg-white divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                                Actions
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                File Name
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                                Size
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="document-table-body" class="bg-white divide-y divide-gray-200">
-                        </tbody>
-                </table>
+                <!-- Resize Handle -->
+                <div id="resize-handle" class="resize-handle w-1 bg-gray-300 hover:bg-indigo-600 cursor-ew-resize hidden"></div>
+
+                <!-- Document Viewer Section -->
+                <div id="viewer-section" class="hidden flex-col bg-gray-50" style="width: 50%;">
+                    <!-- Viewer Header -->
+                    <div class="p-4 border-b border-gray-200 bg-white flex justify-between items-center">
+                        <h3 id="viewer-title" class="text-lg font-semibold text-gray-800 truncate flex-1">📄 Document</h3>
+                        <div class="flex items-center space-x-2">
+                            <!-- Expand/Collapse Buttons -->
+                            <button onclick="expandViewer()" class="p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-100 rounded-md transition" title="Expand Viewer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                </svg>
+                            </button>
+                            <button onclick="collapseViewer()" class="p-2 text-gray-600 hover:text-indigo-600 hover:bg-gray-100 rounded-md transition" title="Collapse Viewer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                                </svg>
+                            </button>
+                            <button onclick="closeViewer()" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition" title="Close Viewer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Viewer Content -->
+                    <div id="viewer-content" class="flex-1 p-6 overflow-auto">
+                        <p class="text-gray-500">Select a file to view its contents...</p>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 
     <script>
-        // --- Document Data (Same as before) ---
+        // --- Document Data with Mock Content ---
         const documents = [
-            { name: "Quarterly Report 2023.pdf", size: "1.2 MB" },
-            { name: "Team Meeting Notes.docx", size: "55 KB" },
-            { name: "Project_Plan_V3.xlsx", size: "320 KB" },
-            { name: "Company Logo.png", size: "88 KB" },
-            { name: "Marketing Strategy.pptx", size: "4.5 MB" }
+            { 
+                name: "Quarterly Report 2023.pdf", 
+                size: "1.2 MB",
+                content: `<h3 class="text-xl font-bold mb-4 text-indigo-600">Q4 2023 Financial Report</h3>
+                <div class="space-y-4">
+                    <section>
+                        <h4 class="font-semibold text-lg mb-2">Executive Summary</h4>
+                        <p class="text-gray-700">This quarter has shown remarkable growth across all business segments. Revenue increased by 23% compared to Q3 2023, reaching $4.2M in total sales.</p>
+                    </section>
+                    <section>
+                        <h4 class="font-semibold text-lg mb-2">Key Metrics</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li>Total Revenue: $4,200,000</li>
+                            <li>Net Profit: $890,000</li>
+                            <li>Customer Acquisition: +1,240 new customers</li>
+                            <li>Customer Retention Rate: 94%</li>
+                            <li>Operating Expenses: $2,100,000</li>
+                        </ul>
+                    </section>
+                    <section>
+                        <h4 class="font-semibold text-lg mb-2">Department Performance</h4>
+                        <p class="text-gray-700 mb-2"><strong>Sales:</strong> Exceeded targets by 15%. Strong performance in the enterprise segment.</p>
+                        <p class="text-gray-700 mb-2"><strong>Marketing:</strong> Successfully launched three major campaigns with an average ROI of 340%.</p>
+                        <p class="text-gray-700 mb-2"><strong>Product:</strong> Released two major features that increased user engagement by 28%.</p>
+                    </section>
+                    <section>
+                        <h4 class="font-semibold text-lg mb-2">Challenges</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li>Supply chain delays in Q4 affected product delivery timelines</li>
+                            <li>Increased competition in the mid-market segment</li>
+                            <li>Recruiting challenges in technical positions</li>
+                        </ul>
+                    </section>
+                    <section>
+                        <h4 class="font-semibold text-lg mb-2">Q1 2024 Outlook</h4>
+                        <p class="text-gray-700">Projecting continued growth with expected revenue of $4.8M. Focus areas include expanding into new markets and launching our mobile platform.</p>
+                    </section>
+                </div>`
+            },
+            { 
+                name: "Team Meeting Notes.docx", 
+                size: "55 KB",
+                content: `<h3 class="text-xl font-bold mb-4 text-indigo-600">Team Meeting - November 1, 2025</h3>
+                <div class="space-y-4">
+                    <div class="bg-blue-50 p-3 rounded">
+                        <p class="text-sm text-gray-600"><strong>Date:</strong> November 1, 2025</p>
+                        <p class="text-sm text-gray-600"><strong>Time:</strong> 10:00 AM - 11:30 AM</p>
+                        <p class="text-sm text-gray-600"><strong>Attendees:</strong> Sarah (PM), Mike (Dev), Lisa (Design), John (Marketing)</p>
+                    </div>
+                    
+                    <section>
+                        <h4 class="font-semibold text-lg mb-2">Agenda Items</h4>
+                        <ol class="list-decimal list-inside space-y-3 text-gray-700">
+                            <li>
+                                <strong>Project Status Update</strong>
+                                <ul class="list-disc list-inside ml-6 mt-1 space-y-1">
+                                    <li>Development team is 80% complete on the new dashboard feature</li>
+                                    <li>Design mockups approved for Phase 2</li>
+                                    <li>QA testing scheduled for next week</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong>Marketing Campaign Review</strong>
+                                <ul class="list-disc list-inside ml-6 mt-1 space-y-1">
+                                    <li>Email campaign had 42% open rate (above industry average)</li>
+                                    <li>Social media engagement up 35%</li>
+                                    <li>Need to adjust messaging for younger demographic</li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong>Budget Discussion</strong>
+                                <ul class="list-disc list-inside ml-6 mt-1 space-y-1">
+                                    <li>Q4 budget approved with 10% increase</li>
+                                    <li>Additional funding allocated for cloud infrastructure</li>
+                                </ul>
+                            </li>
+                        </ol>
+                    </section>
+                    
+                    <section>
+                        <h4 class="font-semibold text-lg mb-2">Action Items</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li><strong>Sarah:</strong> Schedule Phase 2 kickoff meeting</li>
+                            <li><strong>Mike:</strong> Complete dashboard feature by Nov 8</li>
+                            <li><strong>Lisa:</strong> Finalize mobile app wireframes</li>
+                            <li><strong>John:</strong> Prepare Q4 marketing report</li>
+                        </ul>
+                    </section>
+                    
+                    <div class="bg-yellow-50 p-3 rounded mt-4">
+                        <p class="text-sm"><strong>Next Meeting:</strong> November 8, 2025 at 10:00 AM</p>
+                    </div>
+                </div>`
+            },
+            { 
+                name: "Project_Plan_V3.xlsx", 
+                size: "320 KB",
+                content: `<h3 class="text-xl font-bold mb-4 text-indigo-600">Project Plan - Website Redesign</h3>
+                <div class="space-y-4">
+                    <section>
+                        <h4 class="font-semibold text-lg mb-2">Project Overview</h4>
+                        <p class="text-gray-700"><strong>Project Name:</strong> Website Redesign & Modernization</p>
+                        <p class="text-gray-700"><strong>Duration:</strong> 12 weeks</p>
+                        <p class="text-gray-700"><strong>Budget:</strong> $125,000</p>
+                        <p class="text-gray-700"><strong>Team Size:</strong> 8 members</p>
+                    </section>
+                    
+                    <section>
+                        <h4 class="font-semibold text-lg mb-2">Phase 1: Discovery & Planning (Weeks 1-2)</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full border border-gray-300 text-sm">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="border border-gray-300 px-3 py-2 text-left">Task</th>
+                                        <th class="border border-gray-300 px-3 py-2 text-left">Owner</th>
+                                        <th class="border border-gray-300 px-3 py-2 text-left">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="border border-gray-300 px-3 py-2">Stakeholder interviews</td>
+                                        <td class="border border-gray-300 px-3 py-2">Sarah</td>
+                                        <td class="border border-gray-300 px-3 py-2 text-green-600">✓ Complete</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="border border-gray-300 px-3 py-2">User research</td>
+                                        <td class="border border-gray-300 px-3 py-2">Lisa</td>
+                                        <td class="border border-gray-300 px-3 py-2 text-green-600">✓ Complete</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="border border-gray-300 px-3 py-2">Technical assessment</td>
+                                        <td class="border border-gray-300 px-3 py-2">Mike</td>
+                                        <td class="border border-gray-300 px-3 py-2 text-green-600">✓ Complete</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                    
+                    <section>
+                        <h4 class="font-semibold text-lg mb-2">Phase 2: Design (Weeks 3-5)</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full border border-gray-300 text-sm">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="border border-gray-300 px-3 py-2 text-left">Task</th>
+                                        <th class="border border-gray-300 px-3 py-2 text-left">Owner</th>
+                                        <th class="border border-gray-300 px-3 py-2 text-left">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="border border-gray-300 px-3 py-2">Wireframes</td>
+                                        <td class="border border-gray-300 px-3 py-2">Lisa</td>
+                                        <td class="border border-gray-300 px-3 py-2 text-blue-600">⟳ In Progress</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="border border-gray-300 px-3 py-2">Visual design</td>
+                                        <td class="border border-gray-300 px-3 py-2">Lisa</td>
+                                        <td class="border border-gray-300 px-3 py-2 text-gray-500">○ Not Started</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="border border-gray-300 px-3 py-2">Design system</td>
+                                        <td class="border border-gray-300 px-3 py-2">Team</td>
+                                        <td class="border border-gray-300 px-3 py-2 text-gray-500">○ Not Started</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                    
+                    <section>
+                        <h4 class="font-semibold text-lg mb-2">Phase 3: Development (Weeks 6-10)</h4>
+                        <p class="text-gray-600 italic">Details to be finalized upon design approval</p>
+                    </section>
+                    
+                    <section>
+                        <h4 class="font-semibold text-lg mb-2">Phase 4: Testing & Launch (Weeks 11-12)</h4>
+                        <p class="text-gray-600 italic">QA testing, user acceptance testing, and deployment</p>
+                    </section>
+                    
+                    <div class="bg-green-50 p-3 rounded mt-4">
+                        <p class="text-sm"><strong>Overall Progress:</strong> 25% Complete</p>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                            <div class="bg-green-600 h-2.5 rounded-full" style="width: 25%"></div>
+                        </div>
+                    </div>
+                </div>`
+            },
+            { 
+                name: "Company Logo.png", 
+                size: "88 KB",
+                content: `<h3 class="text-xl font-bold mb-4 text-indigo-600">Company Logo.png</h3>
+                <div class="space-y-4">
+                    <div class="bg-gray-100 p-8 rounded-lg flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="w-48 h-48 bg-indigo-600 rounded-lg shadow-lg flex items-center justify-center mx-auto">
+                                <span class="text-white text-6xl font-bold">DM</span>
+                            </div>
+                            <p class="mt-4 text-gray-600 font-semibold">Document Manager Logo</p>
+                        </div>
+                    </div>
+                    
+                    <section>
+                        <h4 class="font-semibold text-lg mb-2">File Information</h4>
+                        <ul class="list-none space-y-1 text-gray-700">
+                            <li><strong>Format:</strong> PNG</li>
+                            <li><strong>Dimensions:</strong> 1024 x 1024 pixels</li>
+                            <li><strong>Color Mode:</strong> RGB</li>
+                            <li><strong>Bit Depth:</strong> 24-bit</li>
+                            <li><strong>File Size:</strong> 88 KB</li>
+                            <li><strong>Last Modified:</strong> October 15, 2025</li>
+                        </ul>
+                    </section>
+                    
+                    <section>
+                        <h4 class="font-semibold text-lg mb-2">Usage Guidelines</h4>
+                        <p class="text-gray-700">This is the primary company logo. Maintain minimum clear space of 20px on all sides. Do not distort, rotate, or modify colors.</p>
+                    </section>
+                </div>`
+            },
+            { 
+                name: "Marketing Strategy.pptx", 
+                size: "4.5 MB",
+                content: `<h3 class="text-xl font-bold mb-4 text-indigo-600">Marketing Strategy 2025</h3>
+                <div class="space-y-6">
+                    <section class="bg-indigo-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-lg mb-3">Slide 1: Executive Summary</h4>
+                        <p class="text-gray-700">Our 2025 marketing strategy focuses on digital transformation, customer experience, and data-driven decision making. Key goals include 40% increase in online engagement and 25% growth in qualified leads.</p>
+                    </section>
+                    
+                    <section class="bg-blue-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-lg mb-3">Slide 2: Market Analysis</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li>Total Addressable Market: $2.5B</li>
+                            <li>Current Market Share: 8%</li>
+                            <li>Target Market Share (2025): 12%</li>
+                            <li>Primary Competitors: 5 major players</li>
+                            <li>Market Growth Rate: 15% annually</li>
+                        </ul>
+                    </section>
+                    
+                    <section class="bg-green-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-lg mb-3">Slide 3: Target Audience</h4>
+                        <div class="space-y-2 text-gray-700">
+                            <p><strong>Primary:</strong> Enterprise decision-makers, ages 35-55</p>
+                            <p><strong>Secondary:</strong> Small business owners, ages 28-45</p>
+                            <p><strong>Emerging:</strong> Tech-savvy millennials in mid-level management</p>
+                        </div>
+                    </section>
+                    
+                    <section class="bg-yellow-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-lg mb-3">Slide 4: Campaign Strategies</h4>
+                        <ol class="list-decimal list-inside space-y-2 text-gray-700">
+                            <li><strong>Content Marketing:</strong> 2 blog posts/week, video series, podcasts</li>
+                            <li><strong>Social Media:</strong> Daily posts on LinkedIn, Twitter, Instagram</li>
+                            <li><strong>Email Marketing:</strong> Weekly newsletter, targeted campaigns</li>
+                            <li><strong>Paid Advertising:</strong> Google Ads, LinkedIn Sponsored Content</li>
+                            <li><strong>Events:</strong> 4 major conferences, 12 webinars</li>
+                        </ol>
+                    </section>
+                    
+                    <section class="bg-purple-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-lg mb-3">Slide 5: Budget Allocation</h4>
+                        <div class="space-y-1 text-gray-700">
+                            <p>Total Budget: $500,000</p>
+                            <ul class="list-disc list-inside ml-4 mt-2 space-y-1">
+                                <li>Digital Advertising: $200,000 (40%)</li>
+                                <li>Content Creation: $125,000 (25%)</li>
+                                <li>Events & Sponsorships: $100,000 (20%)</li>
+                                <li>Tools & Technology: $50,000 (10%)</li>
+                                <li>Miscellaneous: $25,000 (5%)</li>
+                            </ul>
+                        </div>
+                    </section>
+                    
+                    <section class="bg-red-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-lg mb-3">Slide 6: KPIs & Metrics</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-700">
+                            <li>Website Traffic: Increase by 50%</li>
+                            <li>Lead Generation: 5,000 qualified leads</li>
+                            <li>Conversion Rate: Improve to 4.5%</li>
+                            <li>Social Media Followers: Grow to 50K</li>
+                            <li>Customer Acquisition Cost: Reduce by 20%</li>
+                            <li>ROI: Achieve 300%+ on all campaigns</li>
+                        </ul>
+                    </section>
+                </div>`
+            }
         ];
+
+        let currentActiveRow = null;
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
 
         // --- Sidebar Menu Functions ---
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
             
-            // Toggle the 'translate-x-full' class for slide animation
             sidebar.classList.toggle('translate-x-full');
-            // Toggle the overlay visibility and opacity
             overlay.classList.toggle('hidden');
             overlay.classList.toggle('opacity-0');
             overlay.classList.toggle('opacity-50');
@@ -102,13 +454,133 @@
 
         function handleMenuAction(action) {
             alert(`Sidebar Action: ${action} selected.`);
-            // Close the sidebar after action
             toggleSidebar(); 
-            // In a real application, you'd navigate away (Logout) or show a modal (Account Info)
         }
 
-        // --- Table Population Functions (Same as before) ---
+        // --- Document Viewer Functions ---
+        function openFileViewer(index) {
+            const doc = documents[index];
+            const viewerSection = document.getElementById('viewer-section');
+            const resizeHandle = document.getElementById('resize-handle');
+            const title = document.getElementById('viewer-title');
+            const content = document.getElementById('viewer-content');
+            const documentSection = document.getElementById('document-section');
+            
+            // Set the file name and content
+            title.textContent = `📄 ${doc.name}`;
+            content.innerHTML = doc.content;
+            
+            // Show the viewer
+            viewerSection.classList.remove('hidden');
+            viewerSection.classList.add('flex');
+            resizeHandle.classList.remove('hidden');
+            
+            // Collapse table to show only file name
+            collapseTable();
+            
+            // Highlight active row
+            if (currentActiveRow) {
+                currentActiveRow.classList.remove('active-row');
+            }
+            const rows = document.querySelectorAll('#document-table-body tr');
+            currentActiveRow = rows[index];
+            currentActiveRow.classList.add('active-row');
+        }
+
+        function closeViewer() {
+            const viewerSection = document.getElementById('viewer-section');
+            const resizeHandle = document.getElementById('resize-handle');
+            
+            viewerSection.classList.add('hidden');
+            viewerSection.classList.remove('flex');
+            resizeHandle.classList.add('hidden');
+            
+            // Expand table back to full
+            expandTable();
+            
+            // Remove highlight
+            if (currentActiveRow) {
+                currentActiveRow.classList.remove('active-row');
+                currentActiveRow = null;
+            }
+        }
+
+        function expandViewer() {
+            const viewerSection = document.getElementById('viewer-section');
+            viewerSection.style.width = '75%';
+        }
+
+        function collapseViewer() {
+            const viewerSection = document.getElementById('viewer-section');
+            viewerSection.style.width = '50%';
+        }
+
+        function collapseTable() {
+            // Hide Actions and Size columns
+            const actionsHeader = document.getElementById('actions-header');
+            const sizeHeader = document.getElementById('size-header');
+            const actionsCells = document.querySelectorAll('#document-table-body td:first-child');
+            const sizeCells = document.querySelectorAll('#document-table-body td:last-child');
+            
+            if (actionsHeader) actionsHeader.classList.add('hidden');
+            if (sizeHeader) sizeHeader.classList.add('hidden');
+            actionsCells.forEach(cell => cell.classList.add('hidden'));
+            sizeCells.forEach(cell => cell.classList.add('hidden'));
+        }
+
+        function expandTable() {
+            // Show Actions and Size columns
+            const actionsHeader = document.getElementById('actions-header');
+            const sizeHeader = document.getElementById('size-header');
+            const actionsCells = document.querySelectorAll('#document-table-body td:first-child');
+            const sizeCells = document.querySelectorAll('#document-table-body td:last-child');
+            
+            if (actionsHeader) actionsHeader.classList.remove('hidden');
+            if (sizeHeader) sizeHeader.classList.remove('hidden');
+            actionsCells.forEach(cell => cell.classList.remove('hidden'));
+            sizeCells.forEach(cell => cell.classList.remove('hidden'));
+        }
+
+        // --- Resize Functionality ---
+        const resizeHandle = document.getElementById('resize-handle');
         
+        resizeHandle.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            startX = e.clientX;
+            const viewerSection = document.getElementById('viewer-section');
+            startWidth = viewerSection.offsetWidth;
+            document.body.style.cursor = 'ew-resize';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            
+            const viewerSection = document.getElementById('viewer-section');
+            const container = viewerSection.parentElement;
+            const containerWidth = container.offsetWidth;
+            
+            // Calculate new width (moving left increases width, moving right decreases)
+            const delta = startX - e.clientX;
+            let newWidth = startWidth + delta;
+            
+            // Set min and max width constraints
+            const minWidth = 300;
+            const maxWidth = containerWidth - 200;
+            
+            newWidth = Math.max(minWidth, Math.min(newWidth, maxWidth));
+            
+            viewerSection.style.width = `${newWidth}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                document.body.style.cursor = 'default';
+            }
+        });
+
+        // --- Table Population Functions ---
         function populateDocumentTable() {
             const tableBody = document.getElementById('document-table-body');
             tableBody.innerHTML = ''; 
@@ -120,22 +592,22 @@
                 row.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium relative">
                         <div class="relative inline-block text-left">
-                            <button id="menu-button-${index}" type="button" class="inline-flex justify-center w-full rounded-md px-2 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100" aria-expanded="false" aria-haspopup="true" onclick="toggleActionMenu(${index})">
+                            <button id="menu-button-${index}" type="button" class="inline-flex justify-center w-full rounded-md px-2 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100" aria-expanded="false" aria-haspopup="true" onclick="event.stopPropagation(); toggleActionMenu(${index})">
                                 <span class="text-xl">...</span> 
                             </button>
 
                             <div id="dropdown-menu-${index}" class="hidden origin-top-left absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10" role="menu" aria-orientation="vertical" aria-labelledby="menu-button-${index}" tabindex="-1">
                                 <div class="py-1" role="none">
-                                    <a href="#" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white" role="menuitem" tabindex="-1" onclick="handleFileAction('Download', '${doc.name}')">⬇️ Download</a>
-                                    <a href="#" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white" role="menuitem" tabindex="-1" onclick="handleFileAction('Delete', '${doc.name}')">🗑️ Delete</a>
-                                    <a href="#" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white" role="menuitem" tabindex="-1" onclick="handleFileAction('Favorite', '${doc.name}')">⭐ Favorite</a>
+                                    <a href="#" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white" role="menuitem" tabindex="-1" onclick="event.stopPropagation(); handleFileAction('Download', '${doc.name}')">⬇️ Download</a>
+                                    <a href="#" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white" role="menuitem" tabindex="-1" onclick="event.stopPropagation(); handleFileAction('Delete', '${doc.name}')">🗑️ Delete</a>
+                                    <a href="#" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white" role="menuitem" tabindex="-1" onclick="event.stopPropagation(); handleFileAction('Favorite', '${doc.name}')">⭐ Favorite</a>
                                 </div>
                             </div>
                         </div>
                     </td>
 
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        ${doc.name}
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <span class="file-name-link" onclick="openFileViewer(${index})">${doc.name}</span>
                     </td>
                     
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -165,7 +637,6 @@
 
         // Hide document menus when clicking outside
         document.addEventListener('click', (event) => {
-            // Logic to close the document action menus
             document.querySelectorAll('[id^="dropdown-menu-"]').forEach((menu, index) => {
                 const button = document.getElementById(`menu-button-${index}`);
                 if (button && menu && !button.contains(event.target) && !menu.contains(event.target)) {
