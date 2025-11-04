@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document List & Account Menu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Optional: Custom style for smooth transition on the sidebar */
+        #sidebar {
+            transition: transform 0.3s ease-in-out;
+        }
+        /* Style to push the menu off-screen by default */
+        .translate-x-full {
+            transform: translateX(100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <div id="sidebar" class="fixed top-0 right-0 w-64 h-full bg-white shadow-2xl z-40 transform translate-x-full">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800">👤 My Account</h2>
+        </div>
+        <nav class="p-4 space-y-2">
+            <button class="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition duration-150 ease-in-out" onclick="handleMenuAction('Account Info')">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Account Info
+            </button>
+            
+            <button class="flex items-center w-full px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition duration-150 ease-in-out" onclick="handleMenuAction('Logout')">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+            </button>
+        </nav>
+    </div>
+
+    <div id="overlay" class="fixed inset-0 bg-black opacity-0 hidden z-30 transition-opacity duration-300" onclick="toggleSidebar()"></div>
+
+    <header class="bg-indigo-600 shadow-md p-4 flex justify-between items-center z-20 relative">
+        <h1 class="text-xl font-bold text-white">Document Manager</h1>
+        
+        <button id="menu-toggle-btn" class="text-white hover:text-indigo-200 p-2 rounded-md transition duration-150" onclick="toggleSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+    </header>
+
+    <div class="p-8">
+        <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-lg p-6">
+            <h2 class="text-3xl font-bold mb-6 text-gray-800">📁 Document List</h2>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                                Actions
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                File Name
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                Size
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="document-table-body" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Document Data (Same as before) ---
+        const documents = [
+            { name: "Quarterly Report 2023.pdf", size: "1.2 MB" },
+            { name: "Team Meeting Notes.docx", size: "55 KB" },
+            { name: "Project_Plan_V3.xlsx", size: "320 KB" },
+            { name: "Company Logo.png", size: "88 KB" },
+            { name: "Marketing Strategy.pptx", size: "4.5 MB" }
+        ];
+
+        // --- Sidebar Menu Functions ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            // Toggle the 'translate-x-full' class for slide animation
+            sidebar.classList.toggle('translate-x-full');
+            // Toggle the overlay visibility and opacity
+            overlay.classList.toggle('hidden');
+            overlay.classList.toggle('opacity-0');
+            overlay.classList.toggle('opacity-50');
+        }
+
+        function handleMenuAction(action) {
+            alert(`Sidebar Action: ${action} selected.`);
+            // Close the sidebar after action
+            toggleSidebar(); 
+            // In a real application, you'd navigate away (Logout) or show a modal (Account Info)
+        }
+
+        // --- Table Population Functions (Same as before) ---
+        
+        function populateDocumentTable() {
+            const tableBody = document.getElementById('document-table-body');
+            tableBody.innerHTML = ''; 
+
+            documents.forEach((doc, index) => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium relative">
+                        <div class="relative inline-block text-left">
+                            <button id="menu-button-${index}" type="button" class="inline-flex justify-center w-full rounded-md px-2 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100" aria-expanded="false" aria-haspopup="true" onclick="toggleActionMenu(${index})">
+                                <span class="text-xl">...</span> 
+                            </button>
+
+                            <div id="dropdown-menu-${index}" class="hidden origin-top-left absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10" role="menu" aria-orientation="vertical" aria-labelledby="menu-button-${index}" tabindex="-1">
+                                <div class="py-1" role="none">
+                                    <a href="#" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white" role="menuitem" tabindex="-1" onclick="handleFileAction('Download', '${doc.name}')">⬇️ Download</a>
+                                    <a href="#" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white" role="menuitem" tabindex="-1" onclick="handleFileAction('Delete', '${doc.name}')">🗑️ Delete</a>
+                                    <a href="#" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-500 hover:text-white" role="menuitem" tabindex="-1" onclick="handleFileAction('Favorite', '${doc.name}')">⭐ Favorite</a>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ${doc.name}
+                    </td>
+                    
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${doc.size}
+                    </td>
+                `;
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Function to toggle the document action dropdown menu visibility
+        function toggleActionMenu(index) {
+            const menu = document.getElementById(`dropdown-menu-${index}`);
+            menu.classList.toggle('hidden');
+        }
+
+        // Function to handle the document menu actions
+        function handleFileAction(action, fileName) {
+            alert(`${action} action performed on: ${fileName}`);
+            
+            // Hide all menus after an action
+            document.querySelectorAll('[id^="dropdown-menu-"]').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
+
+        // Hide document menus when clicking outside
+        document.addEventListener('click', (event) => {
+            // Logic to close the document action menus
+            document.querySelectorAll('[id^="dropdown-menu-"]').forEach((menu, index) => {
+                const button = document.getElementById(`menu-button-${index}`);
+                if (button && menu && !button.contains(event.target) && !menu.contains(event.target)) {
+                    menu.classList.add('hidden');
+                }
+            });
+        });
+
+        // Load the data when the page loads
+        document.addEventListener('DOMContentLoaded', populateDocumentTable);
+    </script>
+</body>
+</html>
