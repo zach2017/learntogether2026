@@ -63,14 +63,76 @@
     <!-- Overlay for account menu -->
     <div id="overlay" class="fixed inset-0 bg-black opacity-0 hidden z-30 transition-opacity duration-300" onclick="toggleSidebar()"></div>
 
+    <!-- Overlay for file viewer -->
+    <div id="file-overlay" class="fixed inset-0 bg-black opacity-0 hidden z-30 transition-opacity duration-300" onclick="closeFileViewer()"></div>
+
+    <!-- Upload Dialog Modal -->
+    <div id="upload-overlay" class="fixed inset-0 bg-black opacity-0 hidden z-40 transition-opacity duration-300"></div>
+    <div id="upload-dialog" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl z-50 hidden w-full max-w-2xl">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-800">📤 Upload Files</h2>
+                <button onclick="closeUploadDialog()" class="text-gray-500 hover:text-gray-700 p-1 rounded-md hover:bg-gray-100 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <!-- File Input Area -->
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-indigo-500 transition-colors cursor-pointer" onclick="document.getElementById('file-input').click()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p class="text-lg font-semibold text-gray-700 mb-2">Click to select files</p>
+                <p class="text-sm text-gray-500">or drag and drop files here</p>
+                <input type="file" id="file-input" multiple class="hidden" onchange="handleFileSelect(event)">
+            </div>
+            
+            <!-- Selected Files List -->
+            <div id="selected-files-container" class="mt-6 hidden">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Selected Files</h3>
+                <div id="selected-files-list" class="space-y-2 max-h-64 overflow-y-auto">
+                    <!-- Files will be listed here -->
+                </div>
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <p class="text-sm text-gray-700">
+                        <span class="font-semibold">Total files:</span> <span id="total-files">0</span> | 
+                        <span class="font-semibold">Total size:</span> <span id="total-size">0 B</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-6 border-t border-gray-200 flex justify-end space-x-3">
+            <button onclick="closeUploadDialog()" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition duration-150">
+                Cancel
+            </button>
+            <button id="upload-btn" disabled class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150 disabled:bg-gray-300 disabled:cursor-not-allowed" onclick="handleUpload()">
+                Upload Files
+            </button>
+        </div>
+    </div>
+
     <header class="bg-indigo-600 shadow-md p-4 flex justify-between items-center z-20 relative">
         <h1 class="text-xl font-bold text-white">Document Manager</h1>
         
-        <button id="menu-toggle-btn" class="text-white hover:text-indigo-200 p-2 rounded-md transition duration-150" onclick="toggleSidebar()">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-        </button>
+        <div class="flex items-center space-x-3">
+            <button onclick="openUploadDialog()" class="flex items-center px-4 py-2 bg-white text-indigo-600 rounded-md hover:bg-indigo-50 transition duration-150 font-semibold shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                Upload
+            </button>
+            
+            <button id="menu-toggle-btn" class="text-white hover:text-indigo-200 p-2 rounded-md transition duration-150" onclick="toggleSidebar()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </div>
     </header>
 
     <div class="p-8">
@@ -647,6 +709,189 @@
 
         // Load the data when the page loads
         document.addEventListener('DOMContentLoaded', populateDocumentTable);
+
+        // --- Upload Dialog Functions ---
+        let selectedFiles = [];
+
+        function openUploadDialog() {
+            const uploadDialog = document.getElementById('upload-dialog');
+            const uploadOverlay = document.getElementById('upload-overlay');
+            
+            uploadDialog.classList.remove('hidden');
+            uploadOverlay.classList.remove('hidden');
+            uploadOverlay.classList.remove('opacity-0');
+            uploadOverlay.classList.add('opacity-50');
+            
+            // Reset the dialog
+            selectedFiles = [];
+            document.getElementById('file-input').value = '';
+            document.getElementById('selected-files-container').classList.add('hidden');
+            document.getElementById('upload-btn').disabled = true;
+        }
+
+        function closeUploadDialog() {
+            const uploadDialog = document.getElementById('upload-dialog');
+            const uploadOverlay = document.getElementById('upload-overlay');
+            
+            uploadDialog.classList.add('hidden');
+            uploadOverlay.classList.add('hidden');
+            uploadOverlay.classList.add('opacity-0');
+            uploadOverlay.classList.remove('opacity-50');
+        }
+
+        function handleFileSelect(event) {
+            selectedFiles = Array.from(event.target.files);
+            displaySelectedFiles();
+            
+            // Enable upload button if files are selected
+            document.getElementById('upload-btn').disabled = selectedFiles.length === 0;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        function displaySelectedFiles() {
+            const container = document.getElementById('selected-files-container');
+            const filesList = document.getElementById('selected-files-list');
+            const totalFilesSpan = document.getElementById('total-files');
+            const totalSizeSpan = document.getElementById('total-size');
+            
+            if (selectedFiles.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            filesList.innerHTML = '';
+            
+            let totalSize = 0;
+            
+            selectedFiles.forEach((file, index) => {
+                totalSize += file.size;
+                
+                const fileItem = document.createElement('div');
+                fileItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100';
+                fileItem.innerHTML = `
+                    <div class="flex items-center flex-1 min-w-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">${file.name}</p>
+                            <p class="text-xs text-gray-500">${formatFileSize(file.size)}</p>
+                        </div>
+                    </div>
+                    <button onclick="removeFile(${index})" class="ml-3 text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded transition flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                `;
+                filesList.appendChild(fileItem);
+            });
+            
+            totalFilesSpan.textContent = selectedFiles.length;
+            totalSizeSpan.textContent = formatFileSize(totalSize);
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            displaySelectedFiles();
+            
+            // Disable upload button if no files left
+            document.getElementById('upload-btn').disabled = selectedFiles.length === 0;
+            
+            // Update the file input
+            const fileInput = document.getElementById('file-input');
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            fileInput.files = dt.files;
+        }
+
+        function handleUpload() {
+            if (selectedFiles.length === 0) return;
+            
+            // Add files to the document list
+            selectedFiles.forEach(file => {
+                documents.push({
+                    name: file.name,
+                    size: formatFileSize(file.size),
+                    content: `<h3 class="text-xl font-bold mb-4 text-indigo-600">${file.name}</h3>
+                    <div class="space-y-4">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <p class="text-gray-700"><strong>File Name:</strong> ${file.name}</p>
+                            <p class="text-gray-700"><strong>File Size:</strong> ${formatFileSize(file.size)}</p>
+                            <p class="text-gray-700"><strong>File Type:</strong> ${file.type || 'Unknown'}</p>
+                            <p class="text-gray-700"><strong>Last Modified:</strong> ${new Date(file.lastModified).toLocaleString()}</p>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <p class="text-sm text-green-800">✓ File uploaded successfully!</p>
+                        </div>
+                        <div class="bg-gray-100 p-4 rounded-lg">
+                            <p class="text-gray-600 italic">This is a newly uploaded file. Preview functionality would display the actual file contents here.</p>
+                        </div>
+                    </div>`
+                });
+            });
+            
+            // Refresh the table
+            populateDocumentTable();
+            
+            // Show success message
+            alert(`Successfully uploaded ${selectedFiles.length} file(s)!`);
+            
+            // Close the dialog
+            closeUploadDialog();
+        }
+
+        // Drag and drop functionality
+        const dropZone = document.getElementById('upload-dialog');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            const dropArea = dropZone.querySelector('.border-dashed');
+            if (dropArea) {
+                dropArea.classList.add('border-indigo-500', 'bg-indigo-50');
+            }
+        }
+
+        function unhighlight(e) {
+            const dropArea = dropZone.querySelector('.border-dashed');
+            if (dropArea) {
+                dropArea.classList.remove('border-indigo-500', 'bg-indigo-50');
+            }
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            document.getElementById('file-input').files = files;
+            handleFileSelect({ target: { files: files } });
+        }
     </script>
 </body>
 </html>
