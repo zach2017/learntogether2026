@@ -150,3 +150,4 @@ Java/springbasic/upload/src/main/docker
 Java/spring-upload-processor-full/target/
 Java/spring-upload-processor-full/uploads/*
 Java/securejwt/src/main/resources/static/
+Docker/microservicedemo/spring-keycloak-demo copy/client-service/target

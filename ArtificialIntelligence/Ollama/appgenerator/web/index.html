@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ollama Prompt UI</title>
+  <!-- Tailwind via CDN (for quick start; swap to compiled in prod) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100">
+  <div class="max-w-3xl mx-auto p-6">
+    <header class="mb-6">
+      <h1 class="text-3xl font-extrabold tracking-tight">Qwen  Prompt Console</h1>
+      <p class="text-slate-300 mt-1">Send a prompt to Ollama (<code class="text-slate-200">Qwen AI/Qwen -M2</code>) via the API.</p>
+    </header>
+
+    <section class="bg-slate-800/70 rounded-2xl shadow-xl border border-slate-700 p-5">
+      <label class="block text-sm font-medium mb-2">Your Prompt</label>
+      <textarea id="prompt" rows="6" class="w-full rounded-xl bg-slate-900/70 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 p-3" placeholder="Ask anything..."></textarea>
+
+      <div class="mt-4 flex items-center gap-3">
+        <button id="sendBtn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition font-semibold">
+          Generate
+        </button>
+        <span id="status" class="text-sm text-slate-400"></span>
+      </div>
+
+      <div class="mt-6">
+        <h2 class="text-lg font-semibold mb-2">Response</h2>
+        <pre id="output" class="whitespace-pre-wrap bg-slate-900/60 border border-slate-700 rounded-xl p-4 text-slate-100"></pre>
+      </div>
+    </section>
+
+    <footer class="mt-8 text-xs text-slate-400">
+      Backend: <code>http://localhost:8000</code> • UI: <code>http://localhost:8088</code>
+    </footer>
+  </div>
+
+  <script>
+    const API_BASE = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
+      ? "http://localhost:8000"
+      : `${location.origin.replace(":8088", ":8000")}`;
+
+    const $ = (s) => document.querySelector(s);
+    const promptEl = $("#prompt");
+    const outputEl = $("#output");
+    const statusEl = $("#status");
+    const btn = $("#sendBtn");
+
+    async function sendPrompt() {
+      const prompt = promptEl.value.trim();
+      if (!prompt) {
+        outputEl.textContent = "Please enter a prompt.";
+        return;
+      }
+      outputEl.textContent = "";
+      statusEl.textContent = "Sending...";
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`http://localhost:8000/generate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `Request failed with ${res.status}`);
+        }
+        const data = await res.json();
+        outputEl.textContent = data.response || "(empty response)";
+      } catch (e) {
+        outputEl.textContent = "Error: " + e.message;
+      } finally {
+        statusEl.textContent = "";
+        btn.disabled = false;
+      }
+    }
+
+    btn.addEventListener("click", sendPrompt);
+    promptEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) sendPrompt();
+    });
+  </script>
+</body>
+</html>
