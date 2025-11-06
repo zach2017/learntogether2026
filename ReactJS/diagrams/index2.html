@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diagram Builder</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -40,6 +41,21 @@
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .notification {
+            animation: slideIn 0.3s ease-out;
         }
         
         /* Print styles */
@@ -223,6 +239,28 @@
             </button>
         </div>
         
+        <!-- Import/Export -->
+        <div class="flex gap-2 border-r pr-4">
+            <button onclick="exportDiagram()" class="flex items-center gap-1 px-3 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span class="text-sm">Export</span>
+            </button>
+            
+            <button onclick="document.getElementById('importFile').click()" class="flex items-center gap-1 px-3 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <span class="text-sm">Import</span>
+            </button>
+            <input type="file" id="importFile" accept=".yaml,.yml" style="display: none;" onchange="importDiagram(event)">
+        </div>
+        
         <!-- Color picker -->
         <div id="colorPicker" class="hidden gap-2">
             <button onclick="changeColor('#3b82f6')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #3b82f6;"></button>
@@ -237,7 +275,7 @@
         
         <!-- Instructions -->
         <div class="ml-auto text-sm text-gray-600">
-            <p><strong>Tips:</strong> Click shapes/arrows to select • Double-click to edit • Drag to move • Print button for diagram only</p>
+            <p><strong>Tips:</strong> Click shapes/arrows to select • Double-click to edit • Export/Import to save diagrams as YAML</p>
         </div>
     </div>
     
@@ -751,6 +789,134 @@
                 updateSelection();
                 updateConnectionMode();
             }, 100);
+        }
+        
+        // Export diagram to YAML
+        function exportDiagram() {
+            const diagramData = {
+                version: '1.0',
+                created: new Date().toISOString(),
+                shapes: shapes.map(shape => ({
+                    id: shape.id,
+                    type: shape.type,
+                    x: shape.x,
+                    y: shape.y,
+                    width: shape.width,
+                    height: shape.height,
+                    color: shape.color,
+                    text: shape.text
+                })),
+                connections: connections.map(conn => ({
+                    id: conn.id,
+                    from: conn.from,
+                    to: conn.to
+                }))
+            };
+            
+            // Convert to YAML
+            const yamlContent = jsyaml.dump(diagramData, {
+                indent: 2,
+                lineWidth: -1
+            });
+            
+            // Create download link
+            const blob = new Blob([yamlContent], { type: 'text/yaml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `diagram-${Date.now()}.yaml`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Show success message
+            showNotification('Diagram exported successfully!', 'success');
+        }
+        
+        // Import diagram from YAML
+        function importDiagram(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    // Parse YAML
+                    const diagramData = jsyaml.load(e.target.result);
+                    
+                    // Validate data
+                    if (!diagramData.shapes || !diagramData.connections) {
+                        throw new Error('Invalid diagram format');
+                    }
+                    
+                    // Clear current diagram
+                    document.getElementById('shapesContainer').innerHTML = '';
+                    shapes = [];
+                    connections = [];
+                    selectedShapeId = null;
+                    selectedConnectionId = null;
+                    connectingFromId = null;
+                    
+                    // Load shapes
+                    diagramData.shapes.forEach(shapeData => {
+                        const shape = {
+                            id: shapeData.id,
+                            type: shapeData.type,
+                            x: shapeData.x,
+                            y: shapeData.y,
+                            width: shapeData.width,
+                            height: shapeData.height,
+                            color: shapeData.color,
+                            text: shapeData.text
+                        };
+                        shapes.push(shape);
+                        renderShape(shape);
+                    });
+                    
+                    // Load connections
+                    connections = diagramData.connections.map(conn => ({
+                        id: conn.id,
+                        from: conn.from,
+                        to: conn.to
+                    }));
+                    
+                    // Update UI
+                    renderConnections();
+                    updateSelection();
+                    
+                    // Update shape counter to avoid ID conflicts
+                    if (shapes.length > 0) {
+                        shapeIdCounter = Math.max(...shapes.map(s => s.id)) + 1;
+                    }
+                    
+                    // Show success message
+                    showNotification('Diagram imported successfully!', 'success');
+                    
+                } catch (error) {
+                    showNotification('Error importing diagram: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification fixed top-20 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } text-white font-semibold`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
         
         // Escape HTML
