@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagram Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .canvas-grid {
+            background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .shape {
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+        }
+        
+        .shape.dragging {
+            cursor: grabbing;
+            opacity: 0.8;
+        }
+        
+        .shape.selected {
+            box-shadow: 0 0 0 3px #3b82f6;
+        }
+        
+        .shape.connecting {
+            box-shadow: 0 0 0 3px #10b981;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            
+            /* Hide toolbar when printing */
+            .toolbar {
+                display: none !important;
+            }
+            
+            /* Make canvas full page */
+            #canvas {
+                height: 100vh !important;
+                width: 100vw !important;
+                page-break-after: avoid;
+            }
+            
+            /* Remove selection highlights for print */
+            .shape.selected {
+                box-shadow: none !important;
+            }
+            
+            .shape.connecting {
+                box-shadow: none !important;
+                animation: none !important;
+            }
+            
+            /* Hide connection indicator */
+            #connectionIndicator {
+                display: none !important;
+            }
+        }
+        
+        .shape-rectangle {
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            padding: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .shape-circle {
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            padding: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .shape-diamond {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .diamond-inner {
+            position: absolute;
+            width: 75%;
+            height: 75%;
+            transform: rotate(45deg);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .diamond-text {
+            position: relative;
+            z-index: 10;
+            color: white;
+            font-weight: 600;
+            padding: 8px;
+        }
+        
+        .shape-class {
+            border-radius: 0.375rem;
+            border: 2px solid #374151;
+            color: white;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .text-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: inherit;
+            font: inherit;
+            text-align: center;
+            width: 100%;
+            height: 100%;
+        }
+        
+        textarea.text-input {
+            resize: none;
+            text-align: left;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Toolbar -->
+    <div class="toolbar bg-white shadow-md p-4 flex items-center gap-4 border-b-2 border-gray-200">
+        <h1 class="text-xl font-bold text-gray-800 mr-4">Diagram Builder</h1>
+        
+        <!-- Shape buttons -->
+        <div class="flex gap-2 border-r pr-4">
+            <button onclick="addShape('rectangle')" class="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                </svg>
+                <span class="text-xs">Rectangle</span>
+            </button>
+            
+            <button onclick="addShape('circle')" class="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                </svg>
+                <span class="text-xs">Circle</span>
+            </button>
+            
+            <button onclick="addShape('diamond')" class="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                    <path d="M12 2l9 10-9 10-9-10z"/>
+                </svg>
+                <span class="text-xs">Diamond</span>
+            </button>
+            
+            <button onclick="addShape('class')" class="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <line x1="3" y1="9" x2="21" y2="9"/>
+                    <line x1="3" y1="15" x2="21" y2="15"/>
+                </svg>
+                <span class="text-xs">UML Class</span>
+            </button>
+        </div>
+        
+        <!-- Tools -->
+        <div class="flex gap-2 border-r pr-4">
+            <button id="connectBtn" onclick="startConnection()" disabled class="flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                    <polyline points="12 5 19 12 12 19"/>
+                </svg>
+                <span class="text-sm">Connect</span>
+            </button>
+            
+            <button id="colorBtn" onclick="toggleColorPicker()" disabled class="flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 2a10 10 0 0 1 10 10c0 1.5-1 2-2 2s-2-.5-2-2c0-1.5.5-2 2-2s2 .5 2 2"/>
+                </svg>
+                <span class="text-sm">Color</span>
+            </button>
+            
+            <button id="deleteBtn" onclick="deleteSelected()" disabled class="flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/>
+                </svg>
+                <span class="text-sm">Delete</span>
+            </button>
+            
+            <button onclick="printDiagram()" class="flex items-center gap-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 6 2 18 2 18 9"/>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                    <rect x="6" y="14" width="12" height="8"/>
+                </svg>
+                <span class="text-sm">Print</span>
+            </button>
+        </div>
+        
+        <!-- Color picker -->
+        <div id="colorPicker" class="hidden gap-2">
+            <button onclick="changeColor('#3b82f6')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #3b82f6;"></button>
+            <button onclick="changeColor('#10b981')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #10b981;"></button>
+            <button onclick="changeColor('#f59e0b')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #f59e0b;"></button>
+            <button onclick="changeColor('#ef4444')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #ef4444;"></button>
+            <button onclick="changeColor('#8b5cf6')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #8b5cf6;"></button>
+            <button onclick="changeColor('#ec4899')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #ec4899;"></button>
+            <button onclick="changeColor('#6366f1')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #6366f1;"></button>
+            <button onclick="changeColor('#14b8a6')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #14b8a6;"></button>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="ml-auto text-sm text-gray-600">
+            <p><strong>Tips:</strong> Click shapes/arrows to select • Double-click to edit • Drag to move • Print button for diagram only</p>
+        </div>
+    </div>
+    
+    <!-- Canvas -->
+    <div id="canvas" class="canvas-grid bg-white relative" style="height: calc(100vh - 80px); overflow: hidden;">
+        <svg id="connectionsSvg" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 0;">
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#374151" />
+                </marker>
+            </defs>
+        </svg>
+        
+        <div id="shapesContainer" class="relative w-full h-full" style="z-index: 1;"></div>
+        
+        <div id="connectionIndicator" class="hidden absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg" style="z-index: 50;">
+            Click on another shape to connect with an arrow
+        </div>
+    </div>
+
+    <script>
+        // Application state
+        let shapes = [];
+        let connections = [];
+        let selectedShapeId = null;
+        let selectedConnectionId = null;
+        let draggingShapeId = null;
+        let dragOffset = { x: 0, y: 0 };
+        let editingShapeId = null;
+        let connectingFromId = null;
+        let shapeIdCounter = 1;
+        
+        const shapeDefaults = {
+            rectangle: { width: 100, height: 100, color: '#3b82f6', text: 'Text' },
+            circle: { width: 100, height: 100, color: '#10b981', text: 'Text' },
+            diamond: { width: 100, height: 100, color: '#f59e0b', text: 'Text' },
+            class: { width: 150, height: 120, color: '#8b5cf6', text: 'ClassName\n---\n+method()' }
+        };
+        
+        // Add shape to canvas
+        function addShape(type) {
+            const defaults = shapeDefaults[type];
+            const shape = {
+                id: shapeIdCounter++,
+                type: type,
+                x: 100,
+                y: 100,
+                width: defaults.width,
+                height: defaults.height,
+                color: defaults.color,
+                text: defaults.text
+            };
+            shapes.push(shape);
+            renderShape(shape);
+        }
+        
+        // Render a shape
+        function renderShape(shape) {
+            const shapeDiv = document.createElement('div');
+            shapeDiv.id = `shape-${shape.id}`;
+            shapeDiv.className = `shape shape-${shape.type}`;
+            shapeDiv.style.left = shape.x + 'px';
+            shapeDiv.style.top = shape.y + 'px';
+            shapeDiv.style.width = shape.width + 'px';
+            shapeDiv.style.height = shape.height + 'px';
+            shapeDiv.style.backgroundColor = shape.color;
+            
+            if (shape.type === 'diamond') {
+                shapeDiv.innerHTML = `
+                    <div class="diamond-inner" style="background-color: ${shape.color};"></div>
+                    <div class="diamond-text" id="text-${shape.id}">${escapeHtml(shape.text)}</div>
+                `;
+            } else if (shape.type === 'class') {
+                shapeDiv.innerHTML = `<div id="text-${shape.id}">${escapeHtml(shape.text)}</div>`;
+            } else {
+                shapeDiv.innerHTML = `<div id="text-${shape.id}">${escapeHtml(shape.text)}</div>`;
+            }
+            
+            shapeDiv.addEventListener('mousedown', (e) => handleShapeMouseDown(e, shape.id));
+            shapeDiv.addEventListener('dblclick', (e) => handleShapeDoubleClick(e, shape.id));
+            
+            document.getElementById('shapesContainer').appendChild(shapeDiv);
+        }
+        
+        // Handle shape mouse down
+        function handleShapeMouseDown(e, shapeId) {
+            e.stopPropagation();
+            
+            // If in connection mode
+            if (connectingFromId) {
+                if (connectingFromId !== shapeId) {
+                    connections.push({
+                        id: Date.now(),
+                        from: connectingFromId,
+                        to: shapeId
+                    });
+                    renderConnections();
+                }
+                connectingFromId = null;
+                updateConnectionMode();
+                return;
+            }
+            
+            const canvas = document.getElementById('canvas').getBoundingClientRect();
+            const shape = shapes.find(s => s.id === shapeId);
+            
+            draggingShapeId = shapeId;
+            selectedShapeId = shapeId;
+            selectedConnectionId = null;
+            dragOffset = {
+                x: e.clientX - canvas.left - shape.x,
+                y: e.clientY - canvas.top - shape.y
+            };
+            
+            updateSelection();
+        }
+        
+        // Handle shape double click (edit text)
+        function handleShapeDoubleClick(e, shapeId) {
+            e.stopPropagation();
+            selectedShapeId = shapeId;
+            editingShapeId = shapeId;
+            
+            const shape = shapes.find(s => s.id === shapeId);
+            const textDiv = document.getElementById(`text-${shapeId}`);
+            
+            if (shape.type === 'class') {
+                textDiv.innerHTML = `<textarea class="text-input" id="input-${shapeId}" style="width: 100%; height: 100%;">${escapeHtml(shape.text)}</textarea>`;
+            } else {
+                textDiv.innerHTML = `<input type="text" class="text-input" id="input-${shapeId}" value="${escapeHtml(shape.text)}">`;
+            }
+            
+            const input = document.getElementById(`input-${shapeId}`);
+            input.focus();
+            input.select();
+            
+            input.addEventListener('blur', () => finishTextEdit(shapeId));
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && shape.type !== 'class') {
+                    finishTextEdit(shapeId);
+                }
+            });
+        }
+        
+        // Finish text editing
+        function finishTextEdit(shapeId) {
+            const input = document.getElementById(`input-${shapeId}`);
+            if (!input) return;
+            
+            const shape = shapes.find(s => s.id === shapeId);
+            shape.text = input.value;
+            
+            const textDiv = document.getElementById(`text-${shapeId}`);
+            textDiv.innerHTML = escapeHtml(shape.text);
+            
+            editingShapeId = null;
+        }
+        
+        // Handle mouse move
+        document.addEventListener('mousemove', (e) => {
+            if (draggingShapeId) {
+                const canvas = document.getElementById('canvas').getBoundingClientRect();
+                const shape = shapes.find(s => s.id === draggingShapeId);
+                
+                shape.x = e.clientX - canvas.left - dragOffset.x;
+                shape.y = e.clientY - canvas.top - dragOffset.y;
+                
+                const shapeDiv = document.getElementById(`shape-${draggingShapeId}`);
+                shapeDiv.style.left = shape.x + 'px';
+                shapeDiv.style.top = shape.y + 'px';
+                shapeDiv.classList.add('dragging');
+                
+                renderConnections();
+            }
+        });
+        
+        // Handle mouse up
+        document.addEventListener('mouseup', () => {
+            if (draggingShapeId) {
+                const shapeDiv = document.getElementById(`shape-${draggingShapeId}`);
+                shapeDiv.classList.remove('dragging');
+                draggingShapeId = null;
+            }
+        });
+        
+        // Canvas click (deselect)
+        document.getElementById('canvas').addEventListener('click', (e) => {
+            // Only deselect if clicking on canvas background, not on a shape
+            if (e.target.id === 'canvas' || e.target.id === 'shapesContainer') {
+                selectedShapeId = null;
+                selectedConnectionId = null;
+                connectingFromId = null;
+                updateSelection();
+                updateConnectionMode();
+                
+                // Close color picker
+                const picker = document.getElementById('colorPicker');
+                picker.classList.add('hidden');
+                picker.classList.remove('flex');
+            }
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Escape key cancels connection mode or deselects
+            if (e.key === 'Escape') {
+                if (connectingFromId) {
+                    connectingFromId = null;
+                    updateConnectionMode();
+                } else if ((selectedShapeId || selectedConnectionId) && !editingShapeId) {
+                    selectedShapeId = null;
+                    selectedConnectionId = null;
+                    updateSelection();
+                }
+            }
+            
+            // Delete key removes selected shape or connection
+            if (e.key === 'Delete' && (selectedShapeId || selectedConnectionId) && !editingShapeId) {
+                deleteSelected();
+            }
+        });
+        
+        // Update selection visual
+        function updateSelection() {
+            document.querySelectorAll('.shape').forEach(shape => {
+                shape.classList.remove('selected');
+            });
+            
+            if (selectedShapeId) {
+                const shapeDiv = document.getElementById(`shape-${selectedShapeId}`);
+                if (shapeDiv) shapeDiv.classList.add('selected');
+            }
+            
+            updateToolbar();
+            renderConnections(); // Re-render to update connection visual feedback
+        }
+        
+        // Update toolbar buttons state
+        function updateToolbar() {
+            const hasSelection = selectedShapeId !== null;
+            const hasConnectionSelection = selectedConnectionId !== null;
+            
+            const connectBtn = document.getElementById('connectBtn');
+            const colorBtn = document.getElementById('colorBtn');
+            const deleteBtn = document.getElementById('deleteBtn');
+            
+            if (hasSelection) {
+                connectBtn.disabled = false;
+                connectBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-green-500 hover:bg-green-600 text-white cursor-pointer';
+                
+                colorBtn.disabled = false;
+                colorBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-purple-500 hover:bg-purple-600 text-white cursor-pointer';
+                
+                deleteBtn.disabled = false;
+                deleteBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-red-500 hover:bg-red-600 text-white cursor-pointer';
+            } else if (hasConnectionSelection) {
+                connectBtn.disabled = true;
+                connectBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed';
+                
+                colorBtn.disabled = true;
+                colorBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed';
+                
+                deleteBtn.disabled = false;
+                deleteBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-red-500 hover:bg-red-600 text-white cursor-pointer';
+            } else {
+                connectBtn.disabled = true;
+                connectBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed';
+                
+                colorBtn.disabled = true;
+                colorBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed';
+                
+                deleteBtn.disabled = true;
+                deleteBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed';
+            }
+        }
+        
+        // Start connection mode
+        function startConnection() {
+            if (!selectedShapeId) return;
+            connectingFromId = selectedShapeId;
+            updateConnectionMode();
+        }
+        
+        // Update connection mode visual
+        function updateConnectionMode() {
+            document.querySelectorAll('.shape').forEach(shape => {
+                shape.classList.remove('connecting');
+            });
+            
+            const indicator = document.getElementById('connectionIndicator');
+            const connectBtn = document.getElementById('connectBtn');
+            
+            if (connectingFromId) {
+                const shapeDiv = document.getElementById(`shape-${connectingFromId}`);
+                if (shapeDiv) shapeDiv.classList.add('connecting');
+                indicator.classList.remove('hidden');
+                
+                // Make connect button pulse when active
+                connectBtn.classList.add('animate-pulse');
+            } else {
+                indicator.classList.add('hidden');
+                connectBtn.classList.remove('animate-pulse');
+            }
+        }
+        
+        // Toggle color picker
+        function toggleColorPicker() {
+            if (!selectedShapeId) return;
+            const picker = document.getElementById('colorPicker');
+            picker.classList.toggle('hidden');
+            picker.classList.toggle('flex');
+        }
+        
+        // Change shape color
+        function changeColor(color) {
+            if (!selectedShapeId) return;
+            
+            const shape = shapes.find(s => s.id === selectedShapeId);
+            shape.color = color;
+            
+            const shapeDiv = document.getElementById(`shape-${selectedShapeId}`);
+            shapeDiv.style.backgroundColor = color;
+            
+            if (shape.type === 'diamond') {
+                const diamondInner = shapeDiv.querySelector('.diamond-inner');
+                diamondInner.style.backgroundColor = color;
+            }
+            
+            document.getElementById('colorPicker').classList.add('hidden');
+            document.getElementById('colorPicker').classList.remove('flex');
+        }
+        
+        // Delete selected shape or connection
+        function deleteSelected() {
+            if (selectedShapeId) {
+                // Remove shape
+                const shapeDiv = document.getElementById(`shape-${selectedShapeId}`);
+                if (shapeDiv) shapeDiv.remove();
+                
+                shapes = shapes.filter(s => s.id !== selectedShapeId);
+                
+                // Remove connections related to this shape
+                connections = connections.filter(c => 
+                    c.from !== selectedShapeId && c.to !== selectedShapeId
+                );
+                
+                selectedShapeId = null;
+            } else if (selectedConnectionId) {
+                // Remove connection
+                connections = connections.filter(c => c.id !== selectedConnectionId);
+                selectedConnectionId = null;
+            }
+            
+            updateSelection();
+            renderConnections();
+        }
+        
+        // Render connections (arrows)
+        function renderConnections() {
+            const svg = document.getElementById('connectionsSvg');
+            
+            // Clear existing connections
+            const existingLines = svg.querySelectorAll('line');
+            existingLines.forEach(line => line.remove());
+            
+            // Draw connections
+            connections.forEach(conn => {
+                const fromShape = shapes.find(s => s.id === conn.from);
+                const toShape = shapes.find(s => s.id === conn.to);
+                
+                if (!fromShape || !toShape) return;
+                
+                const from = getShapeCenter(fromShape);
+                const to = getShapeCenter(toShape);
+                
+                const angle = Math.atan2(to.y - from.y, to.x - from.x);
+                
+                // Calculate edge points based on shape type
+                let fromX, fromY, toX, toY;
+                
+                // From shape edge calculation
+                if (fromShape.type === 'circle') {
+                    const radius = fromShape.width / 2;
+                    fromX = from.x + Math.cos(angle) * radius;
+                    fromY = from.y + Math.sin(angle) * radius;
+                } else if (fromShape.type === 'diamond') {
+                    const halfW = fromShape.width / 2;
+                    const halfH = fromShape.height / 2;
+                    const absAngle = Math.abs(angle);
+                    const diagonalAngle = Math.atan2(halfH, halfW);
+                    
+                    if (absAngle < diagonalAngle || absAngle > Math.PI - diagonalAngle) {
+                        fromX = from.x + Math.sign(Math.cos(angle)) * halfW * 0.7;
+                        fromY = from.y + Math.tan(angle) * Math.sign(Math.cos(angle)) * halfW * 0.7;
+                    } else {
+                        fromX = from.x + Math.sign(Math.sin(angle)) * halfH * 0.7 / Math.tan(absAngle);
+                        fromY = from.y + Math.sign(Math.sin(angle)) * halfH * 0.7;
+                    }
+                } else {
+                    const halfW = fromShape.width / 2;
+                    const halfH = fromShape.height / 2;
+                    const absAngle = Math.abs(angle);
+                    const cornerAngle = Math.atan2(halfH, halfW);
+                    
+                    if (absAngle < cornerAngle || absAngle > Math.PI - cornerAngle) {
+                        fromX = from.x + Math.sign(Math.cos(angle)) * halfW;
+                        fromY = from.y + Math.tan(angle) * Math.sign(Math.cos(angle)) * halfW;
+                    } else {
+                        fromY = from.y + Math.sign(Math.sin(angle)) * halfH;
+                        fromX = from.x + Math.sign(Math.sin(angle)) * halfH / Math.tan(absAngle);
+                    }
+                }
+                
+                // To shape edge calculation
+                const reverseAngle = angle + Math.PI;
+                if (toShape.type === 'circle') {
+                    const radius = toShape.width / 2;
+                    toX = to.x + Math.cos(reverseAngle) * radius;
+                    toY = to.y + Math.sin(reverseAngle) * radius;
+                } else if (toShape.type === 'diamond') {
+                    const halfW = toShape.width / 2;
+                    const halfH = toShape.height / 2;
+                    const absAngle = Math.abs(reverseAngle);
+                    const diagonalAngle = Math.atan2(halfH, halfW);
+                    
+                    if (absAngle < diagonalAngle || absAngle > Math.PI - diagonalAngle) {
+                        toX = to.x + Math.sign(Math.cos(reverseAngle)) * halfW * 0.7;
+                        toY = to.y + Math.tan(reverseAngle) * Math.sign(Math.cos(reverseAngle)) * halfW * 0.7;
+                    } else {
+                        toX = to.x + Math.sign(Math.sin(reverseAngle)) * halfH * 0.7 / Math.tan(absAngle);
+                        toY = to.y + Math.sign(Math.sin(reverseAngle)) * halfH * 0.7;
+                    }
+                } else {
+                    const halfW = toShape.width / 2;
+                    const halfH = toShape.height / 2;
+                    const absAngle = Math.abs(reverseAngle);
+                    const cornerAngle = Math.atan2(halfH, halfW);
+                    
+                    if (absAngle < cornerAngle || absAngle > Math.PI - cornerAngle) {
+                        toX = to.x + Math.sign(Math.cos(reverseAngle)) * halfW;
+                        toY = to.y + Math.tan(reverseAngle) * Math.sign(Math.cos(reverseAngle)) * halfW;
+                    } else {
+                        toY = to.y + Math.sign(Math.sin(reverseAngle)) * halfH;
+                        toX = to.x + Math.sign(Math.sin(reverseAngle)) * halfH / Math.tan(absAngle);
+                    }
+                }
+                
+                // Create invisible thick line for easier clicking
+                const hitLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                hitLine.setAttribute('x1', fromX);
+                hitLine.setAttribute('y1', fromY);
+                hitLine.setAttribute('x2', toX);
+                hitLine.setAttribute('y2', toY);
+                hitLine.setAttribute('stroke', 'transparent');
+                hitLine.setAttribute('stroke-width', '15');
+                hitLine.style.cursor = 'pointer';
+                hitLine.style.pointerEvents = 'stroke';
+                hitLine.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectedConnectionId = conn.id;
+                    selectedShapeId = null;
+                    updateSelection();
+                });
+                
+                // Create visible line
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', fromX);
+                line.setAttribute('y1', fromY);
+                line.setAttribute('x2', toX);
+                line.setAttribute('y2', toY);
+                line.setAttribute('stroke', selectedConnectionId === conn.id ? '#3b82f6' : '#374151');
+                line.setAttribute('stroke-width', selectedConnectionId === conn.id ? '3' : '2');
+                line.setAttribute('marker-end', 'url(#arrowhead)');
+                line.style.pointerEvents = 'none';
+                
+                svg.appendChild(hitLine);
+                svg.appendChild(line);
+            });
+        }
+        
+        // Get shape center
+        function getShapeCenter(shape) {
+            return {
+                x: shape.x + shape.width / 2,
+                y: shape.y + shape.height / 2
+            };
+        }
+        
+        // Print diagram
+        function printDiagram() {
+            // Clear any selections before printing
+            const tempSelectedShape = selectedShapeId;
+            const tempSelectedConnection = selectedConnectionId;
+            const tempConnecting = connectingFromId;
+            
+            selectedShapeId = null;
+            selectedConnectionId = null;
+            connectingFromId = null;
+            
+            updateSelection();
+            updateConnectionMode();
+            
+            // Trigger print
+            window.print();
+            
+            // Restore selections after print dialog closes
+            setTimeout(() => {
+                selectedShapeId = tempSelectedShape;
+                selectedConnectionId = tempSelectedConnection;
+                connectingFromId = tempConnecting;
+                updateSelection();
+                updateConnectionMode();
+            }, 100);
+        }
+        
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Initialize
+        updateToolbar();
+    </script>
+</body>
+</html>
