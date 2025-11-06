@@ -1,0 +1,1 @@
+<localstack bootstrap script>
