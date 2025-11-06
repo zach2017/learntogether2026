@@ -94,75 +94,77 @@
         }
         
         .shape-rectangle {
-            border-radius: 0.375rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            padding: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
         
         .shape-circle {
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            padding: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
         
         .shape-diamond {
-            display: flex;
-            align-items: center;
-            justify-content: center;
             position: relative;
-        }
-        
-        .diamond-inner {
-            position: absolute;
-            width: 75%;
-            height: 75%;
-            transform: rotate(45deg);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        
-        .diamond-text {
-            position: relative;
-            z-index: 10;
-            color: white;
-            font-weight: 600;
-            padding: 8px;
         }
         
         .shape-class {
-            border-radius: 0.375rem;
-            border: 2px solid #374151;
-            color: white;
+            position: relative;
+        }
+        
+        .shape-cloud {
+            position: relative;
+        }
+        
+        .shape-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+        
+        .shape-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-weight: 500;
+            color: #000;
+            pointer-events: none;
+            max-width: 90%;
+            word-wrap: break-word;
+        }
+        
+        .shape-class .shape-text {
+            top: 0;
+            left: 0;
+            transform: none;
+            width: 100%;
+            height: 100%;
             padding: 8px;
             font-family: monospace;
             font-size: 0.875rem;
             white-space: pre-wrap;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: flex-start;
         }
         
         .text-input {
             background: transparent;
-            border: none;
+            border: 2px solid #3b82f6;
             outline: none;
-            color: inherit;
+            color: #000;
             font: inherit;
             text-align: center;
             width: 100%;
-            height: 100%;
+            z-index: 100;
+            position: relative;
+            padding: 4px;
+            border-radius: 4px;
         }
         
         textarea.text-input {
             resize: none;
             text-align: left;
+            height: 100%;
+            padding: 8px;
         }
     </style>
 </head>
@@ -192,6 +194,13 @@
                     <path d="M12 2l9 10-9 10-9-10z"/>
                 </svg>
                 <span class="text-xs">Diamond</span>
+            </button>
+            
+            <button onclick="addShape('cloud')" class="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2">
+                    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+                </svg>
+                <span class="text-xs">Cloud</span>
             </button>
             
             <button onclick="addShape('class')" class="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
@@ -263,19 +272,19 @@
         
         <!-- Color picker -->
         <div id="colorPicker" class="hidden gap-2">
-            <button onclick="changeColor('#3b82f6')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #3b82f6;"></button>
-            <button onclick="changeColor('#10b981')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #10b981;"></button>
-            <button onclick="changeColor('#f59e0b')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #f59e0b;"></button>
-            <button onclick="changeColor('#ef4444')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #ef4444;"></button>
-            <button onclick="changeColor('#8b5cf6')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #8b5cf6;"></button>
-            <button onclick="changeColor('#ec4899')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #ec4899;"></button>
-            <button onclick="changeColor('#6366f1')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #6366f1;"></button>
-            <button onclick="changeColor('#14b8a6')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #14b8a6;"></button>
+            <button onclick="changeColor('#ffffff')" class="w-8 h-8 rounded-full border-2 border-gray-400 hover:border-gray-600 transition-colors" style="background-color: #ffffff;"></button>
+            <button onclick="changeColor('#f3f4f6')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #f3f4f6;"></button>
+            <button onclick="changeColor('#d1d5db')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #d1d5db;"></button>
+            <button onclick="changeColor('#9ca3af')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #9ca3af;"></button>
+            <button onclick="changeColor('#6b7280')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #6b7280;"></button>
+            <button onclick="changeColor('#374151')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #374151;"></button>
+            <button onclick="changeColor('#1f2937')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #1f2937;"></button>
+            <button onclick="changeColor('#000000')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #000000;"></button>
         </div>
         
         <!-- Instructions -->
         <div class="ml-auto text-sm text-gray-600">
-            <p><strong>Tips:</strong> Click shapes/arrows to select • Double-click to edit • Export/Import to save diagrams as YAML</p>
+            <p><strong>Tips:</strong> Professional B&W SVG shapes • Double-click to edit • Use color picker for shading</p>
         </div>
     </div>
     
@@ -284,7 +293,7 @@
         <svg id="connectionsSvg" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 0;">
             <defs>
                 <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                    <polygon points="0 0, 10 3, 0 6" fill="#374151" />
+                    <polygon points="0 0, 10 3, 0 6" fill="#000" />
                 </marker>
             </defs>
         </svg>
@@ -309,10 +318,11 @@
         let shapeIdCounter = 1;
         
         const shapeDefaults = {
-            rectangle: { width: 100, height: 100, color: '#3b82f6', text: 'Text' },
-            circle: { width: 100, height: 100, color: '#10b981', text: 'Text' },
-            diamond: { width: 100, height: 100, color: '#f59e0b', text: 'Text' },
-            class: { width: 150, height: 120, color: '#8b5cf6', text: 'ClassName\n---\n+method()' }
+            rectangle: { width: 100, height: 100, color: '#ffffff', text: 'Text' },
+            circle: { width: 100, height: 100, color: '#ffffff', text: 'Text' },
+            diamond: { width: 100, height: 100, color: '#ffffff', text: 'Text' },
+            cloud: { width: 120, height: 80, color: '#ffffff', text: 'Text' },
+            class: { width: 150, height: 120, color: '#ffffff', text: 'ClassName\n---\n+method()' }
         };
         
         // Add shape to canvas
@@ -341,17 +351,59 @@
             shapeDiv.style.top = shape.y + 'px';
             shapeDiv.style.width = shape.width + 'px';
             shapeDiv.style.height = shape.height + 'px';
-            shapeDiv.style.backgroundColor = shape.color;
             
-            if (shape.type === 'diamond') {
+            if (shape.type === 'rectangle') {
                 shapeDiv.innerHTML = `
-                    <div class="diamond-inner" style="background-color: ${shape.color};"></div>
-                    <div class="diamond-text" id="text-${shape.id}">${escapeHtml(shape.text)}</div>
+                    <svg class="shape-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                        <rect x="2" y="2" width="96" height="96" rx="4" 
+                              fill="${shape.color}" 
+                              stroke="#000" 
+                              stroke-width="2"/>
+                    </svg>
+                    <div class="shape-text" id="text-${shape.id}">${escapeHtml(shape.text)}</div>
+                `;
+            } else if (shape.type === 'circle') {
+                shapeDiv.innerHTML = `
+                    <svg class="shape-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="48" 
+                                fill="${shape.color}" 
+                                stroke="#000" 
+                                stroke-width="2"/>
+                    </svg>
+                    <div class="shape-text" id="text-${shape.id}">${escapeHtml(shape.text)}</div>
+                `;
+            } else if (shape.type === 'diamond') {
+                shapeDiv.innerHTML = `
+                    <svg class="shape-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M50,5 L95,50 L50,95 L5,50 Z" 
+                              fill="${shape.color}" 
+                              stroke="#000" 
+                              stroke-width="2"/>
+                    </svg>
+                    <div class="shape-text" id="text-${shape.id}">${escapeHtml(shape.text)}</div>
+                `;
+            } else if (shape.type === 'cloud') {
+                shapeDiv.innerHTML = `
+                    <svg class="shape-svg" viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                        <path d="M90,45 Q90,35 80,35 Q80,20 65,20 Q50,20 45,30 Q35,25 25,30 Q15,35 15,45 Q5,50 5,60 Q5,70 15,70 L85,70 Q95,70 100,60 Q100,50 90,45 Z" 
+                              fill="${shape.color}" 
+                              stroke="#000" 
+                              stroke-width="2"/>
+                    </svg>
+                    <div class="shape-text" id="text-${shape.id}">${escapeHtml(shape.text)}</div>
                 `;
             } else if (shape.type === 'class') {
-                shapeDiv.innerHTML = `<div id="text-${shape.id}">${escapeHtml(shape.text)}</div>`;
-            } else {
-                shapeDiv.innerHTML = `<div id="text-${shape.id}">${escapeHtml(shape.text)}</div>`;
+                shapeDiv.innerHTML = `
+                    <svg class="shape-svg" viewBox="0 0 150 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                        <rect x="2" y="2" width="146" height="116" rx="4" 
+                              fill="${shape.color}" 
+                              stroke="#000" 
+                              stroke-width="2"/>
+                        <line x1="2" y1="35" x2="148" y2="35" stroke="#000" stroke-width="2"/>
+                        <line x1="2" y1="80" x2="148" y2="80" stroke="#000" stroke-width="2"/>
+                    </svg>
+                    <div class="shape-text" id="text-${shape.id}">${escapeHtml(shape.text)}</div>
+                `;
             }
             
             shapeDiv.addEventListener('mousedown', (e) => handleShapeMouseDown(e, shape.id));
@@ -597,12 +649,12 @@
             shape.color = color;
             
             const shapeDiv = document.getElementById(`shape-${selectedShapeId}`);
-            shapeDiv.style.backgroundColor = color;
             
-            if (shape.type === 'diamond') {
-                const diamondInner = shapeDiv.querySelector('.diamond-inner');
-                diamondInner.style.backgroundColor = color;
-            }
+            // Update SVG fill
+            const svgElements = shapeDiv.querySelectorAll('rect, circle, path');
+            svgElements.forEach(elem => {
+                elem.setAttribute('fill', color);
+            });
             
             document.getElementById('colorPicker').classList.add('hidden');
             document.getElementById('colorPicker').classList.remove('flex');
@@ -651,75 +703,127 @@
                 const from = getShapeCenter(fromShape);
                 const to = getShapeCenter(toShape);
                 
-                const angle = Math.atan2(to.y - from.y, to.x - from.x);
+                const dx = to.x - from.x;
+                const dy = to.y - from.y;
+                const angle = Math.atan2(dy, dx);
                 
                 // Calculate edge points based on shape type
                 let fromX, fromY, toX, toY;
                 
                 // From shape edge calculation
+                fromX = from.x;
+                fromY = from.y;
+                
                 if (fromShape.type === 'circle') {
-                    const radius = fromShape.width / 2;
+                    // Circle: exact radius minus stroke
+                    const radius = (fromShape.width / 2) - 2;
                     fromX = from.x + Math.cos(angle) * radius;
                     fromY = from.y + Math.sin(angle) * radius;
                 } else if (fromShape.type === 'diamond') {
-                    const halfW = fromShape.width / 2;
-                    const halfH = fromShape.height / 2;
-                    const absAngle = Math.abs(angle);
-                    const diagonalAngle = Math.atan2(halfH, halfW);
+                    // Diamond: calculate intersection with rotated square
+                    const halfW = (fromShape.width / 2) - 4;
+                    const halfH = (fromShape.height / 2) - 4;
                     
-                    if (absAngle < diagonalAngle || absAngle > Math.PI - diagonalAngle) {
-                        fromX = from.x + Math.sign(Math.cos(angle)) * halfW * 0.7;
-                        fromY = from.y + Math.tan(angle) * Math.sign(Math.cos(angle)) * halfW * 0.7;
+                    // Use parametric line intersection with diamond edges
+                    const absAngle = Math.abs(angle);
+                    const absCos = Math.abs(Math.cos(angle));
+                    const absSin = Math.abs(Math.sin(angle));
+                    
+                    if (absCos > absSin) {
+                        // Intersect with left or right edge
+                        const t = halfW / absCos;
+                        fromX = from.x + Math.cos(angle) * t;
+                        fromY = from.y + Math.sin(angle) * t;
                     } else {
-                        fromX = from.x + Math.sign(Math.sin(angle)) * halfH * 0.7 / Math.tan(absAngle);
-                        fromY = from.y + Math.sign(Math.sin(angle)) * halfH * 0.7;
+                        // Intersect with top or bottom edge
+                        const t = halfH / absSin;
+                        fromX = from.x + Math.cos(angle) * t;
+                        fromY = from.y + Math.sin(angle) * t;
                     }
-                } else {
-                    const halfW = fromShape.width / 2;
-                    const halfH = fromShape.height / 2;
-                    const absAngle = Math.abs(angle);
-                    const cornerAngle = Math.atan2(halfH, halfW);
+                } else if (fromShape.type === 'cloud') {
+                    // Cloud: elliptical approximation
+                    const radiusX = (fromShape.width / 2) - 4;
+                    const radiusY = (fromShape.height / 2) - 4;
                     
-                    if (absAngle < cornerAngle || absAngle > Math.PI - cornerAngle) {
-                        fromX = from.x + Math.sign(Math.cos(angle)) * halfW;
-                        fromY = from.y + Math.tan(angle) * Math.sign(Math.cos(angle)) * halfW;
+                    // Ellipse intersection
+                    const cos = Math.cos(angle);
+                    const sin = Math.sin(angle);
+                    const t = Math.sqrt(1 / ((cos * cos) / (radiusX * radiusX) + (sin * sin) / (radiusY * radiusY)));
+                    
+                    fromX = from.x + cos * t * 0.9;
+                    fromY = from.y + sin * t * 0.9;
+                } else {
+                    // Rectangle and Class: box edge intersection
+                    const halfW = (fromShape.width / 2) - 2;
+                    const halfH = (fromShape.height / 2) - 2;
+                    
+                    const absCos = Math.abs(Math.cos(angle));
+                    const absSin = Math.abs(Math.sin(angle));
+                    
+                    if (halfH * absCos < halfW * absSin) {
+                        // Intersect with top or bottom
+                        const t = halfH / absSin;
+                        fromX = from.x + Math.cos(angle) * t;
+                        fromY = from.y + Math.sin(angle) * t;
                     } else {
-                        fromY = from.y + Math.sign(Math.sin(angle)) * halfH;
-                        fromX = from.x + Math.sign(Math.sin(angle)) * halfH / Math.tan(absAngle);
+                        // Intersect with left or right
+                        const t = halfW / absCos;
+                        fromX = from.x + Math.cos(angle) * t;
+                        fromY = from.y + Math.sin(angle) * t;
                     }
                 }
                 
-                // To shape edge calculation
+                // To shape edge calculation (reverse direction)
                 const reverseAngle = angle + Math.PI;
+                toX = to.x;
+                toY = to.y;
+                
                 if (toShape.type === 'circle') {
-                    const radius = toShape.width / 2;
+                    const radius = (toShape.width / 2) - 2;
                     toX = to.x + Math.cos(reverseAngle) * radius;
                     toY = to.y + Math.sin(reverseAngle) * radius;
                 } else if (toShape.type === 'diamond') {
-                    const halfW = toShape.width / 2;
-                    const halfH = toShape.height / 2;
-                    const absAngle = Math.abs(reverseAngle);
-                    const diagonalAngle = Math.atan2(halfH, halfW);
+                    const halfW = (toShape.width / 2) - 4;
+                    const halfH = (toShape.height / 2) - 4;
                     
-                    if (absAngle < diagonalAngle || absAngle > Math.PI - diagonalAngle) {
-                        toX = to.x + Math.sign(Math.cos(reverseAngle)) * halfW * 0.7;
-                        toY = to.y + Math.tan(reverseAngle) * Math.sign(Math.cos(reverseAngle)) * halfW * 0.7;
+                    const absAngle = Math.abs(reverseAngle);
+                    const absCos = Math.abs(Math.cos(reverseAngle));
+                    const absSin = Math.abs(Math.sin(reverseAngle));
+                    
+                    if (absCos > absSin) {
+                        const t = halfW / absCos;
+                        toX = to.x + Math.cos(reverseAngle) * t;
+                        toY = to.y + Math.sin(reverseAngle) * t;
                     } else {
-                        toX = to.x + Math.sign(Math.sin(reverseAngle)) * halfH * 0.7 / Math.tan(absAngle);
-                        toY = to.y + Math.sign(Math.sin(reverseAngle)) * halfH * 0.7;
+                        const t = halfH / absSin;
+                        toX = to.x + Math.cos(reverseAngle) * t;
+                        toY = to.y + Math.sin(reverseAngle) * t;
                     }
-                } else {
-                    const halfW = toShape.width / 2;
-                    const halfH = toShape.height / 2;
-                    const absAngle = Math.abs(reverseAngle);
-                    const cornerAngle = Math.atan2(halfH, halfW);
+                } else if (toShape.type === 'cloud') {
+                    const radiusX = (toShape.width / 2) - 4;
+                    const radiusY = (toShape.height / 2) - 4;
                     
-                    if (absAngle < cornerAngle || absAngle > Math.PI - cornerAngle) {
-                        toX = to.x + Math.sign(Math.cos(reverseAngle)) * halfW;
-                        toY = to.y + Math.tan(reverseAngle) * Math.sign(Math.cos(reverseAngle)) * halfW;
+                    const cos = Math.cos(reverseAngle);
+                    const sin = Math.sin(reverseAngle);
+                    const t = Math.sqrt(1 / ((cos * cos) / (radiusX * radiusX) + (sin * sin) / (radiusY * radiusY)));
+                    
+                    toX = to.x + cos * t * 0.9;
+                    toY = to.y + sin * t * 0.9;
+                } else {
+                    const halfW = (toShape.width / 2) - 2;
+                    const halfH = (toShape.height / 2) - 2;
+                    
+                    const absCos = Math.abs(Math.cos(reverseAngle));
+                    const absSin = Math.abs(Math.sin(reverseAngle));
+                    
+                    if (halfH * absCos < halfW * absSin) {
+                        const t = halfH / absSin;
+                        toX = to.x + Math.cos(reverseAngle) * t;
+                        toY = to.y + Math.sin(reverseAngle) * t;
                     } else {
-                        toY = to.y + Math.sign(Math.sin(reverseAngle)) * halfH;
-                        toX = to.x + Math.sign(Math.sin(reverseAngle)) * halfH / Math.tan(absAngle);
+                        const t = halfW / absCos;
+                        toX = to.x + Math.cos(reverseAngle) * t;
+                        toY = to.y + Math.sin(reverseAngle) * t;
                     }
                 }
                 
@@ -746,7 +850,7 @@
                 line.setAttribute('y1', fromY);
                 line.setAttribute('x2', toX);
                 line.setAttribute('y2', toY);
-                line.setAttribute('stroke', selectedConnectionId === conn.id ? '#3b82f6' : '#374151');
+                line.setAttribute('stroke', selectedConnectionId === conn.id ? '#3b82f6' : '#000');
                 line.setAttribute('stroke-width', selectedConnectionId === conn.id ? '3' : '2');
                 line.setAttribute('marker-end', 'url(#arrowhead)');
                 line.style.pointerEvents = 'none';
