@@ -1,0 +1,9 @@
+server:
+  port: 9000
+spring:
+  security:
+    user:
+      name: admin
+      password: password
+app:
+  issuer: http://localhost:9000
