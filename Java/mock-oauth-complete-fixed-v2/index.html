@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Password Grant Test</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        form { display: grid; gap: 10px; max-width: 300px; }
+        input { padding: 8px; }
+        button { padding: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+        pre { background: #f4f4f4; padding: 1em; white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+
+    <h2>OAuth Login (Password Grant)</h2>
+    <form id="login-form">
+        <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" required>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" required>
+        </div>
+        <button type="submit">Get Token</button>
+    </form>
+
+    <h3>Server Response:</h3>
+    <pre id="output">Waiting for submission...</pre>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async function(event) {
+            // Prevent the form from submitting normally
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const output = document.getElementById('output');
+
+            // !!! IMPORTANT: Update 'your-realm-name' to your actual realm
+            const tokenUrl = 'http://localhost:8080/login';
+            const clientId = 'test-client';
+
+            // We use 'URLSearchParams' to format the body as 'x-www-form-urlencoded'
+            const body = new URLSearchParams();
+            body.append('grant_type', 'password');
+            body.append('client_id', clientId);
+            body.append('username', username);
+            body.append('password', password);
+            // We DO NOT include client_secret here
+
+            output.textContent = 'Requesting token...';
+
+            try {
+                const myCsrfToken =  crypto.randomUUID();
+                const response = await fetch(tokenUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRF-Token': myCsrfToken
+                    },
+                    body: body
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Success! Display the token.
+                    output.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    // Handle errors from the server
+                    output.textContent = `Error: ${data.error}\n${data.error_description}`;
+                }
+
+            } catch (error) {
+                // Handle network or other fetch errors
+                output.textContent = `Network error: ${error.message}`;
+            }
+        });
+    </script>
+
+</body>
+</html>
