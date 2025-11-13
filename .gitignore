@@ -153,3 +153,6 @@ Java/securejwt/src/main/resources/static/
 Docker/microservicedemo/spring-keycloak-demo copy/client-service/target
 ArtificialIntelligence/demoapp/spring-app/target
 Java/mock-auth-server/target/
+Java/mock-oauth-complete/mock-oauth-server/target/
+Java/mock-oauth-complete/resource-server/target/
+Java/mock-resource-server/target/

@@ -1,11 +1,11 @@
-package com.example.resource;
+package com.example.oauth;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class ResourceServerApplication {
+public class MockOAuthServerApplication {
     public static void main(String[] args) {
-        SpringApplication.run(ResourceServerApplication.class, args);
+        SpringApplication.run(MockOAuthServerApplication.class, args);
     }
 }
