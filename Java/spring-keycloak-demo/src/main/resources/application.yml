@@ -1,0 +1,15 @@
+server:
+  port: 8080
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8081/realms/myrealm
+
+app:
+  oauth2:
+    authorization-uri: http://localhost:8081/realms/myrealm/protocol/openid-connect/auth
+    client-id: my-spring-client
+    redirect-uri: http://localhost:8080/
