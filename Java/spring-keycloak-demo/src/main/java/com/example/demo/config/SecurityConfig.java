@@ -1,31 +1,97 @@
 package com.example.demo.config;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
+
 import java.util.*;
-import org.springframework.security.core.*;
-import org.springframework.security.core.authority.*;
 
 @Configuration
 public class SecurityConfig {
 
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
+
+    private static final String ACCESS_TOKEN_COOKIE_NAME = "JSESSIONID";
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
+        log.info("Configuring HTTP security (resource server + cookie-based JWT)");
+
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            // Let Spring create a session for request cache, but auth itself is still via JWT
+            .sessionManagement(sm ->
+                sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            ) 
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/getAuth").permitAll()
-                .requestMatchers("/", "/index.html", "/api/**", "/css/**", "/js/**").hasRole("USER")
+                .requestMatchers("/", "/api/**", "/css/**", "/js/**", "/images/**")
+                    .hasRole("USER")
                 .anyRequest().authenticated()
             )
-            .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter())));
+            .oauth2ResourceServer(oauth -> oauth
+                .bearerTokenResolver(cookieAwareBearerTokenResolver())
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter()))
+            );
+
         return http.build();
+    }
+
+    /**
+     * Custom BearerTokenResolver:
+     * 1) Try Authorization: Bearer xxx header
+     * 2) If missing, try cookie ACCESS_TOKEN
+     */
+    @Bean
+    public BearerTokenResolver cookieAwareBearerTokenResolver() {
+        return new BearerTokenResolver() {
+            @Override
+            public String resolve(HttpServletRequest request) {
+                // 1. Standard Authorization header
+                String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+                if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
+                    String token = authHeader.substring(7);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Resolved JWT from Authorization header");
+                    }
+                    return token;
+                }
+
+                // 2. Custom cookie
+                if (request.getCookies() != null) {
+                    for (Cookie cookie : request.getCookies()) {
+                        if (ACCESS_TOKEN_COOKIE_NAME.equals(cookie.getName())
+                                && StringUtils.hasText(cookie.getValue())) {
+                            if (log.isDebugEnabled()) {
+                                log.debug("Resolved JWT from cookie {}", ACCESS_TOKEN_COOKIE_NAME);
+                            }
+                            return cookie.getValue();
+                        }
+                    }
+                }
+
+                if (log.isDebugEnabled()) {
+                    log.debug("No bearer token found (header or cookie)");
+                }
+                return null;
+            }
+        };
     }
 
     @Bean
@@ -37,11 +103,21 @@ public class SecurityConfig {
         JwtAuthenticationConverter conv = new JwtAuthenticationConverter();
         conv.setJwtGrantedAuthoritiesConverter(jwt -> {
             Set<GrantedAuthority> auths = new HashSet<>(base.convert(jwt));
+
             Map<String, Object> realm = jwt.getClaim("realm_access");
             if (realm != null) {
+                @SuppressWarnings("unchecked")
                 List<String> roles = (List<String>) realm.get("roles");
-                if (roles != null) roles.forEach(r -> auths.add(new SimpleGrantedAuthority("ROLE_" + r.toUpperCase())));
+                if (roles != null) {
+                    roles.forEach(r -> auths.add(new SimpleGrantedAuthority("ROLE_" + r.toUpperCase())));
+                }
             }
+
+            if (log.isDebugEnabled()) {
+                log.debug("JWT subject: {}", jwt.getSubject());
+                log.debug("JWT authorities resolved: {}", auths);
+            }
+
             return auths;
         });
         return conv;

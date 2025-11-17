@@ -1,12 +1,30 @@
 server:
   port: 8080
-
+  servlet:
+    session:
+      cookie:
+        # Force the cookie name to be JSESSIONID
+        name: JSESSIONID
+        
+        # Prevents JavaScript (XSS) from reading the cookie
+        http-only: true
+        
+        # Set to 'true' only if you are using HTTPS (SSL). 
+        # If you are on localhost (http), keep this 'false'.
+        secure: false
+        
+        # Strict prevents the cookie from being sent in cross-site requests (CSRF protection)
+        same-site: strict
+        
 spring:
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:9191/realms/demo-realm
+
+
+  
 
 logging:
   level:
