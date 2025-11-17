@@ -6,10 +6,19 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8081/realms/myrealm
+          issuer-uri: http://localhost:9191/realms/demo-realm
+
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.boot.autoconfigure: INFO
 
 app:
   oauth2:
-    authorization-uri: http://localhost:8081/realms/myrealm/protocol/openid-connect/auth
-    client-id: my-spring-client
-    redirect-uri: http://localhost:8080/
+    authorization-uri: http://localhost:9191/realms/demo-realm/protocol/openid-connect/auth
+    client-id: demo-client
+    redirect-uri: http://localhost:8080/api/hello
