@@ -1,5 +1,6 @@
 import { useAuth } from './AuthContext';
 import './SecurePage.css';
+import InactivityTimer from './InactivityTimer';
 
 const SecurePage = () => {
   const { userInfo, logout, getUserRoles } = useAuth();
@@ -12,6 +13,7 @@ const SecurePage = () => {
         
         <div className="info-section">
           <h2>Your Information</h2>
+          <InactivityTimer/>
           {userInfo?.email && (
             <p><strong>Email:</strong> {userInfo.email}</p>
           )}
