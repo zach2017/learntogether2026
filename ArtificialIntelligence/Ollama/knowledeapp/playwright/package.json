@@ -1,0 +1,14 @@
+{
+  "name": "knowledgedb",
+  "version": "1.0.0",
+  "description": "Knowlegde dmeo",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {},
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@types/node": "^24.10.0"
+  }
+}

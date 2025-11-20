@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: document_localstack
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    environment:
+      - SERVICES=s3,sqs
+      - DEBUG=0
+      - DATA_DIR=/tmp/localstack/data
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - EAGER_SERVICE_LOADING=1
+      - LAMBDA_EXECUTOR=docker
+    volumes:
+      - "${TMPDIR:-.}/.localstack:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - ./docker/localstack-init.sh:/docker-entrypoint-initaws.d/init-aws.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: document_postgres
+    environment:
+      POSTGRES_USER: docuser
+      POSTGRES_PASSWORD: docpass123
+      POSTGRES_DB: document_db
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docuser -d document_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - app-network
+    command: postgres -c shared_buffers=256MB -c max_connections=200
+
+  spring-app:
+    build:
+      context: ./spring-app
+      dockerfile: Dockerfile
+    container_name: document_spring_app
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/document_db
+      SPRING_DATASOURCE_USERNAME: docuser
+      SPRING_DATASOURCE_PASSWORD: docpass123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "false"
+      AWS_S3_ENDPOINT: http://localstack:4566
+      AWS_SQS_ENDPOINT: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_S3_BUCKET_NAME: documents
+      SQS_QUEUE_NAME: document-queue
+      JAVA_OPTS: "-Xmx1G -Xms256M"
+      SERVER_SERVLET_CONTEXT_PATH: /
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/documents"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - app-network
+    stdin_open: true
+    tty: true
+
+  python-summary-service:
+    build:
+      context: ./python-service
+      dockerfile: Dockerfile
+    container_name: document_python_service
+    environment:
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      SQS_QUEUE_NAME: document-queue
+      S3_BUCKET_NAME: documents
+      SPRING_API_URL: http://spring-app:8080/api
+      PYTHONUNBUFFERED: "1"
+      LOG_LEVEL: INFO
+    depends_on:
+      spring-app:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - app-network
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
+    name: document_network
