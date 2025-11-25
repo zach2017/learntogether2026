@@ -1,0 +1,61 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "7777:11434"  # Exposed to localhost only
+    environment:
+      #- OLLAMA_HOST=0.0.0.0
+      - OLLAMA_KEEP_ALIVE=24h
+    volumes:
+      - ollama:/root/.ollama
+    networks:
+      - app-network
+    entrypoint:
+      [
+        "/bin/bash","-lc",
+        "set -euo pipefail; \
+         ollama serve & \
+         until printf '' > /dev/tcp/127.0.0.1/11434 2>/dev/null; do echo 'Waiting for Ollama...'; sleep 2; done; \
+         echo 'Pulling model: qwen3:4b'; \
+         ollama pull qwen3:4b || echo 'Model already present or pull failed; continuing'; \
+         wait -n"
+      ]
+    healthcheck:
+      test: ["CMD", "bash", "-lc", "printf '' > /dev/tcp/127.0.0.1/11434"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./api
+    container_name: prompt-api
+    ports:
+      - "8000:8000"  # Exposed to localhost only
+    environment:
+      - OLLAMA_HOST=http://ollama:11434  # Use service name and internal port
+      - MODEL_NAME=qwen3:4b
+    networks:
+      - app-network
+    depends_on:
+      ollama:
+        condition: service_healthy
+   
+  web:
+    build: ./web
+    container_name: prompt-web
+    ports:
+      - "8080:80"  # Exposed to localhost only
+    networks:
+      - app-network
+    depends_on:
+      api:
+        condition: service_started
+
+volumes:
+  ollama:
+
+networks:
+  app-network:
+    driver: bridge
+    internal: false  # Set to true if you don't want containers to access the internet

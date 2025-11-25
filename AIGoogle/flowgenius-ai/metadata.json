@@ -1,0 +1,5 @@
+{
+  "name": "FlowGenius AI",
+  "description": "A professional-grade diagramming tool for Flowcharts, UML, and State Diagrams. Features AI-assisted generation via Gemini, JSON export/import, and a fully interactive drag-and-drop canvas.",
+  "requestFramePermissions": []
+}
