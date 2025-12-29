@@ -1,0 +1,19 @@
+cd C:\Users\zcstr\ragdemo
+code .
+pip install -r requirements.txt
+python ingest.py --persist ./chroma_db --collection demo --files docs/policy.txt docs/notes.txt
+python query.py --persist ./chroma_db --collection demo --query "How long do refunds take?"
+pip install -U langchain langchain-community langchain-core langchain-text-splitters chromadb sentence-transformers
+python ingest.py --persist ./chroma_db --collection demo --files docs/policy.txt docs/notes.txt
+python query.py --persist ./chroma_db --collection demo --query "How long do refunds take?"
+doskey /history > didthis.txt
+pip install -U langchain langchain-community langchain-core langchain-text-splitters chromadb sentence-transformers ollama
+python query.py --persist ./chroma_db --collection demo \
+  --query "Summarize our refund policy" --ollama llama3
+ollama list
+python query.py --persist ./chroma_db --collection demo --query "Summarize the policy" --ollama tinyllama
+`pip install -U `langchain-ollama
+pip install -U `langchain-ollama
+pip install -U langchain-ollama
+python query.py --persist ./chroma_db --collection demo --query "Summarize the policy" --ollama tinyllama
+doskey /history > didthis.txt

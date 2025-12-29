@@ -1,0 +1,33 @@
+# docker-compose.override.yml
+# This file overrides the main docker-compose.yml for development
+# Uncomment sections to enable custom configurations
+
+version: '3.8'
+
+services:
+  spring-app:
+    # Build configuration for development
+    build:
+      context: ./spring-app
+      dockerfile: Dockerfile
+      cache_from:
+        - maven:3.9.4-eclipse-temurin-17
+    
+    # Enable debug mode
+    environment:
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    
+    # Debug port
+    ports:
+      - "5005:5005"
+
+  python-summary-service:
+    # Enable development mode
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=DEBUG
+
+  postgres:
+    # Enable PostgreSQL query logging
+    environment:
+      - POSTGRES_INITDB_ARGS=-c log_statement=all -c log_duration=on

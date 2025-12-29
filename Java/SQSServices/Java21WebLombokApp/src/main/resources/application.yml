@@ -1,0 +1,24 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: spring-sqs-app
+
+aws:
+  region: ${AWS_REGION:us-east-1}
+  endpoint: ${AWS_ENDPOINT:http://localhost:4566}
+  access-key-id: ${AWS_ACCESS_KEY_ID:test}
+  secret-access-key: ${AWS_SECRET_ACCESS_KEY:test}
+
+sqs:
+  queue-name: ${SQS_QUEUE_NAME:spring-message-queue}
+  max-messages: 1
+  wait-time-seconds: 5
+  visibility-timeout: 30
+
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG
+    software.amazon.awssdk: DEBUG

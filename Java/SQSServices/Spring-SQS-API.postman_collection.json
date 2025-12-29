@@ -1,0 +1,111 @@
+{
+  "info": {
+    "name": "Spring SQS API",
+    "description": "Collection for testing Spring Boot SQS integration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/sqs/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "sqs", "health"]
+        },
+        "description": "Check the health of the SQS service and get queue message count"
+      }
+    },
+    {
+      "name": "Publish Message - Simple",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"content\": \"Simple test message\",\n  \"type\": \"INFO\",\n  \"priority\": \"LOW\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/sqs/publish",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "sqs", "publish"]
+        },
+        "description": "Publish a simple message to the SQS queue"
+      }
+    },
+    {
+      "name": "Publish Message - With Metadata",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"content\": \"Message with full metadata\",\n  \"type\": \"NOTIFICATION\",\n  \"priority\": \"HIGH\",\n  \"metadata\": {\n    \"source\": \"postman\",\n    \"userId\": \"user123\",\n    \"tags\": [\"test\", \"postman\", \"demo\"]\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/sqs/publish",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "sqs", "publish"]
+        },
+        "description": "Publish a message with complete metadata to the SQS queue"
+      }
+    },
+    {
+      "name": "Publish Message - Alert",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"content\": \"Critical system alert\",\n  \"type\": \"ALERT\",\n  \"priority\": \"HIGH\",\n  \"metadata\": {\n    \"source\": \"monitoring-system\",\n    \"userId\": \"system\",\n    \"tags\": [\"critical\", \"urgent\", \"production\"]\n  }\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/sqs/publish",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "sqs", "publish"]
+        },
+        "description": "Publish a high-priority alert message"
+      }
+    },
+    {
+      "name": "Read Message",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/sqs/read",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "sqs", "read"]
+        },
+        "description": "Read the next message from the SQS queue. Returns empty if no messages available."
+      }
+    }
+  ]
+}

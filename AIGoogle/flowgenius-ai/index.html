@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FlowGenius AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://esm.run/@google/genai"
+      }
+    }
+    </script>
+    <style>
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .grid-bg {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .node {
+            position: absolute;
+            user-select: none;
+            cursor: grab;
+            z-index: 10;
+            box-sizing: border-box;
+        }
+        /* Text nodes have no background/border by default */
+        .node.text-node { z-index: 15; cursor: text; }
+        .node.text-node:active { cursor: grabbing; }
+
+        .node:active { cursor: grabbing; }
+        
+        /* Selection styles */
+        .node.selected .selection-ring { outline: 2px solid #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2); }
+        .node.selected.separator .separator-line { background-color: #2563eb; }
+        
+        /* Handles */
+        .handle {
+            width: 10px; height: 10px; background: #64748b; border-radius: 50%;
+            position: absolute; opacity: 0; transition: all 0.2s; cursor: crosshair; z-index: 50;
+            border: 2px solid white;
+        }
+        .node:hover .handle { opacity: 1; }
+        .handle:hover { transform: scale(1.2); background: #2563eb; }
+        .node.connecting .handle { opacity: 1; }
+
+        /* Resize Handle */
+        .resize-handle {
+            width: 12px; height: 12px; 
+            background: white; border: 2px solid #2563eb; 
+            position: absolute; bottom: -6px; right: -6px;
+            cursor: se-resize; z-index: 60;
+            display: none;
+            border-radius: 2px;
+        }
+        .node.selected .resize-handle { display: block; }
+        
+        .resize-handle.x-only {
+            cursor: e-resize;
+            top: 50%; bottom: auto; transform: translateY(-50%);
+            right: -12px;
+        }
+
+        /* Edge Styles */
+        path.edge { fill: none; stroke: #64748b; stroke-width: 2px; cursor: pointer; transition: stroke 0.2s; }
+        path.edge:hover { stroke: #2563eb; stroke-width: 3px; }
+        path.edge.selected { stroke: #2563eb; stroke-width: 3px; }
+
+        .diamond-shape { transform: rotate(45deg); }
+        
+        .temp-edge { fill: none; stroke: #2563eb; stroke-width: 2px; stroke-dasharray: 5,5; pointer-events: none; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden bg-slate-50 text-slate-800">
+
+    <!-- Top Bar -->
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm z-20">
+        <div class="flex items-center gap-2">
+            <div class="bg-blue-600 p-2 rounded-lg">
+                <i data-lucide="workflow" class="text-white w-5 h-5"></i>
+            </div>
+            <h1 class="font-bold text-xl tracking-tight">FlowGenius<span class="text-blue-600">AI</span></h1>
+        </div>
+
+        <div class="flex-1 max-w-2xl mx-8 relative">
+            <div class="relative">
+                <input id="ai-prompt" type="text" 
+                    placeholder="Describe a diagram (e.g., 'Login flow with password reset')"
+                    class="w-full pl-4 pr-12 py-2.5 rounded-full border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none text-sm transition-all shadow-sm">
+                <button id="btn-generate" class="absolute right-1.5 top-1.5 p-1.5 bg-blue-600 rounded-full hover:bg-blue-700 transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button id="btn-clear" class="p-2 text-slate-600 hover:bg-slate-100 rounded-md" title="Clear Canvas">
+                <i data-lucide="trash-2" class="w-5 h-5"></i>
+            </button>
+            <div class="h-6 w-px bg-slate-200 mx-2"></div>
+            <button id="btn-import" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-md">
+                <i data-lucide="upload" class="w-4 h-4"></i> Import
+            </button>
+            <input type="file" id="file-input" accept=".json" class="hidden">
+            <button id="btn-export" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-md shadow-sm">
+                <i data-lucide="download" class="w-4 h-4"></i> Export
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 h-full relative overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-slate-200 flex flex-col h-full z-10 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+            <div class="p-4 border-b border-slate-100">
+                <h2 class="font-semibold text-slate-800">Library</h2>
+                <p class="text-xs text-slate-500 mt-1">Drag shapes to canvas</p>
+            </div>
+            <div class="p-4 space-y-1 overflow-y-auto flex-1">
+                
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-1">Flowchart</div>
+                
+                <div draggable="true" data-type="start" data-label="Start" class="draggable-item flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg cursor-grab hover:border-blue-400 transition-all hover:shadow-sm group">
+                    <div class="w-8 h-8 rounded-full border-2 border-green-500 bg-green-100 flex items-center justify-center">
+                        <span class="text-[10px] font-bold text-green-700">S</span>
+                    </div>
+                    <span class="text-sm font-medium text-slate-700 group-hover:text-blue-700">Start</span>
+                </div>
+
+                <div draggable="true" data-type="process" data-label="Process" class="draggable-item flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg cursor-grab hover:border-blue-400 transition-all hover:shadow-sm group">
+                    <div class="w-8 h-6 border-2 border-blue-500 bg-blue-100 rounded-sm"></div>
+                    <span class="text-sm font-medium text-slate-700 group-hover:text-blue-700">Process</span>
+                </div>
+
+                <div draggable="true" data-type="decision" data-label="Decision" class="draggable-item flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg cursor-grab hover:border-blue-400 transition-all hover:shadow-sm group">
+                    <div class="w-6 h-6 border-2 border-amber-500 bg-amber-100 transform rotate-45 rounded-sm ml-1"></div>
+                    <span class="text-sm font-medium text-slate-700 group-hover:text-blue-700 ml-1">Decision</span>
+                </div>
+
+                <div draggable="true" data-type="end" data-label="End" class="draggable-item flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg cursor-grab hover:border-blue-400 transition-all hover:shadow-sm group">
+                    <div class="w-8 h-8 rounded-full border-2 border-red-500 bg-red-100 flex items-center justify-center">
+                         <span class="text-[10px] font-bold text-red-700">E</span>
+                    </div>
+                    <span class="text-sm font-medium text-slate-700 group-hover:text-blue-700">End</span>
+                </div>
+
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6">Visuals</div>
+
+                <div draggable="true" data-type="separator" data-label="" class="draggable-item flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg cursor-grab hover:border-blue-400 transition-all hover:shadow-sm group">
+                    <div class="w-8 h-1 bg-slate-400"></div>
+                    <span class="text-sm font-medium text-slate-700 group-hover:text-blue-700">Separator Line</span>
+                </div>
+
+                <div draggable="true" data-type="circle" data-label="" class="draggable-item flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg cursor-grab hover:border-blue-400 transition-all hover:shadow-sm group">
+                    <div class="w-6 h-6 rounded-full border-2 border-purple-500 bg-transparent"></div>
+                    <span class="text-sm font-medium text-slate-700 group-hover:text-blue-700">Circle Group</span>
+                </div>
+
+                <div draggable="true" data-type="text" data-label="Text Node" class="draggable-item flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg cursor-grab hover:border-blue-400 transition-all hover:shadow-sm group">
+                    <i data-lucide="type" class="w-6 h-6 text-slate-600"></i>
+                    <span class="text-sm font-medium text-slate-700 group-hover:text-blue-700">Text</span>
+                </div>
+
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6">UML</div>
+
+                <div draggable="true" data-type="umlClass" data-label="Class" class="draggable-item flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg cursor-grab hover:border-blue-400 transition-all hover:shadow-sm group">
+                    <i data-lucide="box" class="w-6 h-6 text-purple-600"></i>
+                    <span class="text-sm font-medium text-slate-700 group-hover:text-blue-700">Class</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Canvas -->
+        <div id="canvas-container" class="flex-1 relative bg-slate-50 overflow-hidden cursor-grab active:cursor-grabbing grid-bg">
+            <div id="canvas-content" class="absolute top-0 left-0 w-[8000px] h-[8000px] origin-top-left transition-transform duration-75 ease-linear will-change-transform">
+                <!-- SVG Layer for Edges -->
+                <svg id="svg-layer" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible z-0">
+                    <defs>
+                        <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
+                        </marker>
+                        <marker id="arrow-selected" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb" />
+                        </marker>
+                    </defs>
+                    <g id="edges-group"></g>
+                </svg>
+                
+                <!-- Nodes Layer -->
+                <div id="nodes-layer" class="absolute inset-0 w-full h-full z-10"></div>
+
+                <!-- Temp Connection Layer (High Z-Index) -->
+                <svg id="temp-layer" class="absolute inset-0 w-full h-full pointer-events-none overflow-visible z-50"></svg>
+            </div>
+        </div>
+
+        <!-- Properties Panel -->
+        <aside id="properties-panel" class="w-64 bg-white border-l border-slate-200 flex flex-col h-full z-20 shadow-[-4px_0_24px_rgba(0,0,0,0.02)] hidden">
+            <div class="p-4 border-b border-slate-100">
+                <h2 class="font-semibold text-slate-800">Properties</h2>
+                <p class="text-xs text-slate-500 mt-1">Edit selected item</p>
+            </div>
+            
+            <div class="p-4 space-y-4 overflow-y-auto flex-1" id="props-content">
+                <!-- Dynamic Content will be injected here -->
+            </div>
+        </aside>
+    </div>
+
+    <!-- Loader -->
+    <div id="loader" class="fixed inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-2xl shadow-xl border border-slate-100 flex flex-col items-center">
+            <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <h3 class="text-lg font-bold text-slate-800">Thinking...</h3>
+            <p class="text-sm text-slate-500">Gemini is designing your diagram</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { GoogleGenAI } from "@google/genai";
+
+        // --- Application State ---
+        const state = {
+            nodes: [],
+            edges: [], // { id, source, target, sourceHandle, targetHandle, style: { stroke, strokeDasharray } }
+            transform: { x: -3500, y: -3500, scale: 1 },
+            isDragging: false,
+            isPanning: false,
+            isResizing: false,
+            selection: null,  // Can be node ID or edge ID
+            selectionType: null, // 'node' or 'edge'
+            dragItem: null, 
+            resizeItem: null,
+            resizeStart: null, 
+            panStart: { x: 0, y: 0 },
+            dragOffset: { x: 0, y: 0 },
+            connectionStart: null,
+            pointer: { x: 0, y: 0 }
+        };
+
+        // --- DOM Elements ---
+        const container = document.getElementById('canvas-container');
+        const content = document.getElementById('canvas-content');
+        const nodesLayer = document.getElementById('nodes-layer');
+        const edgesGroup = document.getElementById('edges-group');
+        const tempLayer = document.getElementById('temp-layer');
+        const loader = document.getElementById('loader');
+        const propsPanel = document.getElementById('properties-panel');
+        const propsContent = document.getElementById('props-content');
+
+        // --- Initialization ---
+        lucide.createIcons();
+        
+        function updateCanvasTransform() {
+            content.style.transform = `translate(${state.transform.x}px, ${state.transform.y}px) scale(${state.transform.scale})`;
+            container.style.backgroundPosition = `${state.transform.x}px ${state.transform.y}px`;
+            container.style.backgroundSize = `${20 * state.transform.scale}px ${20 * state.transform.scale}px`;
+        }
+
+        updateCanvasTransform();
+        render();
+
+        // --- Rendering ---
+        function render() {
+            // 1. Render Nodes
+            nodesLayer.innerHTML = '';
+            state.nodes.forEach(node => {
+                const el = document.createElement('div');
+                el.className = `node group ${state.selection === node.id ? 'selected' : ''} ${node.type === 'text' ? 'text-node' : ''} ${node.type === 'separator' ? 'separator' : ''}`;
+                el.style.left = `${node.x}px`;
+                el.style.top = `${node.y}px`;
+                el.dataset.id = node.id;
+                el.innerHTML = getNodeHTML(node);
+                
+                nodesLayer.appendChild(el);
+            });
+
+            // 2. Render Edges
+            edgesGroup.innerHTML = '';
+            state.edges.forEach(edge => {
+                const source = state.nodes.find(n => n.id === edge.source);
+                const target = state.nodes.find(n => n.id === edge.target);
+                if (source && target) {
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    const isSelected = state.selection === edge.id;
+                    path.setAttribute("d", getEdgePath(source, target, edge.sourceHandle, edge.targetHandle));
+                    path.setAttribute("class", `edge ${isSelected ? 'selected' : ''}`);
+                    path.setAttribute("marker-end", isSelected ? "url(#arrow-selected)" : "url(#arrow)");
+                    
+                    // Apply custom styles
+                    if (edge.style) {
+                        if (edge.style.stroke) path.style.stroke = edge.style.stroke;
+                        if (edge.style.strokeDasharray) path.setAttribute("stroke-dasharray", edge.style.strokeDasharray);
+                    }
+
+                    path.onclick = (e) => { e.stopPropagation(); select(edge.id, 'edge'); };
+                    edgesGroup.appendChild(path);
+                }
+            });
+
+            // 3. Render Temp Connection
+            tempLayer.innerHTML = '';
+            if (state.connectionStart) {
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                const start = { x: state.connectionStart.x, y: state.connectionStart.y };
+                const rect = container.getBoundingClientRect();
+                const endX = (state.pointer.x - rect.left - state.transform.x) / state.transform.scale;
+                const endY = (state.pointer.y - rect.top - state.transform.y) / state.transform.scale;
+                
+                const d = `M ${start.x} ${start.y} L ${endX} ${endY}`;
+                path.setAttribute("d", d);
+                path.setAttribute("class", "temp-edge");
+                tempLayer.appendChild(path);
+            }
+        }
+
+        function getNodeHTML(node) {
+            const s = node.data.style || {};
+            const bgColor = s.backgroundColor;
+            const borderColor = s.borderColor;
+            const borderStyle = s.borderStyle || 'solid';
+            const color = s.color || '#000'; // text color
+
+            const handles = `
+                <div class="handle" style="top:-5px; left:50%; transform:translateX(-50%)" data-handle="top" data-node="${node.id}"></div>
+                <div class="handle" style="top:50%; right:-5px; transform:translateY(-50%)" data-handle="right" data-node="${node.id}"></div>
+                <div class="handle" style="bottom:-5px; left:50%; transform:translateX(-50%)" data-handle="bottom" data-node="${node.id}"></div>
+                <div class="handle" style="top:50%; left:-5px; transform:translateY(-50%)" data-handle="left" data-node="${node.id}"></div>
+            `;
+
+            // CSS Variables for inline styles
+            const styleStr = `
+                background-color: ${bgColor || ''};
+                border-color: ${borderColor || ''};
+                border-style: ${borderStyle};
+                color: ${color};
+            `;
+
+            if (node.type === 'decision') {
+                // Default Colors for decision if not set
+                const fill = bgColor || '#fffbeb'; // amber-50
+                const stroke = borderColor || '#fbbf24'; // amber-400
+                return `
+                    <div class="w-32 h-32 relative flex items-center justify-center selection-ring">
+                        <div class="absolute inset-0 border-2 rounded-sm diamond-shape shadow-sm" 
+                             style="background-color: ${fill}; border-color: ${stroke}; border-style: ${borderStyle}"></div>
+                        <div class="relative z-10 text-xs font-semibold text-center px-2 leading-tight max-w-[90px] pointer-events-none" style="color: ${color}">${node.data.label}</div>
+                        ${handles}
+                    </div>
+                `;
+            } else if (node.type === 'start') {
+                 const fill = bgColor || '#f0fdf4'; // green-50
+                 const stroke = borderColor || '#22c55e'; // green-500
+                return `
+                    <div class="selection-ring px-6 py-2 rounded-full border-2 shadow-sm min-w-[100px] text-center relative"
+                         style="background-color: ${fill}; border-color: ${stroke}; border-style: ${borderStyle}">
+                        <span class="text-sm font-bold pointer-events-none" style="color: ${color}">${node.data.label}</span>
+                        ${handles}
+                    </div>
+                `;
+            } else if (node.type === 'end') {
+                 const fill = bgColor || '#fef2f2'; // red-50
+                 const stroke = borderColor || '#ef4444'; // red-500
+                return `
+                    <div class="selection-ring px-6 py-2 rounded-full border-2 shadow-sm min-w-[100px] text-center relative"
+                         style="background-color: ${fill}; border-color: ${stroke}; border-style: ${borderStyle}">
+                        <span class="text-sm font-bold pointer-events-none" style="color: ${color}">${node.data.label}</span>
+                        ${handles}
+                    </div>
+                `;
+            } else if (node.type === 'umlClass') {
+                 const fill = bgColor || '#ffffff'; 
+                 const stroke = borderColor || '#334155'; // slate-700
+                return `
+                    <div class="selection-ring w-48 border-2 shadow-md rounded-sm overflow-hidden flex flex-col relative"
+                         style="background-color: ${fill}; border-color: ${stroke}; border-style: ${borderStyle}">
+                        <div class="bg-slate-100 border-b p-2 font-bold text-center text-xs pointer-events-none" style="border-color: ${stroke}; color: ${color}">${node.data.label}</div>
+                        <div class="p-2 border-b text-[10px] space-y-0.5 min-h-[20px] pointer-events-none" style="border-color: ${stroke}; color: ${color}">
+                            ${(node.data.attributes || ['+ attr: type']).map(a => `<div>${a}</div>`).join('')}
+                        </div>
+                        <div class="p-2 text-[10px] space-y-0.5 min-h-[20px] pointer-events-none" style="color: ${color}">
+                            ${(node.data.methods || ['+ method(): void']).map(m => `<div>${m}</div>`).join('')}
+                        </div>
+                        ${handles}
+                    </div>
+                `;
+            } else if (node.type === 'text') {
+                return `
+                    <div class="selection-ring p-2 min-w-[50px] relative border border-transparent hover:border-slate-200">
+                        <span class="text-lg font-medium whitespace-nowrap pointer-events-none" style="color: ${color}">${node.data.label}</span>
+                    </div>
+                `;
+            } else if (node.type === 'separator') {
+                const w = node.data.width || 200;
+                const stroke = borderColor || '#475569';
+                return `
+                    <div class="selection-ring relative group flex items-center justify-center" style="width: ${w}px; height: 20px;">
+                        <div class="w-full h-1 transition-colors" style="background-color: ${stroke}"></div>
+                        <div class="resize-handle x-only" data-node="${node.id}"></div>
+                    </div>
+                `;
+            } else if (node.type === 'circle') {
+                const w = node.data.width || 200;
+                const h = node.data.height || 200;
+                const stroke = borderColor || '#c084fc'; // purple-400
+                const fill = bgColor || 'rgba(233, 213, 255, 0.2)';
+                return `
+                    <div class="selection-ring rounded-full border-4 relative flex items-center justify-center group" 
+                         style="width:${w}px; height:${h}px; background-color: ${fill}; border-color: ${stroke}; border-style: ${borderStyle}">
+                        <span class="text-xs font-bold absolute top-4 pointer-events-none" style="color: ${stroke}">${node.data.label || ''}</span>
+                        ${handles}
+                        <div class="resize-handle" data-node="${node.id}"></div>
+                    </div>
+                `;
+            } else {
+                // Process / Default
+                const fill = bgColor || '#ffffff'; 
+                const stroke = borderColor || '#3b82f6'; // blue-500
+                return `
+                    <div class="selection-ring px-4 py-3 rounded-md border-2 shadow-sm min-w-[140px] text-center relative"
+                         style="background-color: ${fill}; border-color: ${stroke}; border-style: ${borderStyle}">
+                        <span class="text-sm font-medium pointer-events-none" style="color: ${color}">${node.data.label}</span>
+                        ${handles}
+                    </div>
+                `;
+            }
+        }
+
+        function getEdgePath(source, target, sourceHandle, targetHandle) {
+            const s = getNodePort(source, sourceHandle || 'right');
+            const t = getNodePort(target, targetHandle || 'left');
+            
+            let cp1x = s.x, cp1y = s.y, cp2x = t.x, cp2y = t.y;
+            const curvature = 0.5;
+            const dist = Math.abs(t.x - s.x) * curvature + Math.abs(t.y - s.y) * curvature * 0.5;
+
+            switch(sourceHandle) {
+                case 'right': cp1x += dist; break;
+                case 'left': cp1x -= dist; break;
+                case 'bottom': cp1y += dist; break;
+                case 'top': cp1y -= dist; break;
+                default: cp1x += dist; 
+            }
+
+            switch(targetHandle) {
+                case 'right': cp2x += dist; break;
+                case 'left': cp2x -= dist; break;
+                case 'bottom': cp2y += dist; break;
+                case 'top': cp2y -= dist; break;
+                default: cp2x -= dist; 
+            }
+
+            return `M ${s.x} ${s.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${t.x} ${t.y}`;
+        }
+
+        function getNodePort(node, handle) {
+            let w = 140, h = 52; 
+            if (node.type === 'start' || node.type === 'end') { w = 100; h = 44; }
+            if (node.type === 'decision') { w = 128; h = 128; }
+            if (node.type === 'umlClass') { w = 192; h = 140; } 
+            if (node.type === 'text') { w = 100; h = 40; }
+            
+            if (node.type === 'separator') { w = node.data.width || 200; h = 20; }
+            if (node.type === 'circle') { w = node.data.width || 200; h = node.data.height || 200; }
+
+            const cx = node.x + w/2;
+            const cy = node.y + h/2;
+
+            if (handle === 'top') return { x: cx, y: node.y };
+            if (handle === 'right') return { x: node.x + w, y: cy };
+            if (handle === 'bottom') return { x: cx, y: node.y + h };
+            if (handle === 'left') return { x: node.x, y: cy };
+            
+            return { x: cx, y: cy };
+        }
+
+        // --- Properties Panel Logic ---
+        function select(id, type = 'node') {
+            state.selection = id;
+            state.selectionType = id ? type : null;
+            render();
+            updatePropertiesPanel();
+        }
+
+        function updatePropertiesPanel() {
+            if (!state.selection) {
+                propsPanel.classList.add('hidden');
+                return;
+            }
+            propsPanel.classList.remove('hidden');
+            propsContent.innerHTML = '';
+
+            if (state.selectionType === 'node') {
+                const node = state.nodes.find(n => n.id === state.selection);
+                if (!node) return;
+                
+                // Default Styles if undefined
+                const s = node.data.style || {};
+                
+                renderPropInput('Text / Label', 'text', node.data.label, (val) => {
+                    node.data.label = val;
+                    render();
+                });
+                
+                if (node.type !== 'separator') {
+                     renderPropColor('Text Color', s.color || '#000000', (val) => {
+                        setStyle(node, 'color', val);
+                    });
+                    renderPropColor('Fill Color', s.backgroundColor || '#ffffff', (val) => {
+                        setStyle(node, 'backgroundColor', val);
+                    });
+                }
+
+                renderPropColor('Line/Border Color', s.borderColor || '#000000', (val) => {
+                    setStyle(node, 'borderColor', val);
+                });
+
+                if (node.type !== 'text' && node.type !== 'separator') {
+                    renderPropSelect('Line Style', ['solid', 'dashed', 'dotted'], s.borderStyle || 'solid', (val) => {
+                        setStyle(node, 'borderStyle', val);
+                    });
+                }
+
+            } else if (state.selectionType === 'edge') {
+                const edge = state.edges.find(e => e.id === state.selection);
+                if (!edge) return;
+                
+                const s = edge.style || {};
+
+                renderPropColor('Line Color', s.stroke || '#64748b', (val) => {
+                    if (!edge.style) edge.style = {};
+                    edge.style.stroke = val;
+                    render();
+                });
+
+                renderPropSelect('Line Style', ['solid', 'dashed', 'dotted'], s.strokeDasharray ? 'dashed' : 'solid', (val) => {
+                    if (!edge.style) edge.style = {};
+                    if (val === 'dashed') edge.style.strokeDasharray = "5,5";
+                    else if (val === 'dotted') edge.style.strokeDasharray = "2,2";
+                    else edge.style.strokeDasharray = null;
+                    render();
+                });
+            }
+        }
+
+        function setStyle(node, key, val) {
+            if (!node.data.style) node.data.style = {};
+            node.data.style[key] = val;
+            render();
+        }
+
+        function renderPropInput(label, type, value, onChange) {
+            const wrapper = document.createElement('div');
+            wrapper.className = "flex flex-col gap-1";
+            wrapper.innerHTML = `<label class="text-xs font-medium text-slate-500">${label}</label>`;
+            
+            if (type === 'text') {
+                const input = document.createElement('textarea');
+                input.className = "w-full px-2 py-1 text-sm border border-slate-200 rounded focus:border-blue-500 outline-none resize-y min-h-[60px]";
+                input.value = value;
+                input.oninput = (e) => onChange(e.target.value);
+                wrapper.appendChild(input);
+            }
+            propsContent.appendChild(wrapper);
+        }
+
+        function renderPropColor(label, value, onChange) {
+            const wrapper = document.createElement('div');
+            wrapper.className = "flex flex-col gap-1";
+            wrapper.innerHTML = `<label class="text-xs font-medium text-slate-500">${label}</label>`;
+            
+            const div = document.createElement('div');
+            div.className = "flex items-center gap-2";
+            
+            const input = document.createElement('input');
+            input.type = "color";
+            input.className = "w-8 h-8 p-0 border-0 rounded cursor-pointer";
+            input.value = value.length === 7 ? value : '#000000'; // Ensure hex
+            input.oninput = (e) => onChange(e.target.value);
+
+            const text = document.createElement('span');
+            text.className = "text-xs text-slate-400 font-mono";
+            text.innerText = value;
+
+            div.appendChild(input);
+            div.appendChild(text);
+            wrapper.appendChild(div);
+            propsContent.appendChild(wrapper);
+        }
+
+        function renderPropSelect(label, options, value, onChange) {
+            const wrapper = document.createElement('div');
+            wrapper.className = "flex flex-col gap-1";
+            wrapper.innerHTML = `<label class="text-xs font-medium text-slate-500">${label}</label>`;
+            
+            const select = document.createElement('select');
+            select.className = "w-full px-2 py-1.5 text-sm border border-slate-200 rounded focus:border-blue-500 outline-none bg-white";
+            options.forEach(opt => {
+                const o = document.createElement('option');
+                o.value = opt;
+                o.text = opt.charAt(0).toUpperCase() + opt.slice(1);
+                o.selected = opt === value;
+                select.appendChild(o);
+            });
+            select.onchange = (e) => onChange(e.target.value);
+            wrapper.appendChild(select);
+            propsContent.appendChild(wrapper);
+        }
+
+        // --- Event Listeners ---
+
+        // Drag & Drop from Sidebar
+        document.querySelectorAll('.draggable-item').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('type', item.dataset.type);
+                e.dataTransfer.setData('label', item.dataset.label);
+            });
+        });
+
+        container.addEventListener('dragover', (e) => e.preventDefault());
+        container.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const type = e.dataTransfer.getData('type');
+            const label = e.dataTransfer.getData('label');
+            if (!type) return;
+
+            const rect = container.getBoundingClientRect();
+            const x = (e.clientX - rect.left - state.transform.x) / state.transform.scale;
+            const y = (e.clientY - rect.top - state.transform.y) / state.transform.scale;
+
+            const node = {
+                id: `n-${Date.now()}`,
+                type,
+                x: x - 50, 
+                y: y - 20,
+                data: { 
+                    label, 
+                    width: type === 'circle' || type === 'separator' ? 200 : undefined,
+                    height: type === 'circle' ? 200 : undefined,
+                    attributes: ['+ attr: type'], 
+                    methods: ['+ method(): void'],
+                    style: {} // Custom styles
+                }
+            };
+            state.nodes.push(node);
+            render();
+        });
+
+        // Canvas Interactions
+        container.addEventListener('mousedown', (e) => {
+            const rect = container.getBoundingClientRect();
+            const mouseX = (e.clientX - rect.left - state.transform.x) / state.transform.scale;
+            const mouseY = (e.clientY - rect.top - state.transform.y) / state.transform.scale;
+
+            // 1. Check Resize Handle Click
+            if (e.target.classList.contains('resize-handle')) {
+                e.stopPropagation();
+                const nodeId = e.target.dataset.node;
+                const node = state.nodes.find(n => n.id === nodeId);
+                if (node) {
+                    state.isResizing = true;
+                    state.resizeItem = node;
+                    state.resizeStart = { 
+                        x: e.clientX, 
+                        y: e.clientY, 
+                        w: node.data.width || 200, 
+                        h: node.data.height || 200 
+                    };
+                }
+                return;
+            }
+
+            // 2. Check Handle Click (Start Connection)
+            if (e.target.classList.contains('handle')) {
+                e.stopPropagation(); 
+                const nodeId = e.target.dataset.node;
+                const handle = e.target.dataset.handle;
+                const handleRect = e.target.getBoundingClientRect();
+                const hx = (handleRect.left + handleRect.width/2 - rect.left - state.transform.x) / state.transform.scale;
+                const hy = (handleRect.top + handleRect.height/2 - rect.top - state.transform.y) / state.transform.scale;
+                state.connectionStart = { nodeId, handle, x: hx, y: hy };
+                return;
+            }
+
+            // 3. Check Node Click (Select/Drag)
+            const nodeEl = e.target.closest('.node');
+            if (nodeEl) {
+                const id = nodeEl.dataset.id;
+                select(id, 'node');
+                state.isDragging = true;
+                state.dragItem = state.nodes.find(n => n.id === id);
+                state.dragOffset = { 
+                    x: mouseX - state.dragItem.x, 
+                    y: mouseY - state.dragItem.y 
+                };
+                return;
+            }
+
+            // 4. Background Click (Pan)
+            state.isPanning = true;
+            state.panStart = { x: e.clientX, y: e.clientY };
+            select(null);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            state.pointer = { x: e.clientX, y: e.clientY };
+
+            if (state.isResizing && state.resizeItem) {
+                const dx = (e.clientX - state.resizeStart.x) / state.transform.scale;
+                const dy = (e.clientY - state.resizeStart.y) / state.transform.scale;
+                
+                state.resizeItem.data.width = Math.max(20, state.resizeStart.w + dx);
+                if (state.resizeItem.type !== 'separator') {
+                    state.resizeItem.data.height = Math.max(20, state.resizeStart.h + dy);
+                }
+                render();
+            } else if (state.isDragging && state.dragItem) {
+                const rect = container.getBoundingClientRect();
+                const mouseX = (e.clientX - rect.left - state.transform.x) / state.transform.scale;
+                const mouseY = (e.clientY - rect.top - state.transform.y) / state.transform.scale;
+                state.dragItem.x = mouseX - state.dragOffset.x;
+                state.dragItem.y = mouseY - state.dragOffset.y;
+                render(); 
+            } else if (state.isPanning) {
+                const dx = e.clientX - state.panStart.x;
+                const dy = e.clientY - state.panStart.y;
+                state.transform.x += dx;
+                state.transform.y += dy;
+                state.panStart = { x: e.clientX, y: e.clientY };
+                updateCanvasTransform();
+            } else if (state.connectionStart) {
+                render();
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (state.isResizing) {
+                state.isResizing = false;
+                state.resizeItem = null;
+            }
+
+            if (state.connectionStart) {
+                if (e.target.classList.contains('handle')) {
+                    const targetId = e.target.dataset.node;
+                    const targetHandle = e.target.dataset.handle;
+                    if (targetId !== state.connectionStart.nodeId) {
+                        state.edges.push({
+                            id: `e-${Date.now()}`,
+                            source: state.connectionStart.nodeId,
+                            sourceHandle: state.connectionStart.handle,
+                            target: targetId,
+                            targetHandle: targetHandle
+                        });
+                    }
+                }
+                state.connectionStart = null;
+                render();
+                return;
+            }
+            state.isDragging = false;
+            state.dragItem = null;
+            state.isPanning = false;
+        });
+
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoom = e.deltaY < 0 ? 1.1 : 0.9;
+            state.transform.scale = Math.max(0.1, Math.min(4, state.transform.scale * zoom));
+            updateCanvasTransform();
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if ((e.key === 'Delete' || e.key === 'Backspace') && state.selection) {
+                state.nodes = state.nodes.filter(n => n.id !== state.selection);
+                state.edges = state.edges.filter(edge => edge.id !== state.selection);
+                select(null);
+                render();
+            }
+        });
+
+        // --- AI Generation ---
+        document.getElementById('btn-generate').addEventListener('click', async () => {
+            const promptText = document.getElementById('ai-prompt').value;
+            if (!promptText) return;
+
+            loader.classList.remove('hidden');
+
+            try {
+                const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+                const model = "gemini-2.5-flash";
+                
+                const systemPrompt = `
+                    You are a diagram generator. Output JSON only.
+                    Schema: { 
+                        "nodes": [{ "id": "n1", "type": "start|process|decision|end|umlClass|separator|circle|text", "x": 0, "y": 0, "data": { "label": "text", "width": 200, "height": 200, "style": { "backgroundColor": "#fff", "borderColor": "#000" } } }], 
+                        "edges": [{ "id": "e1", "source": "n1", "target": "n2", "sourceHandle": "bottom", "targetHandle": "top" }] 
+                    }
+                    Layout Rules:
+                    - Vertical flow.
+                    - Center nodes around x=4000, y=4000.
+                    - Spacing y = 150px.
+                `;
+
+                const result = await ai.models.generateContent({
+                    model: model,
+                    contents: promptText,
+                    config: {
+                        systemInstruction: systemPrompt,
+                        responseMimeType: "application/json"
+                    }
+                });
+
+                const data = JSON.parse(result.text);
+                
+                if (data.nodes) {
+                    let startY = 3800;
+                    const mappedNodes = data.nodes.map((n, i) => ({
+                        ...n,
+                        x: n.x || 4000,
+                        y: n.y || (startY + i * 150)
+                    }));
+
+                    state.nodes = mappedNodes;
+                    state.edges = data.edges || [];
+                    state.transform.x = -3500; 
+                    state.transform.y = -3500;
+                    updateCanvasTransform();
+                    render();
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert("Failed to generate diagram. Check API Key.");
+            } finally {
+                loader.classList.add('hidden');
+            }
+        });
+
+        // --- IO ---
+        document.getElementById('btn-export').addEventListener('click', () => {
+            const json = JSON.stringify({ nodes: state.nodes, edges: state.edges }, null, 2);
+            const blob = new Blob([json], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'flowgenius-diagram.json';
+            a.click();
+        });
+
+        document.getElementById('btn-import').addEventListener('click', () => document.getElementById('file-input').click());
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    const data = JSON.parse(evt.target.result);
+                    state.nodes = data.nodes || [];
+                    state.edges = data.edges || [];
+                    render();
+                } catch(err) { alert("Invalid file"); }
+            };
+            reader.readAsText(file);
+        });
+        
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            if (confirm("Clear canvas?")) {
+                state.nodes = [];
+                state.edges = [];
+                select(null);
+                render();
+            }
+        });
+
+    </script>
+</body>
+</html>

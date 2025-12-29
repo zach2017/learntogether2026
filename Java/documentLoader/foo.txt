@@ -1,0 +1,49 @@
+package com.example.config;
+
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
+import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+
+@Component
+public class S3StartupValidator {
+
+    private static final Logger log = LoggerFactory.getLogger(S3StartupValidator.class);
+
+    private final S3Client s3Client;
+    private final String bucketName;
+
+    public S3StartupValidator(S3Client s3Client,
+                              org.springframework.beans.factory.annotation.Value("${aws.s3.bucket}") String bucketName) {
+        this.s3Client = s3Client;
+        this.bucketName = bucketName;
+    }
+
+    @PostConstruct
+    public void validateBucket() {
+        try {
+            log.info("Validating S3 bucket '{}' at startup...", bucketName);
+
+            s3Client.headBucket(HeadBucketRequest.builder()
+                    .bucket(bucketName)
+                    .build());
+
+            log.info("S3 bucket '{}' is valid and reachable.", bucketName);
+
+        } catch (NoSuchBucketException e) {
+            log.error("S3 bucket '{}' does NOT exist!", bucketName, e);
+            throw new IllegalStateException("Startup failed: S3 bucket does not exist.");
+        } catch (S3Exception e) {
+            log.error("S3 returned error validating bucket '{}': {}", bucketName,
+                    e.awsErrorDetails().errorMessage(), e);
+            throw new IllegalStateException("Startup failed: Invalid or inaccessible S3 bucket.");
+        } catch (Exception e) {
+            log.error("Unexpected error validating S3 bucket", e);
+            throw new IllegalStateException("Startup failed: Cannot validate S3 bucket.", e);
+        }
+    }
+}

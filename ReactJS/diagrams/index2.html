@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagram Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .canvas-grid {
+            background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .shape {
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+        }
+        
+        .shape.dragging {
+            cursor: grabbing;
+            opacity: 0.8;
+        }
+        
+        .shape.selected {
+            box-shadow: 0 0 0 3px #3b82f6;
+        }
+        
+        .shape.connecting {
+            box-shadow: 0 0 0 3px #10b981;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .notification {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            
+            /* Hide toolbar when printing */
+            .toolbar {
+                display: none !important;
+            }
+            
+            /* Make canvas full page */
+            #canvas {
+                height: 100vh !important;
+                width: 100vw !important;
+                page-break-after: avoid;
+            }
+            
+            /* Remove selection highlights for print */
+            .shape.selected {
+                box-shadow: none !important;
+            }
+            
+            .shape.connecting {
+                box-shadow: none !important;
+                animation: none !important;
+            }
+            
+            /* Hide connection indicator */
+            #connectionIndicator {
+                display: none !important;
+            }
+        }
+        
+        .shape-rectangle {
+            position: relative;
+        }
+        
+        .shape-circle {
+            position: relative;
+        }
+        
+        .shape-diamond {
+            position: relative;
+        }
+        
+        .shape-class {
+            position: relative;
+        }
+        
+        .shape-cloud {
+            position: relative;
+        }
+        
+        .shape-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+        
+        .shape-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-weight: 500;
+            color: #000;
+            pointer-events: none;
+            max-width: 90%;
+            word-wrap: break-word;
+        }
+        
+        .shape-class .shape-text {
+            top: 0;
+            left: 0;
+            transform: none;
+            width: 100%;
+            height: 100%;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .text-input {
+            background: transparent;
+            border: 2px solid #3b82f6;
+            outline: none;
+            color: #000;
+            font: inherit;
+            text-align: center;
+            width: 100%;
+            z-index: 100;
+            position: relative;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        
+        textarea.text-input {
+            resize: none;
+            text-align: left;
+            height: 100%;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Toolbar -->
+    <div class="toolbar bg-white shadow-md p-4 flex items-center gap-4 border-b-2 border-gray-200">
+        <h1 class="text-xl font-bold text-gray-800 mr-4">Diagram Builder</h1>
+        
+        <!-- Shape buttons -->
+        <div class="flex gap-2 border-r pr-4">
+            <button onclick="addShape('rectangle')" class="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                </svg>
+                <span class="text-xs">Rectangle</span>
+            </button>
+            
+            <button onclick="addShape('circle')" class="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                </svg>
+                <span class="text-xs">Circle</span>
+            </button>
+            
+            <button onclick="addShape('diamond')" class="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                    <path d="M12 2l9 10-9 10-9-10z"/>
+                </svg>
+                <span class="text-xs">Diamond</span>
+            </button>
+            
+            <button onclick="addShape('cloud')" class="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2">
+                    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+                </svg>
+                <span class="text-xs">Cloud</span>
+            </button>
+            
+            <button onclick="addShape('class')" class="flex flex-col items-center gap-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <line x1="3" y1="9" x2="21" y2="9"/>
+                    <line x1="3" y1="15" x2="21" y2="15"/>
+                </svg>
+                <span class="text-xs">UML Class</span>
+            </button>
+        </div>
+        
+        <!-- Tools -->
+        <div class="flex gap-2 border-r pr-4">
+            <button id="connectBtn" onclick="startConnection()" disabled class="flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                    <polyline points="12 5 19 12 12 19"/>
+                </svg>
+                <span class="text-sm">Connect</span>
+            </button>
+            
+            <button id="colorBtn" onclick="toggleColorPicker()" disabled class="flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 2a10 10 0 0 1 10 10c0 1.5-1 2-2 2s-2-.5-2-2c0-1.5.5-2 2-2s2 .5 2 2"/>
+                </svg>
+                <span class="text-sm">Color</span>
+            </button>
+            
+            <button id="deleteBtn" onclick="deleteSelected()" disabled class="flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/>
+                </svg>
+                <span class="text-sm">Delete</span>
+            </button>
+            
+            <button onclick="printDiagram()" class="flex items-center gap-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 6 2 18 2 18 9"/>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                    <rect x="6" y="14" width="12" height="8"/>
+                </svg>
+                <span class="text-sm">Print</span>
+            </button>
+        </div>
+        
+        <!-- Import/Export -->
+        <div class="flex gap-2 border-r pr-4">
+            <button onclick="exportDiagram()" class="flex items-center gap-1 px-3 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span class="text-sm">Export</span>
+            </button>
+            
+            <button onclick="document.getElementById('importFile').click()" class="flex items-center gap-1 px-3 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <span class="text-sm">Import</span>
+            </button>
+            <input type="file" id="importFile" accept=".yaml,.yml" style="display: none;" onchange="importDiagram(event)">
+        </div>
+        
+        <!-- Color picker -->
+        <div id="colorPicker" class="hidden gap-2">
+            <button onclick="changeColor('#ffffff')" class="w-8 h-8 rounded-full border-2 border-gray-400 hover:border-gray-600 transition-colors" style="background-color: #ffffff;"></button>
+            <button onclick="changeColor('#f3f4f6')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #f3f4f6;"></button>
+            <button onclick="changeColor('#d1d5db')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #d1d5db;"></button>
+            <button onclick="changeColor('#9ca3af')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #9ca3af;"></button>
+            <button onclick="changeColor('#6b7280')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #6b7280;"></button>
+            <button onclick="changeColor('#374151')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #374151;"></button>
+            <button onclick="changeColor('#1f2937')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #1f2937;"></button>
+            <button onclick="changeColor('#000000')" class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-600 transition-colors" style="background-color: #000000;"></button>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="ml-auto text-sm text-gray-600">
+            <p><strong>Tips:</strong> Arrows connect to center of shapes • Double-click to edit • B&W SVG for clean diagrams</p>
+        </div>
+    </div>
+    
+    <!-- Canvas -->
+    <div id="canvas" class="canvas-grid bg-white relative" style="height: calc(100vh - 80px); overflow: hidden;">
+        <svg id="connectionsSvg" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 0;">
+            <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                    <polygon points="0 0, 10 3, 0 6" fill="#000" />
+                </marker>
+            </defs>
+        </svg>
+        
+        <div id="shapesContainer" class="relative w-full h-full" style="z-index: 1;"></div>
+        
+        <div id="connectionIndicator" class="hidden absolute top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg" style="z-index: 50;">
+            Click on another shape to connect with an arrow
+        </div>
+    </div>
+
+    <script>
+        // Application state
+        let shapes = [];
+        let connections = [];
+        let selectedShapeId = null;
+        let selectedConnectionId = null;
+        let draggingShapeId = null;
+        let dragOffset = { x: 0, y: 0 };
+        let editingShapeId = null;
+        let connectingFromId = null;
+        let shapeIdCounter = 1;
+        
+        const shapeDefaults = {
+            rectangle: { width: 100, height: 100, color: '#ffffff', text: 'Text' },
+            circle: { width: 100, height: 100, color: '#ffffff', text: 'Text' },
+            diamond: { width: 100, height: 100, color: '#ffffff', text: 'Text' },
+            cloud: { width: 120, height: 80, color: '#ffffff', text: 'Text' },
+            class: { width: 150, height: 120, color: '#ffffff', text: 'ClassName\n---\n+method()' }
+        };
+        
+        // Add shape to canvas
+        function addShape(type) {
+            const defaults = shapeDefaults[type];
+            const shape = {
+                id: shapeIdCounter++,
+                type: type,
+                x: 100,
+                y: 100,
+                width: defaults.width,
+                height: defaults.height,
+                color: defaults.color,
+                text: defaults.text
+            };
+            shapes.push(shape);
+            renderShape(shape);
+        }
+        
+        // Render a shape
+        function renderShape(shape) {
+            const shapeDiv = document.createElement('div');
+            shapeDiv.id = `shape-${shape.id}`;
+            shapeDiv.className = `shape shape-${shape.type}`;
+            shapeDiv.style.left = shape.x + 'px';
+            shapeDiv.style.top = shape.y + 'px';
+            shapeDiv.style.width = shape.width + 'px';
+            shapeDiv.style.height = shape.height + 'px';
+            
+            if (shape.type === 'rectangle') {
+                shapeDiv.innerHTML = `
+                    <svg class="shape-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                        <rect x="2" y="2" width="96" height="96" rx="4" 
+                              fill="${shape.color}" 
+                              stroke="#000" 
+                              stroke-width="2"/>
+                    </svg>
+                    <div class="shape-text" id="text-${shape.id}">${escapeHtml(shape.text)}</div>
+                `;
+            } else if (shape.type === 'circle') {
+                shapeDiv.innerHTML = `
+                    <svg class="shape-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="48" 
+                                fill="${shape.color}" 
+                                stroke="#000" 
+                                stroke-width="2"/>
+                    </svg>
+                    <div class="shape-text" id="text-${shape.id}">${escapeHtml(shape.text)}</div>
+                `;
+            } else if (shape.type === 'diamond') {
+                shapeDiv.innerHTML = `
+                    <svg class="shape-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M50,5 L95,50 L50,95 L5,50 Z" 
+                              fill="${shape.color}" 
+                              stroke="#000" 
+                              stroke-width="2"/>
+                    </svg>
+                    <div class="shape-text" id="text-${shape.id}">${escapeHtml(shape.text)}</div>
+                `;
+            } else if (shape.type === 'cloud') {
+                shapeDiv.innerHTML = `
+                    <svg class="shape-svg" viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                        <path d="M90,45 Q90,35 80,35 Q80,20 65,20 Q50,20 45,30 Q35,25 25,30 Q15,35 15,45 Q5,50 5,60 Q5,70 15,70 L85,70 Q95,70 100,60 Q100,50 90,45 Z" 
+                              fill="${shape.color}" 
+                              stroke="#000" 
+                              stroke-width="2"/>
+                    </svg>
+                    <div class="shape-text" id="text-${shape.id}">${escapeHtml(shape.text)}</div>
+                `;
+            } else if (shape.type === 'class') {
+                shapeDiv.innerHTML = `
+                    <svg class="shape-svg" viewBox="0 0 150 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                        <rect x="2" y="2" width="146" height="116" rx="4" 
+                              fill="${shape.color}" 
+                              stroke="#000" 
+                              stroke-width="2"/>
+                        <line x1="2" y1="35" x2="148" y2="35" stroke="#000" stroke-width="2"/>
+                        <line x1="2" y1="80" x2="148" y2="80" stroke="#000" stroke-width="2"/>
+                    </svg>
+                    <div class="shape-text" id="text-${shape.id}">${escapeHtml(shape.text)}</div>
+                `;
+            }
+            
+            shapeDiv.addEventListener('mousedown', (e) => handleShapeMouseDown(e, shape.id));
+            shapeDiv.addEventListener('dblclick', (e) => handleShapeDoubleClick(e, shape.id));
+            
+            document.getElementById('shapesContainer').appendChild(shapeDiv);
+        }
+        
+        // Handle shape mouse down
+        function handleShapeMouseDown(e, shapeId) {
+            e.stopPropagation();
+            
+            // If in connection mode
+            if (connectingFromId) {
+                if (connectingFromId !== shapeId) {
+                    connections.push({
+                        id: Date.now(),
+                        from: connectingFromId,
+                        to: shapeId
+                    });
+                    renderConnections();
+                }
+                connectingFromId = null;
+                updateConnectionMode();
+                return;
+            }
+            
+            const canvas = document.getElementById('canvas').getBoundingClientRect();
+            const shape = shapes.find(s => s.id === shapeId);
+            
+            draggingShapeId = shapeId;
+            selectedShapeId = shapeId;
+            selectedConnectionId = null;
+            dragOffset = {
+                x: e.clientX - canvas.left - shape.x,
+                y: e.clientY - canvas.top - shape.y
+            };
+            
+            updateSelection();
+        }
+        
+        // Handle shape double click (edit text)
+        function handleShapeDoubleClick(e, shapeId) {
+            e.stopPropagation();
+            selectedShapeId = shapeId;
+            editingShapeId = shapeId;
+            
+            const shape = shapes.find(s => s.id === shapeId);
+            const textDiv = document.getElementById(`text-${shapeId}`);
+            
+            if (shape.type === 'class') {
+                textDiv.innerHTML = `<textarea class="text-input" id="input-${shapeId}" style="width: 100%; height: 100%;">${escapeHtml(shape.text)}</textarea>`;
+            } else {
+                textDiv.innerHTML = `<input type="text" class="text-input" id="input-${shapeId}" value="${escapeHtml(shape.text)}">`;
+            }
+            
+            const input = document.getElementById(`input-${shapeId}`);
+            input.focus();
+            input.select();
+            
+            input.addEventListener('blur', () => finishTextEdit(shapeId));
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && shape.type !== 'class') {
+                    finishTextEdit(shapeId);
+                }
+            });
+        }
+        
+        // Finish text editing
+        function finishTextEdit(shapeId) {
+            const input = document.getElementById(`input-${shapeId}`);
+            if (!input) return;
+            
+            const shape = shapes.find(s => s.id === shapeId);
+            shape.text = input.value;
+            
+            const textDiv = document.getElementById(`text-${shapeId}`);
+            textDiv.innerHTML = escapeHtml(shape.text);
+            
+            editingShapeId = null;
+        }
+        
+        // Handle mouse move
+        document.addEventListener('mousemove', (e) => {
+            if (draggingShapeId) {
+                const canvas = document.getElementById('canvas').getBoundingClientRect();
+                const shape = shapes.find(s => s.id === draggingShapeId);
+                
+                shape.x = e.clientX - canvas.left - dragOffset.x;
+                shape.y = e.clientY - canvas.top - dragOffset.y;
+                
+                const shapeDiv = document.getElementById(`shape-${draggingShapeId}`);
+                shapeDiv.style.left = shape.x + 'px';
+                shapeDiv.style.top = shape.y + 'px';
+                shapeDiv.classList.add('dragging');
+                
+                renderConnections();
+            }
+        });
+        
+        // Handle mouse up
+        document.addEventListener('mouseup', () => {
+            if (draggingShapeId) {
+                const shapeDiv = document.getElementById(`shape-${draggingShapeId}`);
+                shapeDiv.classList.remove('dragging');
+                draggingShapeId = null;
+            }
+        });
+        
+        // Canvas click (deselect)
+        document.getElementById('canvas').addEventListener('click', (e) => {
+            // Only deselect if clicking on canvas background, not on a shape
+            if (e.target.id === 'canvas' || e.target.id === 'shapesContainer') {
+                selectedShapeId = null;
+                selectedConnectionId = null;
+                connectingFromId = null;
+                updateSelection();
+                updateConnectionMode();
+                
+                // Close color picker
+                const picker = document.getElementById('colorPicker');
+                picker.classList.add('hidden');
+                picker.classList.remove('flex');
+            }
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Escape key cancels connection mode or deselects
+            if (e.key === 'Escape') {
+                if (connectingFromId) {
+                    connectingFromId = null;
+                    updateConnectionMode();
+                } else if ((selectedShapeId || selectedConnectionId) && !editingShapeId) {
+                    selectedShapeId = null;
+                    selectedConnectionId = null;
+                    updateSelection();
+                }
+            }
+            
+            // Delete key removes selected shape or connection
+            if (e.key === 'Delete' && (selectedShapeId || selectedConnectionId) && !editingShapeId) {
+                deleteSelected();
+            }
+        });
+        
+        // Update selection visual
+        function updateSelection() {
+            document.querySelectorAll('.shape').forEach(shape => {
+                shape.classList.remove('selected');
+            });
+            
+            if (selectedShapeId) {
+                const shapeDiv = document.getElementById(`shape-${selectedShapeId}`);
+                if (shapeDiv) shapeDiv.classList.add('selected');
+            }
+            
+            updateToolbar();
+            renderConnections(); // Re-render to update connection visual feedback
+        }
+        
+        // Update toolbar buttons state
+        function updateToolbar() {
+            const hasSelection = selectedShapeId !== null;
+            const hasConnectionSelection = selectedConnectionId !== null;
+            
+            const connectBtn = document.getElementById('connectBtn');
+            const colorBtn = document.getElementById('colorBtn');
+            const deleteBtn = document.getElementById('deleteBtn');
+            
+            if (hasSelection) {
+                connectBtn.disabled = false;
+                connectBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-green-500 hover:bg-green-600 text-white cursor-pointer';
+                
+                colorBtn.disabled = false;
+                colorBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-purple-500 hover:bg-purple-600 text-white cursor-pointer';
+                
+                deleteBtn.disabled = false;
+                deleteBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-red-500 hover:bg-red-600 text-white cursor-pointer';
+            } else if (hasConnectionSelection) {
+                connectBtn.disabled = true;
+                connectBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed';
+                
+                colorBtn.disabled = true;
+                colorBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed';
+                
+                deleteBtn.disabled = false;
+                deleteBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-red-500 hover:bg-red-600 text-white cursor-pointer';
+            } else {
+                connectBtn.disabled = true;
+                connectBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed';
+                
+                colorBtn.disabled = true;
+                colorBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed';
+                
+                deleteBtn.disabled = true;
+                deleteBtn.className = 'flex items-center gap-1 px-3 py-2 rounded transition-colors bg-gray-200 text-gray-400 cursor-not-allowed';
+            }
+        }
+        
+        // Start connection mode
+        function startConnection() {
+            if (!selectedShapeId) return;
+            connectingFromId = selectedShapeId;
+            updateConnectionMode();
+        }
+        
+        // Update connection mode visual
+        function updateConnectionMode() {
+            document.querySelectorAll('.shape').forEach(shape => {
+                shape.classList.remove('connecting');
+            });
+            
+            const indicator = document.getElementById('connectionIndicator');
+            const connectBtn = document.getElementById('connectBtn');
+            
+            if (connectingFromId) {
+                const shapeDiv = document.getElementById(`shape-${connectingFromId}`);
+                if (shapeDiv) shapeDiv.classList.add('connecting');
+                indicator.classList.remove('hidden');
+                
+                // Make connect button pulse when active
+                connectBtn.classList.add('animate-pulse');
+            } else {
+                indicator.classList.add('hidden');
+                connectBtn.classList.remove('animate-pulse');
+            }
+        }
+        
+        // Toggle color picker
+        function toggleColorPicker() {
+            if (!selectedShapeId) return;
+            const picker = document.getElementById('colorPicker');
+            picker.classList.toggle('hidden');
+            picker.classList.toggle('flex');
+        }
+        
+        // Change shape color
+        function changeColor(color) {
+            if (!selectedShapeId) return;
+            
+            const shape = shapes.find(s => s.id === selectedShapeId);
+            shape.color = color;
+            
+            const shapeDiv = document.getElementById(`shape-${selectedShapeId}`);
+            
+            // Update SVG fill
+            const svgElements = shapeDiv.querySelectorAll('rect, circle, path');
+            svgElements.forEach(elem => {
+                elem.setAttribute('fill', color);
+            });
+            
+            document.getElementById('colorPicker').classList.add('hidden');
+            document.getElementById('colorPicker').classList.remove('flex');
+        }
+        
+        // Delete selected shape or connection
+        function deleteSelected() {
+            if (selectedShapeId) {
+                // Remove shape
+                const shapeDiv = document.getElementById(`shape-${selectedShapeId}`);
+                if (shapeDiv) shapeDiv.remove();
+                
+                shapes = shapes.filter(s => s.id !== selectedShapeId);
+                
+                // Remove connections related to this shape
+                connections = connections.filter(c => 
+                    c.from !== selectedShapeId && c.to !== selectedShapeId
+                );
+                
+                selectedShapeId = null;
+            } else if (selectedConnectionId) {
+                // Remove connection
+                connections = connections.filter(c => c.id !== selectedConnectionId);
+                selectedConnectionId = null;
+            }
+            
+            updateSelection();
+            renderConnections();
+        }
+        
+        // Render connections (arrows)
+        function renderConnections() {
+            const svg = document.getElementById('connectionsSvg');
+            
+            // Clear existing connections
+            const existingLines = svg.querySelectorAll('line');
+            existingLines.forEach(line => line.remove());
+            
+            // Draw connections
+            connections.forEach(conn => {
+                const fromShape = shapes.find(s => s.id === conn.from);
+                const toShape = shapes.find(s => s.id === conn.to);
+                
+                if (!fromShape || !toShape) return;
+                
+                const from = getShapeCenter(fromShape);
+                const to = getShapeCenter(toShape);
+                
+                // Connect directly to centers
+                const fromX = from.x;
+                const fromY = from.y;
+                const toX = to.x;
+                const toY = to.y;
+                
+                // Create invisible thick line for easier clicking
+                const hitLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                hitLine.setAttribute('x1', fromX);
+                hitLine.setAttribute('y1', fromY);
+                hitLine.setAttribute('x2', toX);
+                hitLine.setAttribute('y2', toY);
+                hitLine.setAttribute('stroke', 'transparent');
+                hitLine.setAttribute('stroke-width', '15');
+                hitLine.style.cursor = 'pointer';
+                hitLine.style.pointerEvents = 'stroke';
+                hitLine.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectedConnectionId = conn.id;
+                    selectedShapeId = null;
+                    updateSelection();
+                });
+                
+                // Create visible line
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', fromX);
+                line.setAttribute('y1', fromY);
+                line.setAttribute('x2', toX);
+                line.setAttribute('y2', toY);
+                line.setAttribute('stroke', selectedConnectionId === conn.id ? '#3b82f6' : '#000');
+                line.setAttribute('stroke-width', selectedConnectionId === conn.id ? '3' : '2');
+                line.setAttribute('marker-end', 'url(#arrowhead)');
+                line.style.pointerEvents = 'none';
+                
+                svg.appendChild(hitLine);
+                svg.appendChild(line);
+            });
+        }
+        
+        // Get shape center
+        function getShapeCenter(shape) {
+            return {
+                x: shape.x + shape.width / 2,
+                y: shape.y + shape.height / 2
+            };
+        }
+        
+        // Print diagram
+        function printDiagram() {
+            // Clear any selections before printing
+            const tempSelectedShape = selectedShapeId;
+            const tempSelectedConnection = selectedConnectionId;
+            const tempConnecting = connectingFromId;
+            
+            selectedShapeId = null;
+            selectedConnectionId = null;
+            connectingFromId = null;
+            
+            updateSelection();
+            updateConnectionMode();
+            
+            // Trigger print
+            window.print();
+            
+            // Restore selections after print dialog closes
+            setTimeout(() => {
+                selectedShapeId = tempSelectedShape;
+                selectedConnectionId = tempSelectedConnection;
+                connectingFromId = tempConnecting;
+                updateSelection();
+                updateConnectionMode();
+            }, 100);
+        }
+        
+        // Export diagram to YAML
+        function exportDiagram() {
+            const diagramData = {
+                version: '1.0',
+                created: new Date().toISOString(),
+                shapes: shapes.map(shape => ({
+                    id: shape.id,
+                    type: shape.type,
+                    x: shape.x,
+                    y: shape.y,
+                    width: shape.width,
+                    height: shape.height,
+                    color: shape.color,
+                    text: shape.text
+                })),
+                connections: connections.map(conn => ({
+                    id: conn.id,
+                    from: conn.from,
+                    to: conn.to
+                }))
+            };
+            
+            // Convert to YAML
+            const yamlContent = jsyaml.dump(diagramData, {
+                indent: 2,
+                lineWidth: -1
+            });
+            
+            // Create download link
+            const blob = new Blob([yamlContent], { type: 'text/yaml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `diagram-${Date.now()}.yaml`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Show success message
+            showNotification('Diagram exported successfully!', 'success');
+        }
+        
+        // Import diagram from YAML
+        function importDiagram(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    // Parse YAML
+                    const diagramData = jsyaml.load(e.target.result);
+                    
+                    // Validate data
+                    if (!diagramData.shapes || !diagramData.connections) {
+                        throw new Error('Invalid diagram format');
+                    }
+                    
+                    // Clear current diagram
+                    document.getElementById('shapesContainer').innerHTML = '';
+                    shapes = [];
+                    connections = [];
+                    selectedShapeId = null;
+                    selectedConnectionId = null;
+                    connectingFromId = null;
+                    
+                    // Load shapes
+                    diagramData.shapes.forEach(shapeData => {
+                        const shape = {
+                            id: shapeData.id,
+                            type: shapeData.type,
+                            x: shapeData.x,
+                            y: shapeData.y,
+                            width: shapeData.width,
+                            height: shapeData.height,
+                            color: shapeData.color,
+                            text: shapeData.text
+                        };
+                        shapes.push(shape);
+                        renderShape(shape);
+                    });
+                    
+                    // Load connections
+                    connections = diagramData.connections.map(conn => ({
+                        id: conn.id,
+                        from: conn.from,
+                        to: conn.to
+                    }));
+                    
+                    // Update UI
+                    renderConnections();
+                    updateSelection();
+                    
+                    // Update shape counter to avoid ID conflicts
+                    if (shapes.length > 0) {
+                        shapeIdCounter = Math.max(...shapes.map(s => s.id)) + 1;
+                    }
+                    
+                    // Show success message
+                    showNotification('Diagram imported successfully!', 'success');
+                    
+                } catch (error) {
+                    showNotification('Error importing diagram: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+        
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification fixed top-20 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } text-white font-semibold`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transition = 'opacity 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        // Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Initialize
+        updateToolbar();
+    </script>
+</body>
+</html>

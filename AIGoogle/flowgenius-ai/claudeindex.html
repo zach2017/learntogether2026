@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagram Creator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #canvas {
+            background: linear-gradient(to right, #f3f4f6 1px, transparent 1px),
+                        linear-gradient(to bottom, #f3f4f6 1px, transparent 1px);
+            background-size: 20px 20px;
+            cursor: crosshair;
+        }
+
+        .node {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: move;
+            border: 2px solid #3b82f6;
+            background: white;
+            user-select: none;
+            font-size: 12px;
+            text-align: center;
+            padding: 8px;
+            overflow: hidden;
+            word-wrap: break-word;
+        }
+
+        .node.selected {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+        }
+
+        .node.flowchart-process {
+            border-radius: 4px;
+        }
+
+        .node.flowchart-decision {
+            width: 80px;
+            height: 80px;
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        }
+
+        .node.flowchart-terminator {
+            border-radius: 20px;
+        }
+
+        .node.uml-class {
+            border: 2px solid #8b5cf6;
+            background: #f3e8ff;
+            flex-direction: column;
+            align-items: stretch;
+            text-align: left;
+            padding: 0;
+        }
+
+        .node.uml-class .class-section {
+            padding: 8px;
+            border-bottom: 1px solid #8b5cf6;
+            font-weight: bold;
+        }
+
+        .node.state-circle {
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+        }
+
+        .node.state-final {
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            background: #1f2937;
+            border-color: #1f2937;
+        }
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .svg-draggable {
+            pointer-events: auto;
+        }
+
+        .connector-label {
+            position: absolute;
+            background: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            border: 1px solid #9ca3af;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen flex-col">
+        <!-- Header -->
+        <div class="bg-white border-b border-gray-200 shadow-sm">
+            <div class="flex items-center justify-between p-4">
+                <div class="flex items-center gap-4">
+                    <h1 class="text-2xl font-bold text-gray-900">📊 Diagram Creator</h1>
+                    <select id="diagramType" class="px-4 py-2 border border-gray-300 rounded-lg bg-white text-sm font-medium">
+                        <option value="flowchart">Flowchart</option>
+                        <option value="uml">UML Class Diagram</option>
+                        <option value="state">State Diagram</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button id="exportBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                        📥 Export JSON
+                    </button>
+                    <button id="importBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">
+                        📤 Import JSON
+                    </button>
+                    <button id="clearBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700">
+                        🗑️ Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Toolbar -->
+            <div class="w-48 bg-white border-r border-gray-200 p-4 overflow-y-auto">
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 mb-3">Add Element</h3>
+                        <div id="toolbarContainer" class="space-y-2">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 pt-4">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-3">Properties</h3>
+                        <div class="space-y-2">
+                            <div>
+                                <label class="text-xs font-medium text-gray-700">Text:</label>
+                                <input id="nodeText" type="text" placeholder="Enter text" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                            </div>
+                            <button id="updateTextBtn" class="w-full px-3 py-1 bg-gray-700 text-white rounded text-sm font-medium hover:bg-gray-800">
+                                Update Text
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 pt-4">
+                        <h3 class="text-sm font-semibold text-gray-900 mb-3">Connection</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-2">
+                                <input id="connectMode" type="checkbox" class="rounded">
+                                <span class="text-sm text-gray-700">Connect Mode</span>
+                            </label>
+                            <input id="connectionLabel" type="text" placeholder="Label (optional)" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas -->
+            <div class="flex-1 overflow-auto relative">
+                <div id="canvas" class="relative w-full h-full" style="width: 2000px; height: 1500px;">
+                    <svg id="connectionSvg" width="2000" height="1500"></svg>
+                </div>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        let diagramType = 'flowchart';
+        let nodes = [];
+        let connections = [];
+        let selectedNode = null;
+        let connectMode = false;
+        let connectStartNode = null;
+        let draggedNode = null;
+        let dragOffset = { x: 0, y: 0 };
+
+        const canvas = document.getElementById('canvas');
+        const svg = document.getElementById('connectionSvg');
+        const diagramTypeSelect = document.getElementById('diagramType');
+        const toolbarContainer = document.getElementById('toolbarContainer');
+        const nodeTextInput = document.getElementById('nodeText');
+        const updateTextBtn = document.getElementById('updateTextBtn');
+        const connectModeCheckbox = document.getElementById('connectMode');
+        const connectionLabelInput = document.getElementById('connectionLabel');
+        const exportBtn = document.getElementById('exportBtn');
+        const importBtn = document.getElementById('importBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const importFile = document.getElementById('importFile');
+
+        // Toolbar configurations
+        const toolbarConfigs = {
+            flowchart: [
+                { label: 'Process', type: 'flowchart-process' },
+                { label: 'Decision', type: 'flowchart-decision' },
+                { label: 'Terminator', type: 'flowchart-terminator' },
+            ],
+            uml: [
+                { label: 'Class', type: 'uml-class' },
+            ],
+            state: [
+                { label: 'State', type: 'state-circle' },
+                { label: 'Final State', type: 'state-final' },
+            ]
+        };
+
+        // Initialize toolbar
+        function updateToolbar() {
+            toolbarContainer.innerHTML = '';
+            const config = toolbarConfigs[diagramType];
+            config.forEach(item => {
+                const button = document.createElement('button');
+                button.className = 'w-full px-3 py-2 bg-blue-500 text-white rounded text-sm font-medium hover:bg-blue-600 transition';
+                button.textContent = `+ ${item.label}`;
+                button.onclick = () => addNode(item.type);
+                toolbarContainer.appendChild(button);
+            });
+        }
+
+        // Add Node
+        function addNode(type) {
+            const node = {
+                id: `node-${Date.now()}-${Math.random()}`,
+                type,
+                x: 100,
+                y: 100,
+                width: type.includes('decision') ? 80 : (type.includes('final') ? 60 : 120),
+                height: type.includes('decision') ? 80 : (type.includes('final') ? 60 : 60),
+                text: type.replace(/^[^-]+-/, '').replace('-', ' ')
+            };
+
+            if (type === 'uml-class') {
+                node.text = 'ClassName\n\n+ attribute: String\n+ method(): void';
+                node.width = 150;
+                node.height = 100;
+            }
+
+            nodes.push(node);
+            renderNode(node);
+            selectNode(node.id);
+        }
+
+        // Render Node
+        function renderNode(node) {
+            let element = document.getElementById(node.id);
+            if (element) element.remove();
+
+            element = document.createElement('div');
+            element.id = node.id;
+            element.className = `node ${node.type}`;
+            element.style.left = node.x + 'px';
+            element.style.top = node.y + 'px';
+            element.style.width = node.width + 'px';
+            element.style.height = node.height + 'px';
+
+            if (node.type === 'uml-class') {
+                const parts = node.text.split('\n\n');
+                element.innerHTML = `
+                    <div class="w-full">
+                        <div class="class-section">${parts[0]}</div>
+                        <div class="p-2 text-xs text-left">${parts.slice(1).join('<br>')}</div>
+                    </div>
+                `;
+            } else {
+                element.textContent = node.text;
+            }
+
+            element.addEventListener('mousedown', (e) => startDrag(e, node.id));
+            element.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (connectMode) {
+                    handleConnect(node.id);
+                } else {
+                    selectNode(node.id);
+                }
+            });
+
+            canvas.appendChild(element);
+        }
+
+        // Select Node
+        function selectNode(nodeId) {
+            if (selectedNode) {
+                const el = document.getElementById(selectedNode);
+                if (el) el.classList.remove('selected');
+            }
+            selectedNode = nodeId;
+            const el = document.getElementById(nodeId);
+            if (el) {
+                el.classList.add('selected');
+                const node = nodes.find(n => n.id === nodeId);
+                nodeTextInput.value = node.text;
+            }
+        }
+
+        // Start Drag
+        function startDrag(e, nodeId) {
+            e.preventDefault();
+            draggedNode = nodeId;
+            const el = document.getElementById(nodeId);
+            const rect = el.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+        }
+
+        // Mouse Move
+        document.addEventListener('mousemove', (e) => {
+            if (!draggedNode) return;
+            const canvasRect = canvas.getBoundingClientRect();
+            const node = nodes.find(n => n.id === draggedNode);
+            node.x = e.clientX - canvasRect.left - dragOffset.x;
+            node.y = e.clientY - canvasRect.top - dragOffset.y;
+            renderNode(node);
+            redrawConnections();
+        });
+
+        document.addEventListener('mouseup', () => {
+            draggedNode = null;
+        });
+
+        // Handle Connect
+        function handleConnect(nodeId) {
+            if (!connectStartNode) {
+                connectStartNode = nodeId;
+                selectNode(nodeId);
+            } else if (connectStartNode !== nodeId) {
+                const label = connectionLabelInput.value || '';
+                connections.push({
+                    from: connectStartNode,
+                    to: nodeId,
+                    label
+                });
+                connectStartNode = null;
+                connectionLabelInput.value = '';
+                redrawConnections();
+            } else {
+                connectStartNode = null;
+            }
+        }
+
+        // Redraw Connections
+        function redrawConnections() {
+            svg.innerHTML = '';
+            connections.forEach((conn, index) => {
+                const fromNode = nodes.find(n => n.id === conn.from);
+                const toNode = nodes.find(n => n.id === conn.to);
+                if (!fromNode || !toNode) return;
+
+                const x1 = fromNode.x + fromNode.width / 2;
+                const y1 = fromNode.y + fromNode.height / 2;
+                const x2 = toNode.x + toNode.width / 2;
+                const y2 = toNode.y + toNode.height / 2;
+
+                // Line
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', x1);
+                line.setAttribute('y1', y1);
+                line.setAttribute('x2', x2);
+                line.setAttribute('y2', y2);
+                line.setAttribute('stroke', '#3b82f6');
+                line.setAttribute('stroke-width', '2');
+                svg.appendChild(line);
+
+                // Arrow
+                const headlen = 15;
+                const angle = Math.atan2(y2 - y1, x2 - x1);
+                const arrowPoints = [
+                    [x2, y2],
+                    [x2 - headlen * Math.cos(angle - Math.PI / 6), y2 - headlen * Math.sin(angle - Math.PI / 6)],
+                    [x2 - headlen * Math.cos(angle + Math.PI / 6), y2 - headlen * Math.sin(angle + Math.PI / 6)]
+                ];
+                const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                polygon.setAttribute('points', arrowPoints.map(p => p.join(',')).join(' '));
+                polygon.setAttribute('fill', '#3b82f6');
+                svg.appendChild(polygon);
+
+                // Label
+                if (conn.label) {
+                    const midX = (x1 + x2) / 2;
+                    const midY = (y1 + y2) / 2;
+                    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    text.setAttribute('x', midX);
+                    text.setAttribute('y', midY - 5);
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('font-size', '12');
+                    text.setAttribute('fill', '#374151');
+                    text.setAttribute('background', 'white');
+                    text.textContent = conn.label;
+                    svg.appendChild(text);
+                }
+            });
+        }
+
+        // Update Text
+        updateTextBtn.addEventListener('click', () => {
+            if (!selectedNode) return;
+            const node = nodes.find(n => n.id === selectedNode);
+            node.text = nodeTextInput.value;
+            renderNode(node);
+        });
+
+        // Connect Mode Toggle
+        connectModeCheckbox.addEventListener('change', () => {
+            connectMode = connectModeCheckbox.checked;
+            canvas.style.cursor = connectMode ? 'pointer' : 'crosshair';
+        });
+
+        // Diagram Type Change
+        diagramTypeSelect.addEventListener('change', (e) => {
+            diagramType = e.target.value;
+            updateToolbar();
+        });
+
+        // Export
+        exportBtn.addEventListener('click', () => {
+            const data = {
+                diagramType,
+                nodes,
+                connections,
+                version: '1.0'
+            };
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `diagram-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Import
+        importBtn.addEventListener('click', () => {
+            importFile.click();
+        });
+
+        importFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    diagramType = data.diagramType;
+                    nodes = data.nodes;
+                    connections = data.connections || [];
+                    diagramTypeSelect.value = diagramType;
+                    updateToolbar();
+                    redraw();
+                } catch (err) {
+                    alert('Invalid JSON file');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // Clear
+        clearBtn.addEventListener('click', () => {
+            if (confirm('Clear all elements?')) {
+                nodes = [];
+                connections = [];
+                selectedNode = null;
+                canvas.querySelectorAll('.node').forEach(el => el.remove());
+                redrawConnections();
+            }
+        });
+
+        // Redraw
+        function redraw() {
+            canvas.querySelectorAll('.node').forEach(el => el.remove());
+            nodes.forEach(renderNode);
+            redrawConnections();
+        }
+
+        // Canvas click
+        canvas.addEventListener('click', (e) => {
+            if (e.target === canvas) {
+                if (selectedNode) {
+                    const el = document.getElementById(selectedNode);
+                    if (el) el.classList.remove('selected');
+                    selectedNode = null;
+                }
+            }
+        });
+
+        // Initialize
+        updateToolbar();
+    </script>
+</body>
+</html>

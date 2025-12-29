@@ -150,3 +150,15 @@ Java/springbasic/upload/src/main/docker
 Java/spring-upload-processor-full/target/
 Java/spring-upload-processor-full/uploads/*
 Java/securejwt/src/main/resources/static/
+Docker/microservicedemo/spring-keycloak-demo copy/client-service/target
+ArtificialIntelligence/demoapp/spring-app/target
+Java/mock-auth-server/target/
+Java/mock-oauth-complete/mock-oauth-server/target/
+Java/mock-oauth-complete/resource-server/target/
+Java/mock-resource-server/target/
+Java/mock-oauth-complete-fixed-v2/mock-oauth-server
+Java/spring-keycloak-demo/target
+ReactJS/oauth2/files (1)
+
+AWSDeveloper/LocalStack/microservice/app/target
+Java/SQSServices/chroma_data
